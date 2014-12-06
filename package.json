@@ -1,6 +1,6 @@
 {
   "name": "casca",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "A standalone library providing state-based router, built for complex SPA development",
   "main": "src/index.js",
   "repository": {
