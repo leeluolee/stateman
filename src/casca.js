@@ -167,7 +167,7 @@ Cascade.prototype = _.extend(
     _checkQueryAndParam: function(baseState, options){
       var from = baseState;
       while( from !== this ){
-        from.emit("casca:update", options)
+        from.emit("state:update", options)
         from = from.parent;
       }
     }
