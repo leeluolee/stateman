@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script src="/casca.js"></script>
+</head>
+<body>
+
+
+
+<ul>
+<li> <a href="#/a/home">home</a> </li>
+<li> <a href="#/a/contact?id=1">contact</a> </li>
+<li> <a href="#/a/contact/101?id=2">contact.detail</a> </li>
+<li> <a href="#/a/contact/102/option?id=4">contact.detail.option</a> </li>
+<li> <a href="#/a/contactList">contact.list</a> </li>
+<li> <a href="#/a/contact/100/message?id=3">about1</a> </li>
+<li> <a href="#/a/contact/101/message?id=4">about2</a> </li>
+</ul>
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+  <script>
+
+
+  var cascade = new casca()
+    .state("home", {enter: function(){console.log(this.currentName, "---->enter")}})
+    .state("contact", {
+        enter: function(){console.log("---->enter contact")}, 
+        leave: function(){console.log("leave contact <----")},
+        events: {
+          "casca:update": function(data){
+            console.log(data, 'contact update'); 
+          }
+        }
+      })
+      .state("contact.list", {url: "",enter: function(){console.log( "---->enter detail.list")}})
+      .state("contact.list.config", {enter: function(){console.log(this.currentName, "---->enter")}})
+      .state("contact.detail", {
+        url:":id",
+        events: {
+          "casca:update": function(data){
+            console.log(data, 'contact.detail update'); 
+          }
+        },
+        enter: function(){console.log("------>enter contact.detail")},
+        leave: function(){console.log("<-------leave contact.detail")}
+      })
+        .state("contact.detail.option", {
+          enter: function(step){
+            console.log("-------->enter contact.detail.option " + step.param.id)},
+          leave: function(step){
+            console.log("<--------leave contact.detail.option " + step.param.id)}
+        })
+    .state("about",{
+      url: "^/contact/:id/message"  ,
+      watched: ["hello", "name"],
+      events: {
+        "casca:update": function(option){
+          console.log("update", option)
+        }
+      },
+      enter: function(step){
+        step.async();
+        console.log("1s later")
+
+        setTimeout(function(){
+          console.log("---->enter about" ,step);
+          step.done();
+        }, 1000)
+
+      },
+      leave: function(step){
+        step.async();
+        console.log("1s later")
+        setTimeout(function(){
+          step.done();
+          console.log("---->leave about" ,step);
+        }, 1000)
+
+      }
+    })
+    .start({ root:"/a", html5: true });
+
+$("body").on("click", "a[href^='#/']", function(ev){
+
+  ev.preventDefault();
+  cascade.nav($(this).attr("href").split("#")[1].replace("/a", ""))
+});
+
+
+  casca.location.regist(function(path){
+    console.log("================" + path + "==================");
+  })
+
+
+  </script>
+</body>
+
+</html>

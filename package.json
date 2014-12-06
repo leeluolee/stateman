@@ -3,9 +3,6 @@
   "version": "0.0.0",
   "description": "A standalone library providing state-based router, built for complex SPA development",
   "main": "index.js",
-  "scripts": {
-    "test": "node test/index.js"
-  },
   "repository": {
     "type": "git",
     "url": "git@github.com:leeluolee/casca"
@@ -15,10 +12,27 @@
     "state",
     "spa"
   ],
+  "scripts": {
+    "test": "gulp travis --phantomjs"
+  },
   "author": "leeluolee",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/leeluolee/casca/issues"
   },
-  "homepage": "https://github.com/leeluolee/casca"
+  "homepage": "https://github.com/leeluolee/casca",
+  "devDependencies": {
+    "gulp-jshint": "~1.5.3",
+    "gulp-shell": "^0.2.4",
+    "gulp-webpack": "^0.3.0",
+    "gulp-mocha": "~0.4.1",
+    "gulp-uglify": "~0.2.1",
+    "gulp-util": "~2.2.14",
+    "mocha": "~1.18.2",
+    "through2": "~0.4.1",
+    "gulp": "^3.8.10"
+  },
+  "dependencies": {
+
+  }
 }
