@@ -295,9 +295,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return tmp && tmp[1]? tmp[1]: "";
 
 	  }else{
-	    return _.cleanPath( location.pathname + location.search || "" )
-	      .replace( rRoot, "" )
-
+	    return _.cleanPath(( location.pathname + location.search || "" ).replace( rRoot, "/" ))
 	  }
 	}
 
