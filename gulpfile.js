@@ -12,20 +12,9 @@ var pkg = require("./package.json");
     
 var wpConfig = {
  output: {
-    filename: "casca.js",
-    library: "casca",
+    filename: "maze.js",
+    library: "Maze",
     libraryTarget: "umd"
-  }
-}
-
-var routerConfig = {
-  output: {
-    filename: "rerouter.js",
-    library: "rerouter",
-    libraryTarget: "umd"
-  },
-  externals: {
-    "casca": "casca"
   }
 }
 
@@ -51,21 +40,14 @@ gulp.task('build', ['jshint'], function() {
       throw err
     })
 });
-gulp.task('webpack',  function() {
-  gulp.src("src/router.js")
-    .pipe(webpack(routerConfig))
-    .pipe(gulp.dest('./'))
-
-    .on("error", function(err){
-      throw err
-    })
-});
 
 
 gulp.task('watch', function(){
   gulp.watch(['src/**/*.js'], ['build'])
 })
 
+
+gulp.task('default', ['build', 'watch']);
 
 
 function wrap(fn){

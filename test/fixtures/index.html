@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <script src="/casca.js"></script>
+  <script src="../../maze.js"></script>
 </head>
 <body>
 
@@ -22,47 +22,31 @@
   <script>
 
 
-  var cascade = new casca()
+  var maze = new Maze()
     .state("home", {enter: function(){console.log(this.currentName, "---->enter")}})
     .state("contact", {
         enter: function(){console.log("---->enter contact")}, 
         leave: function(){console.log("leave contact <----")},
-        events: {
-          "casca:update": function(data){
-            console.log(data, 'contact update'); 
-          }
-        }
+        update: function(data){ console.log(data, 'contact update');}
       })
       .state("contact.list", {url: "",enter: function(){console.log( "---->enter detail.list")}})
       .state("contact.list.config", {enter: function(){console.log(this.currentName, "---->enter")}})
       .state("contact.detail", {
         url:":id",
-        events: {
-          "casca:update": function(data){
-            console.log(data, 'contact.detail update'); 
-          }
-        },
+        update:function(data){console.log(data, 'contact.detail update')},    
         enter: function(){console.log("------>enter contact.detail")},
         leave: function(){console.log("<-------leave contact.detail")}
       })
         .state("contact.detail.option", {
-          enter: function(step){
-            console.log("-------->enter contact.detail.option " + step.param.id)},
-          leave: function(step){
-            console.log("<--------leave contact.detail.option " + step.param.id)}
+          enter: function(step){console.log("-------->enter contact.detail.option " + step.param.id)},
+          leave: function(step){console.log("<--------leave contact.detail.option " + step.param.id)}
         })
     .state("about",{
-      url: "^/contact/:id/message"  ,
-      watched: ["hello", "name"],
-      events: {
-        "casca:update": function(option){
-          console.log("update", option)
-        }
-      },
+      url: "^/contact/:id/message" ,
+      update: function(option){console.log("update", option)},
       enter: function(step){
         step.async();
         console.log("1s later")
-
         setTimeout(function(){
           console.log("---->enter about" ,step);
           step.done();
@@ -81,16 +65,17 @@
     })
     .start({ root:"/a", html5: true });
 
-$("body").on("click", "a[href^='#/']", function(ev){
 
+
+$("body").on("click", "a[href^='#/']", function(ev){
   ev.preventDefault();
-  cascade.nav($(this).attr("href").split("#")[1].replace("/a", ""))
+  maze.nav($(this).attr("href").split("#")[1].replace("/a", ""));
 });
 
 
-  casca.location.regist(function(path){
-    console.log("================" + path + "==================");
-  })
+Maze.location.regist(function(path){
+  console.log("================" + path + "==================");
+})
 
 
   </script>

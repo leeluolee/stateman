@@ -5,18 +5,19 @@ var State = require("./state.js"),
 
 
 
-function Cascade(options){
+function Maze(options){
+  if(this instanceof Maze === false){ return new Maze(options)}
   options = options || {};
   State.call(this);
-  delete options.state;
   this.options = options;
 }
 
-Cascade.prototype = _.extend(
+
+Maze.prototype = _.extend(
 
   _.ocreate(State.prototype), {
 
-    constructor: Cascade,
+    constructor: Maze,
 
     nav: function(url, data){
       this.data = data;
@@ -24,7 +25,7 @@ Cascade.prototype = _.extend(
       this.data = null;
     },
 
-    // start cascade
+    // start Maze
     start: function(options){
       var self = this;
       this.preState = this;
@@ -54,7 +55,7 @@ Cascade.prototype = _.extend(
       var found = this._findState(this, path);
       var baseState = this, self = this;
 
-      if(!found) return this.emit("cade: nofound", {path: path, query: this.query});
+      if(!found) return this.emit("state:404", {path: path, query: this.query});
 
       this.param = found.param;
       found.param = null;
@@ -68,9 +69,10 @@ Cascade.prototype = _.extend(
       var preState = this.preState, baseState;
       var options = {
           param: this.param,
-          query: this.query,
-          data: this.data || {}
+          query: this.query
       }
+
+      data && _.extend(options.param, data, true);
 
       var baseState = this._findBase(preState, state), self = this;
 
@@ -167,7 +169,7 @@ Cascade.prototype = _.extend(
     _checkQueryAndParam: function(baseState, options){
       var from = baseState;
       while( from !== this ){
-        from.emit("state:update", options)
+        from && from.update(options);
         from = from.parent;
       }
     }
@@ -175,4 +177,4 @@ Cascade.prototype = _.extend(
 
 
 
-module.exports = Cascade;
+module.exports = Maze;

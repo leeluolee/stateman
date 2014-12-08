@@ -1,13 +1,9 @@
-var Casca = require("./casca.js");
-
-function casca( options ){
-  return new Casca( options )
-}
+var Maze = require("./maze.js");
 
 
-casca.location = require("./location.js");
-casca.util = require("./util.js");
-casca.Casca = Casca;
-casca.State = require("./state.js");
+Maze.location = require("./location.js");
+Maze.util = require("./util.js");
+Maze.State = require("./state.js");
+Maze.Step = require("./step.js");
 
-module.exports = casca;
+module.exports = Maze;

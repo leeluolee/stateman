@@ -1,7 +1,7 @@
 /**
 @author	undefined
-@version	0.0.0
-@homepage	https://github.com/leeluolee/casca
+@version	0.0.1
+@homepage	https://github.com/leeluolee/maze
 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
@@ -9,9 +9,9 @@
 	else if(typeof define === 'function' && define.amd)
 		define(factory);
 	else if(typeof exports === 'object')
-		exports["casca"] = factory();
+		exports["Maze"] = factory();
 	else
-		root["casca"] = factory();
+		root["Maze"] = factory();
 })(this, function() {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
@@ -59,17 +59,15 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Casca = __webpack_require__(1);
-
-	function casca( options ){
-	  return new Casca( options )
-	}
+	var Maze = __webpack_require__(1);
 
 
-	casca.location = __webpack_require__(2);
-	casca.util = __webpack_require__(3);
+	Maze.location = __webpack_require__(2);
+	Maze.util = __webpack_require__(3);
+	Maze.State = __webpack_require__(4);
+	Maze.Step = __webpack_require__(5);
 
-	module.exports = casca;
+	module.exports = Maze;
 
 
 /***/ },
@@ -83,18 +81,19 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 
-	function Cascade(options){
+	function Maze(options){
+	  if(this instanceof Maze === false){ return new Maze(options)}
 	  options = options || {};
 	  State.call(this);
-	  delete options.state;
 	  this.options = options;
 	}
 
-	Cascade.prototype = _.extend(
+
+	Maze.prototype = _.extend(
 
 	  _.ocreate(State.prototype), {
 
-	    constructor: Cascade,
+	    constructor: Maze,
 
 	    nav: function(url, data){
 	      this.data = data;
@@ -102,7 +101,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      this.data = null;
 	    },
 
-	    // start cascade
+	    // start Maze
 	    start: function(options){
 	      var self = this;
 	      this.preState = this;
@@ -132,7 +131,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      var found = this._findState(this, path);
 	      var baseState = this, self = this;
 
-	      if(!found) return this.emit("cade: nofound", {path: path, query: this.query});
+	      if(!found) return this.emit("state:404", {path: path, query: this.query});
 
 	      this.param = found.param;
 	      found.param = null;
@@ -146,9 +145,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	      var preState = this.preState, baseState;
 	      var options = {
 	          param: this.param,
-	          query: this.query,
-	          data: this.data || {}
+	          query: this.query
 	      }
+
+	      data && _.extend(options.param, data, true);
 
 	      var baseState = this._findBase(preState, state), self = this;
 
@@ -245,7 +245,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    _checkQueryAndParam: function(baseState, options){
 	      var from = baseState;
 	      while( from !== this ){
-	        from.emit("casca:update", options)
+	        from && from.update(options);
 	        from = from.parent;
 	      }
 	    }
@@ -253,7 +253,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 
-	module.exports = Cascade;
+	module.exports = Maze;
 
 /***/ },
 /* 2 */
@@ -592,9 +592,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	  },
 
 	  config: function(configure){
-
-	    var type = typeof configure;
-	    if(type === "function") configure = {enter: configure};
+	    if(!configure ) return;
+	    configure = this._getConfig(configure);
 
 	    for(var i in configure){
 	      switch(i){
@@ -604,6 +603,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	          this[i] = configure[i];
 	      }
 	    }
+	  },
+
+	  // children override
+	  _getConfig: function(configure){
+	    return typeof configure === "function"? {enter: configure} : configure;
 	  },
 
 	  configUrl: function(){

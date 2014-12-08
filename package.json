@@ -1,11 +1,11 @@
 {
-  "name": "casca",
+  "name": "maze",
   "version": "0.0.1",
   "description": "A standalone library providing state-based router, built for complex SPA development",
   "main": "src/index.js",
   "repository": {
     "type": "git",
-    "url": "git@github.com:leeluolee/casca"
+    "url": "git@github.com:leeluolee/maze"
   },
   "keywords": [
     "router",
@@ -18,9 +18,9 @@
   "author": "leeluolee",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/leeluolee/casca/issues"
+    "url": "https://github.com/leeluolee/maze/issues"
   },
-  "homepage": "https://github.com/leeluolee/casca",
+  "homepage": "https://github.com/leeluolee/maze",
   "devDependencies": {
     "gulp-jshint": "~1.5.3",
     "gulp-shell": "^0.2.4",
