@@ -42,12 +42,12 @@ gulp.task('build', ['jshint'], function() {
 });
 
 
-gulp.task('watch', function(){
+gulp.task('watch', ["build"], function(){
   gulp.watch(['src/**/*.js'], ['build'])
 })
 
 
-gulp.task('default', ['build', 'watch']);
+gulp.task('default', [ 'watch']);
 
 
 function wrap(fn){

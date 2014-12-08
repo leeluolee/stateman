@@ -109,6 +109,7 @@ l.start = function start( options ){
 }
 
 l.nav = function(path, options){
+  options = options || {};
 
   if(l.currentPath == path) return;
 
@@ -123,7 +124,7 @@ l.nav = function(path, options){
 
   }
 
-  notifyAll(path);
+  if(!options.silent) notifyAll(path);
 }
 
 l.regist = function( cb ){

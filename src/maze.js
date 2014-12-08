@@ -55,7 +55,12 @@ Maze.prototype = _.extend(
       var found = this._findState(this, path);
       var baseState = this, self = this;
 
-      if(!found) return this.emit("state:404", {path: path, query: this.query});
+      if(!found){
+        // location.nav("$default", {silent: true})
+        var $notfound = this.state("$notfound");
+        if($notfound) this.go($notfound, {});
+        return this.emit("state:404", {path: path, query: this.query});
+      }
 
       this.param = found.param;
       found.param = null;
@@ -63,6 +68,7 @@ Maze.prototype = _.extend(
     },
     // goto the state with some data
     go: function(state, data){
+      if(typeof state === "string") state = this.state(state);
 
       if(this.isGoing && this.preState) return console.error("step on [" + this.preState.stateName+ "] is not over")
 
@@ -169,7 +175,7 @@ Maze.prototype = _.extend(
     _checkQueryAndParam: function(baseState, options){
       var from = baseState;
       while( from !== this ){
-        from && from.update(options);
+        from.update && from.update(options);
         from = from.parent;
       }
     }
