@@ -509,7 +509,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  rEndSlash = /\/$/;    // end slash
 
 	_.cleanPath = function (path){
-	  return path.replace( rDbSlash,"/" ).replace( rEndSlash, "" );
+	  return ("/" + path).replace( rDbSlash,"/" ).replace( rEndSlash, "" );
 	}
 
 
