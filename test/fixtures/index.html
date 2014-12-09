@@ -104,6 +104,15 @@ Maze.location.regist(function(path){
 })
 
 
+var s = new Maze.State();
+s.config({url: "base"})
+s.state("contact", {url: '/contact'})
+s.state("contact.list", {url: '(type| /\\w+/home)'})
+s.state("contact.list.detail", {url: '/:name(\\w+)'})
+s.state("contact.list.detail.message", {url: '([0-9]+)/message'})
+
+
+
   </script>
 </body>
 

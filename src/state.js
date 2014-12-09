@@ -8,7 +8,7 @@ function normalizeRegexp(path, keys){
   var normPath = "^" + 
     // the optional end lash
     normalizePath(("/" + path + "/?"), keys) //
-      .replace(/([\/.])/g, '\\$1') 
+      .replace(/([\/.])/g, "\\$1")
       .replace(/(\*{2,})|(\*(?!\*))/g, function(all, mult, single){
 
         if(mult) return "(?:.*)";
@@ -24,7 +24,8 @@ function normalizePath(path, keys, index) {
   index = index || 0
 
   return path.replace(/(\/)+/g, "\/") 
-    .replace(/(\/)?(?:(?:\((.+)\))|:([\w-]+)(?:\(([^:\(\)]+)\))?)/g, function(_, slash, capture, key, keyformat) {
+    //  /?        hello             :id                                    (regexp)
+    .replace(/(\/)?(?:(?:\((.+)\))|:([\w-]+)(?:\(([^:\(\)]+)\))?|\(([^\(\)]+)\))/g, function(_, slash, capture, key, keyformat) {
 
       if(capture){
         keys && keys.push(index++)
@@ -85,18 +86,19 @@ _.extend( _.emitable( State ), {
     configure = this._getConfig(configure);
 
     for(var i in configure){
+      var prop = configure[i];
       switch(i){
         case "url": 
-          if(typeof configure[i] === "string"){
-            this.url = configure[i];
+          if(typeof prop === "string"){
+            this.url = prop;
             this.configUrl();
           }
           break;
         case "events": 
-          this.on(configure[i])
+          this.on(prop)
           break;
         default:
-          this[i] = configure[i];
+          this[i] = prop;
       }
     }
   },
