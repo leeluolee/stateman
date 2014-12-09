@@ -116,7 +116,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    go: function(state, data){
 	      if(typeof state === "string") state = this.state(state);
 
-	      if(this.isGoing && this.preState) return console.error("step on [" + this.preState.stateName+ "] is not over")
+	      if(this.isGoing && this.preState){
+	         console.error("step on [" + this.preState.stateName+ "] is not over")
+	      }
 
 	      var preState = this.preState, baseState;
 	      var options = {
@@ -183,9 +185,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	      this.go(found, this.data);
 	    },
 	    _findState: function(state, path){
-	      var param = state.regexp && state.match(path),
-	        states = state._states, 
-	        found;
+	      var states = state._states, found, param;
+	      if(!state.hasNext){
+	        param = state.regexp && state.match(path);
+	      }
 	      if(param){
 	        state.param = param;
 	        return state;
@@ -200,14 +203,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	    // find the same branch;
 	    _findBase: function(now, before){
 	      if(!now || !before || now == this || before == this) return this;
-	      var np = now, bp = before;
-	      var nnames = now.stateName.split("."), bnames = before.stateName.split(".");
-	      var len = Math.min(nnames.length, bnames.length);
-
-	      while(len--){
-	        if(bnames[len] === nnames[len]) return this.state(nnames.slice(0,len + 1))
+	      var np = now, bp = before, tmp;
+	      while(np && bp){
+	        tmp = bp;
+	        while(tmp){
+	          if(np === tmp) return tmp;
+	          tmp = tmp.parent;
+	        }
+	        np = np.parent;
 	      }
-
 	      return this;
 	    },
 	    _enter: function(end, options, callback){
@@ -588,6 +592,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    var slen = stateName.length, current = this;
 
+
 	    do{
 	      nextName = stateName[i];
 	      next = states[nextName];
@@ -599,6 +604,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	          stateName: stateName.join("."),
 	          currentName: nextName
 	        })
+	        current.hasNext = true;
 	        next.configUrl();
 	      }
 	      current = next;
@@ -620,7 +626,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    for(var i in configure){
 	      switch(i){
 	        case "url": 
-	          (this.url = configure[i]) && this.configUrl();
+	          if(typeof configure[i] === "string"){
+	            this.url = configure[i];
+	            this.configUrl();
+	          }
 	          break;
 	        case "events": 
 	          this.on(configure[i])

@@ -53,6 +53,7 @@ _.extend( _.emitable( State ), {
 
     var slen = stateName.length, current = this;
 
+
     do{
       nextName = stateName[i];
       next = states[nextName];
@@ -64,6 +65,7 @@ _.extend( _.emitable( State ), {
           stateName: stateName.join("."),
           currentName: nextName
         })
+        current.hasNext = true;
         next.configUrl();
       }
       current = next;
@@ -85,7 +87,10 @@ _.extend( _.emitable( State ), {
     for(var i in configure){
       switch(i){
         case "url": 
-          (this.url = configure[i]) && this.configUrl();
+          if(typeof configure[i] === "string"){
+            this.url = configure[i];
+            this.configUrl();
+          }
           break;
         case "events": 
           this.on(configure[i])
