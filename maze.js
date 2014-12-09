@@ -96,10 +96,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    constructor: Maze,
 
-	    nav: function(url, data){
-	      this.data = data;
-	      loc.nav(url);
-	      this.data = null;
+	    nav: function(url, options){
+	      loc.nav(url, options);
 	    },
 
 	    // start Maze
@@ -182,7 +180,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	      this.param = found.param;
 	      found.param = null;
-	      this.go(found, this.data);
+	      this.go(found);
 	    },
 	    _findState: function(state, path){
 	      var states = state._states, found, param;
@@ -321,7 +319,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	function loop(){
 	  checkPath();
-	  setTimeout(loop, 800);
+	  l.tid = setTimeout(loop, 800);
 	}
 
 
@@ -396,6 +394,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	l.nav = function(path, options){
 	  options = options || {};
+	  if(typeof options === "function") options = {callback: options}
 
 	  if(l.currentPath == path) return;
 
@@ -407,10 +406,18 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  }else{
 	    history.pushState({}, document.title, _.cleanPath(l.root + path))
-
 	  }
 
-	  if(!options.silent) notifyAll(path);
+	  if(!options.silent){
+	     notifyAll(path);
+	     options.callback && options.callback(path);
+	  }
+	}
+	l.stop = function(){
+	  browser.off(window, 'hashchange', checkPath)  
+	  browser.off(window, 'popstate', checkPath)  
+	  clearTimeout(l.tid)
+	  l.isStart = false;
 	}
 
 	l.regist = function( cb ){
@@ -738,9 +745,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	var b = module.exports = {
 	  hash: "onhashchange" in win && (!doc.documentMode || doc.documentMode > 7),
 	  history: win.history && "onpopstate" in win,
+
 	  on: "attachEvent" in win ? 
 	      function(node,type,cb){return node.attachEvent( "on" + type, cb )}
-	    : function(node,type,cb){return node.addEventListener( type, cb )}
+	    : function(node,type,cb){return node.addEventListener( type, cb )},
+	    
+	  off: "detachEvent" in win ? 
+	      function(node,type,cb){return node.detachEvent( "on" + type, cb )}
+	    : function(node,type,cb){return node.removeEventListener( type, cb )}
 	}
 
 

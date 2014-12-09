@@ -45,6 +45,7 @@
 /***/ function(module, exports, __webpack_require__) {
 
 	__webpack_require__(1);
+	__webpack_require__(2);
 
 
 
@@ -52,8 +53,8 @@
 /* 1 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var loc = __webpack_require__(2);
-	var expect = __webpack_require__(3)
+	var loc = __webpack_require__(3);
+	var expect = __webpack_require__(5)
 
 
 	describe("location", function(){
@@ -61,12 +62,8 @@
 	  before(function(){});
 	  after(function(){});
 
-	  it("location should default to 1", function(done){
-	    expect(loc.mode).to.equal(1);
-	    loc.nav('/home', function(){
-	      expect(loc)
-	      done();
-	    })
+	  it("location should default to 1", function(){
+	    // expect(loc.mode).to.equal(1);
 	  })
 
 	})
@@ -78,9 +75,50 @@
 /* 2 */
 /***/ function(module, exports, __webpack_require__) {
 
+	var Maze = __webpack_require__(4);
+	var expect = __webpack_require__(5)
+
+	var maze = new Maze();
+
+	var obj = {}; 
+
+	maze
+	  .state('l0_not_next', function(){
+	    console.log("enter l0_not_next")
+	    obj.l0 = true
+	  })
+	  .state('l1_has_next', {
+	    enter: function(){obj.l1 = true},
+	    leave: function(){obj.l1 = false}
+	  })
+	  .state('l1_has_next.l11_has_next', {
+	    enter: function(){obj.l12 = true},
+	    leave: function(){obj.l12 = false}
+	  })
+	  .state('l1_has_next.l2_has_next.l3_not_next', {
+	    enter: function(){obj.l13 = true},
+	    leave: function(){obj.l13 = false}
+	  }).start();
+
+
+	describe("maze", function(){
+	  it("we can directly vist the leave1 leaf state", function(done){
+	    maze.nav("/l0_not_next", function(){
+	      expect(obj.l0).to.equal(true)
+	      expect(location.hash).to.equal("#/l0_not_next");
+	      done();
+	    })
+	  })
+	})
+
+
+/***/ },
+/* 3 */
+/***/ function(module, exports, __webpack_require__) {
+
 	
-	var browser = __webpack_require__(4);
-	var _ = __webpack_require__(5);
+	var browser = __webpack_require__(6);
+	var _ = __webpack_require__(7);
 
 	// the location exports
 	var l = module.exports = {};
@@ -113,7 +151,7 @@
 
 	function loop(){
 	  checkPath();
-	  setTimeout(loop, 800);
+	  l.tid = setTimeout(loop, 800);
 	}
 
 
@@ -188,6 +226,7 @@
 
 	l.nav = function(path, options){
 	  options = options || {};
+	  if(typeof options === "function") options = {callback: options}
 
 	  if(l.currentPath == path) return;
 
@@ -199,10 +238,18 @@
 
 	  }else{
 	    history.pushState({}, document.title, _.cleanPath(l.root + path))
-
 	  }
 
-	  if(!options.silent) notifyAll(path);
+	  if(!options.silent){
+	     notifyAll(path);
+	     options.callback && options.callback(path);
+	  }
+	}
+	l.stop = function(){
+	  browser.off(window, 'hashchange', checkPath)  
+	  browser.off(window, 'popstate', checkPath)  
+	  clearTimeout(l.tid)
+	  l.isStart = false;
 	}
 
 	l.regist = function( cb ){
@@ -226,7 +273,217 @@
 
 
 /***/ },
-/* 3 */
+/* 4 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var State = __webpack_require__(8),
+	  loc = __webpack_require__(3),
+	  brow = __webpack_require__(6),
+	  Step = __webpack_require__(9),
+	  _ = __webpack_require__(7);
+
+
+
+	function Maze(options){
+	  if(this instanceof Maze === false){ return new Maze(options)}
+	  options = options || {};
+	  State.call(this);
+	  this.options = options;
+	}
+
+
+	Maze.prototype = _.extend(
+
+	  _.ocreate(State.prototype), {
+
+	    constructor: Maze,
+
+	    nav: function(url, options){
+	      loc.nav(url, options);
+	    },
+
+	    // start Maze
+	    start: function(options){
+	      var self = this;
+	      this.preState = this;
+	      loc.regist(function(path){
+	        self._afterPathChange(path)
+	      });
+	      if(!loc.isStart) loc.start( options || {} );
+	      return this;
+	    },
+	    // goto the state with some data
+	    go: function(state, data){
+	      if(typeof state === "string") state = this.state(state);
+
+	      if(this.isGoing && this.preState){
+	         console.error("step on [" + this.preState.stateName+ "] is not over")
+	      }
+
+	      var preState = this.preState, baseState;
+	      var options = {
+	          param: this.param,
+	          query: this.query
+	      }
+
+	      data && _.extend(options.param, data, true);
+
+	      var baseState = this._findBase(preState, state), self = this;
+
+	      self.isGoing = true;
+	      this._leave(baseState, options, function(){
+	        self._enter(state, options, function(){
+	          self.isGoing = false;
+	        }) 
+	      })
+	      this._checkQueryAndParam(baseState, options);
+	    },
+	    // autolink: function(options){
+	    //   options = options || {};
+	    //   var self = this;
+	    //   var useHtml5 = options.html5 || (!options.hash && loc.mode === 2);
+	    //   if(!options.html5){
+	    //     brow.on(document.body, 'click', function(ev){
+	    //       var target = ev.target || ev.srcElement;
+	    //       if(target.tagName.toLowerCase() === "a"){
+	    //         var href = brow.getHref(target);
+	    //         if(){
+
+	    //         }
+	    //       }
+	    //     })
+	    //   }
+	    // },
+	    // after hash (or url ) changed
+	    _afterPathChange: function(path, query){
+	      var pathAndQuery = path.split("?");
+	      var queries = pathAndQuery[1] && pathAndQuery[1].split("&");
+	      var query = {};
+	      if(queries){
+	        var len = queries.length;
+	        for(;len--;){
+	          var tmp = queries[len].split("=");
+	          query[tmp[0]] = tmp[1];
+	        }
+	      }
+	      path = pathAndQuery[0]  ;
+
+	      this.query = query;
+
+	      var found = this._findState(this, path);
+	      var baseState = this, self = this;
+
+	      if(!found){
+	        // loc.nav("$default", {silent: true})
+	        var $notfound = this.state("$notfound");
+	        if($notfound) this.go($notfound, {});
+	        return this.emit("state:404", {path: path, query: this.query});
+	      }
+
+	      this.param = found.param;
+	      found.param = null;
+	      this.go(found);
+	    },
+	    _findState: function(state, path){
+	      var states = state._states, found, param;
+	      if(!state.hasNext){
+	        param = state.regexp && state.match(path);
+	      }
+	      if(param){
+	        state.param = param;
+	        return state;
+	      }else{
+	        for(var i in states) if(states.hasOwnProperty(i)){
+	          found = this._findState( states[i], path );
+	          if( found ) return found;
+	        }
+	        return false;
+	      }
+	    },
+	    // find the same branch;
+	    _findBase: function(now, before){
+	      if(!now || !before || now == this || before == this) return this;
+	      var np = now, bp = before, tmp;
+	      while(np && bp){
+	        tmp = bp;
+	        while(tmp){
+	          if(np === tmp) return tmp;
+	          tmp = tmp.parent;
+	        }
+	        np = np.parent;
+	      }
+	      return this;
+	    },
+	    _enter: function(end, options, callback){
+
+	      callback = callback || _.noop;
+
+	      var current = this.preState || this;
+
+	      if(current == end) return callback();
+	      var stage = [], self = this;
+	      while(end !== current){
+	        stage.push(end);
+	        end = end.parent;
+	      }
+
+	      this._enterOne(stage, options, callback)
+	    },
+	    _enterOne: function(stage, options, callback){
+
+	      var cur = stage.pop(), self = this;
+	      if(!cur) return callback();
+
+	      this.preState = cur;
+
+	      var step = new Step(options);
+
+	      step.oncompelete = function(){
+	        self._enterOne(stage, options, callback)
+	      }
+
+	      if(!cur.enter) step.done();
+	      else {
+	        cur.enter(step);
+	        if(!step.asynced) step.done();
+	      }
+	    },
+	    _leave: function(end, options, callback){
+	      callback = callback || _.noop;
+	      if(end == this.preState) return callback();
+	      this._leaveOne(end, options,callback)
+	    },
+	    _leaveOne: function(end, options, callback){
+	      if(!end  || end === this.preState) return callback();
+	      var step = new Step(options);
+	      var self = this;
+	      step.oncompelete = function(){
+	        if(self.preState.parent) self.preState = self.preState.parent
+	        self._leaveOne(end, options, callback)
+	      }
+	      if(!this.preState.leave) step.done()
+	      else{
+	        this.preState.leave(step);
+	        if(!step.asynced) step.done();
+	      }
+	    },
+	    // check the query and Param
+	    _checkQueryAndParam: function(baseState, options){
+	      var from = baseState;
+	      while( from !== this ){
+	        from.update && from.update(options);
+	        from = from.parent;
+	      }
+	    }
+
+	})
+
+
+
+	module.exports = Maze;
+
+/***/ },
+/* 5 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(module, Buffer) {(function (global, module) {
@@ -1513,10 +1770,10 @@
 	    this
 	  , true ? module : {exports: {}}
 	);
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7)(module), __webpack_require__(6).Buffer))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(11)(module), __webpack_require__(10).Buffer))
 
 /***/ },
-/* 4 */
+/* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -1528,16 +1785,21 @@
 	var b = module.exports = {
 	  hash: "onhashchange" in win && (!doc.documentMode || doc.documentMode > 7),
 	  history: win.history && "onpopstate" in win,
+
 	  on: "attachEvent" in win ? 
 	      function(node,type,cb){return node.attachEvent( "on" + type, cb )}
-	    : function(node,type,cb){return node.addEventListener( type, cb )}
+	    : function(node,type,cb){return node.addEventListener( type, cb )},
+	    
+	  off: "detachEvent" in win ? 
+	      function(node,type,cb){return node.detachEvent( "on" + type, cb )}
+	    : function(node,type,cb){return node.removeEventListener( type, cb )}
 	}
 
 
 
 
 /***/ },
-/* 5 */
+/* 7 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var _ = module.exports = {};
@@ -1637,7 +1899,199 @@
 
 
 /***/ },
-/* 6 */
+/* 8 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var _ = __webpack_require__(7);
+
+	// normal lize the path
+	function normalizeRegexp(path, keys){
+
+	  if(_.typeOf(path) === "regexp") return path
+
+	  var normPath = "^" + 
+	    // the optional end lash
+	    normalizePath(("/" + path + "/?"), keys) //
+	      .replace(/([\/.])/g, '\\$1') 
+	      .replace(/(\*{2,})|(\*(?!\*))/g, function(all, mult, single){
+
+	        if(mult) return "(?:.*)";
+	        else return "(?:[^\\/]*)";
+
+	      }) + "$";
+
+	  return new RegExp( normPath );
+	}
+
+	// normalize the path
+	function normalizePath(path, keys, index) {
+	  index = index || 0
+
+	  return path.replace(/(\/)+/g, "\/") 
+	    .replace(/(\/)?(?:(?:\((.+)\))|:([\w-]+)(?:\(([^:\(\)]+)\))?)/g, function(_, slash, capture, key, keyformat) {
+
+	      if(capture){
+	        keys && keys.push(index++)
+	        var res = normalizePath(capture, keys, index) // sub capture detect
+	        return (slash ? "(?:/(" : "(") + res + (slash ? "))" : ")")
+	      }
+
+	      keys && keys.push(key)
+	      return (slash ? "(?:/" : "") + "("+(keyformat || "[\\w-]+")+")" + (slash ? ")" : "")
+	    })
+
+	}
+
+	function State( ){
+	  this._states = {};
+	  this.keys = []
+	}
+
+
+	_.extend( _.emitable( State ), {
+
+	  state: function(stateName, config){
+	    var current, next, nextName, states = this._states, i=0;
+
+	    if( typeof stateName === "string" ) stateName = stateName.split(".");
+
+	    var slen = stateName.length, current = this;
+
+
+	    do{
+	      nextName = stateName[i];
+	      next = states[nextName];
+	      if(!next){
+	        if(!config) return;
+	        next = states[nextName] = new State();
+	        _.extend(next, {
+	          parent: current,
+	          stateName: stateName.join("."),
+	          currentName: nextName
+	        })
+	        current.hasNext = true;
+	        next.configUrl();
+	      }
+	      current = next;
+	      states = next._states;
+	    }while((++i) < slen )
+
+	    if(config){
+	       next.config(config);
+	       return this;
+	    } else {
+	      return current;
+	    }
+	  },
+
+	  config: function(configure){
+	    if(!configure ) return;
+	    configure = this._getConfig(configure);
+
+	    for(var i in configure){
+	      switch(i){
+	        case "url": 
+	          if(typeof configure[i] === "string"){
+	            this.url = configure[i];
+	            this.configUrl();
+	          }
+	          break;
+	        case "events": 
+	          this.on(configure[i])
+	          break;
+	        default:
+	          this[i] = configure[i];
+	      }
+	    }
+	  },
+
+	  // children override
+	  _getConfig: function(configure){
+	    return typeof configure === "function"? {enter: configure} : configure;
+	  },
+
+	  configUrl: function(){
+	    var url = "" , base = this, currentUrl;
+	    var _watchedParam = [];
+
+	    this.keys = [];
+
+
+	    while( base ){
+
+	      url = (typeof base.url === "string" ? base.url: (base.currentName || "")) + "/" + url;
+
+	      if(base === this){
+	        // url.replace(/\:([-\w]+)/g, function(all, capture){
+	        //   _watchedParam.push()
+	        // })
+	        this._watchedParam = _watchedParam.concat(this.watched || []);
+	      }
+	      // means absolute;
+	      if(url.indexOf("^/") === 0) {
+	        url = url.slice(1);
+	        break;
+	      }
+	      base = base.parent;
+	    }
+	    this.path = _.cleanPath("/" + url);
+	    var pathAndQuery = this.path.split("?");
+	    this.path = pathAndQuery[0];
+	    // some Query we need watched
+	    if(pathAndQuery[1]){
+	      this._watchedQuery = pathAndQuery[1].split("&");
+	    }
+	    this.regexp = normalizeRegexp(this.path, this.keys);
+	  },
+	  match: function( path ){
+	    var matched = this.regexp.exec(path),
+	      keys = this.keys;
+
+	    if(matched){
+
+	      var param = {};
+
+	      for(var i =0,len=keys.length;i<len;i++){
+	        param[keys[i]] = matched[i+1] 
+	      }
+
+	      return param;
+	    }else{
+
+	      return false;
+	    }
+	  }
+
+	})
+
+
+	module.exports = State;
+
+/***/ },
+/* 9 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var _ = __webpack_require__(7);
+
+	function Step(options){
+	  _.extend(this, options || {});
+	}
+
+	var so = Step.prototype;
+
+	so.async = function(){
+	  this.asynced = true;
+	}
+
+	so.done = function(){
+	  if(this.oncompelete) this.oncompelete();
+	}
+
+	module.exports = Step;
+
+
+/***/ },
+/* 10 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(Buffer) {/*!
@@ -1647,9 +2101,9 @@
 	 * @license  MIT
 	 */
 
-	var base64 = __webpack_require__(10)
-	var ieee754 = __webpack_require__(8)
-	var isArray = __webpack_require__(9)
+	var base64 = __webpack_require__(14)
+	var ieee754 = __webpack_require__(12)
+	var isArray = __webpack_require__(13)
 
 	exports.Buffer = Buffer
 	exports.SlowBuffer = Buffer
@@ -2692,10 +3146,10 @@
 	  }
 	}
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(6).Buffer))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(10).Buffer))
 
 /***/ },
-/* 7 */
+/* 11 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = function(module) {
@@ -2711,7 +3165,7 @@
 
 
 /***/ },
-/* 8 */
+/* 12 */
 /***/ function(module, exports, __webpack_require__) {
 
 	exports.read = function(buffer, offset, isLE, mLen, nBytes) {
@@ -2801,7 +3255,7 @@
 
 
 /***/ },
-/* 9 */
+/* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -2840,7 +3294,7 @@
 
 
 /***/ },
-/* 10 */
+/* 14 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';

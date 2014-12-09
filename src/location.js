@@ -33,7 +33,7 @@ function getPath(path){
 
 function loop(){
   checkPath();
-  setTimeout(loop, 800);
+  l.tid = setTimeout(loop, 800);
 }
 
 
@@ -108,6 +108,7 @@ l.start = function start( options ){
 
 l.nav = function(path, options){
   options = options || {};
+  if(typeof options === "function") options = {callback: options}
 
   if(l.currentPath == path) return;
 
@@ -119,10 +120,18 @@ l.nav = function(path, options){
 
   }else{
     history.pushState({}, document.title, _.cleanPath(l.root + path))
-
   }
 
-  if(!options.silent) notifyAll(path);
+  if(!options.silent){
+     notifyAll(path);
+     options.callback && options.callback(path);
+  }
+}
+l.stop = function(){
+  browser.off(window, 'hashchange', checkPath)  
+  browser.off(window, 'popstate', checkPath)  
+  clearTimeout(l.tid)
+  l.isStart = false;
 }
 
 l.regist = function( cb ){

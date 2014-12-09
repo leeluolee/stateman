@@ -20,10 +20,8 @@ Maze.prototype = _.extend(
 
     constructor: Maze,
 
-    nav: function(url, data){
-      this.data = data;
-      loc.nav(url);
-      this.data = null;
+    nav: function(url, options){
+      loc.nav(url, options);
     },
 
     // start Maze
@@ -106,7 +104,7 @@ Maze.prototype = _.extend(
 
       this.param = found.param;
       found.param = null;
-      this.go(found, this.data);
+      this.go(found);
     },
     _findState: function(state, path){
       var states = state._states, found, param;
