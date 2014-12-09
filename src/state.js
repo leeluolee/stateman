@@ -84,8 +84,12 @@ _.extend( _.emitable( State ), {
 
     for(var i in configure){
       switch(i){
-        case "url": (this.url = configure[i]) && this.configUrl();
-        case "events": this.on(configure[i])
+        case "url": 
+          (this.url = configure[i]) && this.configUrl();
+          break;
+        case "events": 
+          this.on(configure[i])
+          break;
         default:
           this[i] = configure[i];
       }
@@ -103,14 +107,15 @@ _.extend( _.emitable( State ), {
 
     this.keys = [];
 
+
     while( base ){
 
-      url = (base.url || (base.currentName) || "") + "/" + url;
+      url = (typeof base.url === "string" ? base.url: (base.currentName || "")) + "/" + url;
 
       if(base === this){
-        url.replace(/\:([-\w]+)/g, function(all, capture){
-          _watchedParam.push()
-        })
+        // url.replace(/\:([-\w]+)/g, function(all, capture){
+        //   _watchedParam.push()
+        // })
         this._watchedParam = _watchedParam.concat(this.watched || []);
       }
       // means absolute;

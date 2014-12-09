@@ -9,16 +9,15 @@
 
 
 <ul>
-<li> <a href="#/a/home">home</a> </li>
-<li> <a href="#/a/contact?id=1">contact</a> </li>
-<li> <a href="#/a/contact/101?id=2">contact.detail</a> </li>
-<li> <a href="#/a/contact/102/option?id=4">contact.detail.option</a> </li>
-<li> <a href="#/a/contactList">contact.list</a> </li>
-<li> <a href="#/a/contact/100/message?id=3">about1</a> </li>
-<li> <a href="#/a/contact/101/message?id=4">about2</a> </li>
+<li> <a href="#/home">home</a> </li>
+<li> <a href="#/contact?id=1">contact</a> </li>
+<li> <a href="#/contact/101?id=2">contact.detail</a> </li>
+<li> <a href="#/contact/102/option?id=4">contact.detail.option</a> </li>
+<li> <a href="#/contactList">contact.list</a> </li>
+<li> <a href="#/contact/100/message?id=3">about1</a> </li>
+<li> <a href="#/contact/101/message?id=4">about2</a> </li>
 </ul>
 
-<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
   <script>
 
 
@@ -68,14 +67,11 @@
         console.log("notfound")
       }
     })
-    .start({ root:"/a", html5: true });
+    .start({ root:"/a", html5: false });
 
 
 
-$("body").on("click", "a[href^='#/']", function(ev){
-  ev.preventDefault();
-  maze.nav($(this).attr("href").split("#")[1].replace("/a", ""));
-});
+
 
 
 Maze.location.regist(function(path){

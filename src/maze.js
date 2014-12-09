@@ -1,5 +1,6 @@
 var State = require("./state.js"),
-  location = require("./location.js"),
+  loc = require("./location.js"),
+  brow = require("./browser.js"),
   Step = require("./step.js"),
   _ = require("./util.js");
 
@@ -21,7 +22,7 @@ Maze.prototype = _.extend(
 
     nav: function(url, data){
       this.data = data;
-      location.nav(url);
+      loc.nav(url);
       this.data = null;
     },
 
@@ -29,42 +30,11 @@ Maze.prototype = _.extend(
     start: function(options){
       var self = this;
       this.preState = this;
-      location.regist(function(path){
+      loc.regist(function(path){
         self._afterPathChange(path)
       });
-      if(!location.isStart) location.start( options || {} );
+      if(!loc.isStart) loc.start( options || {} );
       return this;
-    },
-
-    // after hash (or url ) changed
-    _afterPathChange: function(path, query){
-      var pathAndQuery = path.split("?");
-      var queries = pathAndQuery[1] && pathAndQuery[1].split("&");
-      var query = {};
-      if(queries){
-        var len = queries.length;
-        for(;len--;){
-          var tmp = queries[len].split("=");
-          query[tmp[0]] = tmp[1];
-        }
-      }
-      path = pathAndQuery[0]  ;
-
-      this.query = query;
-
-      var found = this._findState(this, path);
-      var baseState = this, self = this;
-
-      if(!found){
-        // location.nav("$default", {silent: true})
-        var $notfound = this.state("$notfound");
-        if($notfound) this.go($notfound, {});
-        return this.emit("state:404", {path: path, query: this.query});
-      }
-
-      this.param = found.param;
-      found.param = null;
-      this.go(found, this.data);
     },
     // goto the state with some data
     go: function(state, data){
@@ -89,6 +59,52 @@ Maze.prototype = _.extend(
         }) 
       })
       this._checkQueryAndParam(baseState, options);
+    },
+    // autolink: function(options){
+    //   options = options || {};
+    //   var self = this;
+    //   var useHtml5 = options.html5 || (!options.hash && loc.mode === 2);
+    //   if(!options.html5){
+    //     brow.on(document.body, 'click', function(ev){
+    //       var target = ev.target || ev.srcElement;
+    //       if(target.tagName.toLowerCase() === "a"){
+    //         var href = brow.getHref(target);
+    //         if(){
+
+    //         }
+    //       }
+    //     })
+    //   }
+    // },
+    // after hash (or url ) changed
+    _afterPathChange: function(path, query){
+      var pathAndQuery = path.split("?");
+      var queries = pathAndQuery[1] && pathAndQuery[1].split("&");
+      var query = {};
+      if(queries){
+        var len = queries.length;
+        for(;len--;){
+          var tmp = queries[len].split("=");
+          query[tmp[0]] = tmp[1];
+        }
+      }
+      path = pathAndQuery[0]  ;
+
+      this.query = query;
+
+      var found = this._findState(this, path);
+      var baseState = this, self = this;
+
+      if(!found){
+        // loc.nav("$default", {silent: true})
+        var $notfound = this.state("$notfound");
+        if($notfound) this.go($notfound, {});
+        return this.emit("state:404", {path: path, query: this.query});
+      }
+
+      this.param = found.param;
+      found.param = null;
+      this.go(found, this.data);
     },
     _findState: function(state, path){
       var param = state.regexp && state.match(path),
@@ -120,7 +136,7 @@ Maze.prototype = _.extend(
     },
     _enter: function(end, options, callback){
 
-      callback = callback || noop;
+      callback = callback || _.noop;
 
       var current = this.preState || this;
 
@@ -153,7 +169,7 @@ Maze.prototype = _.extend(
       }
     },
     _leave: function(end, options, callback){
-      callback = callback || noop;
+      callback = callback || _.noop;
       if(end == this.preState) return callback();
       this._leaveOne(end, options,callback)
     },
@@ -179,6 +195,7 @@ Maze.prototype = _.extend(
         from = from.parent;
       }
     }
+
 })
 
 

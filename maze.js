@@ -75,7 +75,8 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	var State = __webpack_require__(4),
-	  location = __webpack_require__(2),
+	  loc = __webpack_require__(2),
+	  brow = __webpack_require__(6),
 	  Step = __webpack_require__(5),
 	  _ = __webpack_require__(3);
 
@@ -97,7 +98,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    nav: function(url, data){
 	      this.data = data;
-	      location.nav(url);
+	      loc.nav(url);
 	      this.data = null;
 	    },
 
@@ -105,42 +106,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    start: function(options){
 	      var self = this;
 	      this.preState = this;
-	      location.regist(function(path){
+	      loc.regist(function(path){
 	        self._afterPathChange(path)
 	      });
-	      if(!location.isStart) location.start( options || {} );
+	      if(!loc.isStart) loc.start( options || {} );
 	      return this;
-	    },
-
-	    // after hash (or url ) changed
-	    _afterPathChange: function(path, query){
-	      var pathAndQuery = path.split("?");
-	      var queries = pathAndQuery[1] && pathAndQuery[1].split("&");
-	      var query = {};
-	      if(queries){
-	        var len = queries.length;
-	        for(;len--;){
-	          var tmp = queries[len].split("=");
-	          query[tmp[0]] = tmp[1];
-	        }
-	      }
-	      path = pathAndQuery[0]  ;
-
-	      this.query = query;
-
-	      var found = this._findState(this, path);
-	      var baseState = this, self = this;
-
-	      if(!found){
-	        // location.nav("$default", {silent: true})
-	        var $notfound = this.state("$notfound");
-	        if($notfound) this.go($notfound, {});
-	        return this.emit("state:404", {path: path, query: this.query});
-	      }
-
-	      this.param = found.param;
-	      found.param = null;
-	      this.go(found, this.data);
 	    },
 	    // goto the state with some data
 	    go: function(state, data){
@@ -165,6 +135,52 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }) 
 	      })
 	      this._checkQueryAndParam(baseState, options);
+	    },
+	    // autolink: function(options){
+	    //   options = options || {};
+	    //   var self = this;
+	    //   var useHtml5 = options.html5 || (!options.hash && loc.mode === 2);
+	    //   if(!options.html5){
+	    //     brow.on(document.body, 'click', function(ev){
+	    //       var target = ev.target || ev.srcElement;
+	    //       if(target.tagName.toLowerCase() === "a"){
+	    //         var href = brow.getHref(target);
+	    //         if(){
+
+	    //         }
+	    //       }
+	    //     })
+	    //   }
+	    // },
+	    // after hash (or url ) changed
+	    _afterPathChange: function(path, query){
+	      var pathAndQuery = path.split("?");
+	      var queries = pathAndQuery[1] && pathAndQuery[1].split("&");
+	      var query = {};
+	      if(queries){
+	        var len = queries.length;
+	        for(;len--;){
+	          var tmp = queries[len].split("=");
+	          query[tmp[0]] = tmp[1];
+	        }
+	      }
+	      path = pathAndQuery[0]  ;
+
+	      this.query = query;
+
+	      var found = this._findState(this, path);
+	      var baseState = this, self = this;
+
+	      if(!found){
+	        // loc.nav("$default", {silent: true})
+	        var $notfound = this.state("$notfound");
+	        if($notfound) this.go($notfound, {});
+	        return this.emit("state:404", {path: path, query: this.query});
+	      }
+
+	      this.param = found.param;
+	      found.param = null;
+	      this.go(found, this.data);
 	    },
 	    _findState: function(state, path){
 	      var param = state.regexp && state.match(path),
@@ -196,7 +212,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 	    _enter: function(end, options, callback){
 
-	      callback = callback || noop;
+	      callback = callback || _.noop;
 
 	      var current = this.preState || this;
 
@@ -229,7 +245,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      }
 	    },
 	    _leave: function(end, options, callback){
-	      callback = callback || noop;
+	      callback = callback || _.noop;
 	      if(end == this.preState) return callback();
 	      this._leaveOne(end, options,callback)
 	    },
@@ -255,6 +271,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        from = from.parent;
 	      }
 	    }
+
 	})
 
 
@@ -279,8 +296,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  HISTORY = 2;
 
 	// All Regexp
-	var rHash = /#(.*)$/,   // hash
-	  rRoot;                // the root remover
+	var rHash = /#(.*)$/;   // hash
 
 	// regist the path change event
 	var registers = [];
@@ -295,13 +311,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return tmp && tmp[1]? tmp[1]: "";
 
 	  }else{
-	    return _.cleanPath(( location.pathname + location.search || "" ).replace( rRoot, "/" ))
+	    return _.cleanPath(( location.pathname + location.search || "" ).replace( l.rRoot, "/" ))
 	  }
 	}
 
 	function loop(){
 	  checkPath();
-	  setTimeout(loop, 60);
+	  setTimeout(loop, 800);
 	}
 
 
@@ -320,8 +336,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	function checkPath(){
 	  var path = getPath();
 	  if(path !== l.currentPath) {
-	    currentPath = path;
-	    notifyAll(currentPath)
+	    l.currentPath = _.cleanPath(path);
+	    notifyAll(l.currentPath)
 	  }
 	}
 
@@ -340,6 +356,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	l.suffix = "";
 	l.root = "/";
 	l.currentPath = undefined;
+	l.rRoot = null;
 
 
 	// start the location detect
@@ -358,7 +375,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  if(options.suffix) l.suffix = options.suffix;
 	  
-	  rRoot = new RegExp("^" + l.suffix + l.root);
+	  l.rRoot = new RegExp("^" + l.suffix + l.root);
 
 	  switch (l.mode){
 	    case HASH: 
@@ -602,8 +619,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    for(var i in configure){
 	      switch(i){
-	        case "url": (this.url = configure[i]) && this.configUrl();
-	        case "events": this.on(configure[i])
+	        case "url": 
+	          (this.url = configure[i]) && this.configUrl();
+	          break;
+	        case "events": 
+	          this.on(configure[i])
+	          break;
 	        default:
 	          this[i] = configure[i];
 	      }
@@ -621,14 +642,15 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    this.keys = [];
 
+
 	    while( base ){
 
-	      url = (base.url || (base.currentName) || "") + "/" + url;
+	      url = (typeof base.url === "string" ? base.url: (base.currentName || "")) + "/" + url;
 
 	      if(base === this){
-	        url.replace(/\:([-\w]+)/g, function(all, capture){
-	          _watchedParam.push()
-	        })
+	        // url.replace(/\:([-\w]+)/g, function(all, capture){
+	        //   _watchedParam.push()
+	        // })
 	        this._watchedParam = _watchedParam.concat(this.watched || []);
 	      }
 	      // means absolute;
@@ -702,10 +724,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	var win = window, 
 	  doc = document;
 
+
+
 	var b = module.exports = {
 	  hash: "onhashchange" in win && (!doc.documentMode || doc.documentMode > 7),
 	  history: win.history && "onpopstate" in win,
-
 	  on: "attachEvent" in win ? 
 	      function(node,type,cb){return node.attachEvent( "on" + type, cb )}
 	    : function(node,type,cb){return node.addEventListener( type, cb )}

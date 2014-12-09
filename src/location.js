@@ -12,8 +12,7 @@ var QUIRK = 3,
   HISTORY = 2;
 
 // All Regexp
-var rHash = /#(.*)$/,   // hash
-  rRoot;                // the root remover
+var rHash = /#(.*)$/;   // hash
 
 // regist the path change event
 var registers = [];
@@ -28,13 +27,13 @@ function getPath(path){
     return tmp && tmp[1]? tmp[1]: "";
 
   }else{
-    return _.cleanPath(( location.pathname + location.search || "" ).replace( rRoot, "/" ))
+    return _.cleanPath(( location.pathname + location.search || "" ).replace( l.rRoot, "/" ))
   }
 }
 
 function loop(){
   checkPath();
-  setTimeout(loop, 60);
+  setTimeout(loop, 800);
 }
 
 
@@ -53,8 +52,8 @@ function notifyAll( path ){
 function checkPath(){
   var path = getPath();
   if(path !== l.currentPath) {
-    currentPath = path;
-    notifyAll(currentPath)
+    l.currentPath = _.cleanPath(path);
+    notifyAll(l.currentPath)
   }
 }
 
@@ -73,6 +72,7 @@ l.mode = HASH;
 l.suffix = "";
 l.root = "/";
 l.currentPath = undefined;
+l.rRoot = null;
 
 
 // start the location detect
@@ -91,7 +91,7 @@ l.start = function start( options ){
 
   if(options.suffix) l.suffix = options.suffix;
   
-  rRoot = new RegExp("^" + l.suffix + l.root);
+  l.rRoot = new RegExp("^" + l.suffix + l.root);
 
   switch (l.mode){
     case HASH: 
