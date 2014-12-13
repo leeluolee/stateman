@@ -62,7 +62,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var Maze = __webpack_require__(1);
 
 
-	Maze.location = __webpack_require__(2);
+	Maze.Histery = __webpack_require__(2);
 	Maze.util = __webpack_require__(3);
 	Maze.State = __webpack_require__(4);
 	Maze.Step = __webpack_require__(5);
@@ -75,7 +75,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	var State = __webpack_require__(4),
-	  loc = __webpack_require__(2),
+	  Histery = __webpack_require__(2),
 	  brow = __webpack_require__(6),
 	  Step = __webpack_require__(5),
 	  _ = __webpack_require__(3);
@@ -86,7 +86,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	  if(this instanceof Maze === false){ return new Maze(options)}
 	  options = options || {};
 	  State.call(this);
-	  this.options = options;
+	  if(options.history) this.history = options.history;
+	  this.curState = this;
 	}
 
 
@@ -97,63 +98,22 @@ return /******/ (function(modules) { // webpackBootstrap
 	    constructor: Maze,
 
 	    nav: function(url, options){
-	      loc.nav(url, options);
+	      this.history.nav( url, options );
+	      return this;
 	    },
 
 	    // start Maze
 	    start: function(options){
-	      var self = this;
-	      this.preState = this;
-	      loc.regist(function(path){
-	        self._afterPathChange(path)
-	      });
-	      if(!loc.isStart) loc.start( options || {} );
+	      if( !this.history ) this.history = new Histery(options); 
+	      this.history.on("change", _.bind(this._afterPathChange, this));
+
+	      // if the history service is not runing, start it
+	      if(!this.history.isStart) this.history.start();
 	      return this;
 	    },
-	    // goto the state with some data
-	    go: function(state, data){
-	      if(typeof state === "string") state = this.state(state);
+	    // after pathchange changed
+	    _afterPathChange: function(path){
 
-	      if(this.isGoing && this.preState){
-	         console.error("step on [" + this.preState.stateName+ "] is not over")
-	      }
-
-	      var preState = this.preState, baseState;
-	      var options = {
-	          param: this.param,
-	          query: this.query
-	      }
-
-	      data && _.extend(options.param, data, true);
-
-	      var baseState = this._findBase(preState, state), self = this;
-
-	      self.isGoing = true;
-	      this._leave(baseState, options, function(){
-	        self._enter(state, options, function(){
-	          self.isGoing = false;
-	        }) 
-	      })
-	      this._checkQueryAndParam(baseState, options);
-	    },
-	    // autolink: function(options){
-	    //   options = options || {};
-	    //   var self = this;
-	    //   var useHtml5 = options.html5 || (!options.hash && loc.mode === 2);
-	    //   if(!options.html5){
-	    //     brow.on(document.body, 'click', function(ev){
-	    //       var target = ev.target || ev.srcElement;
-	    //       if(target.tagName.toLowerCase() === "a"){
-	    //         var href = brow.getHref(target);
-	    //         if(){
-
-	    //         }
-	    //       }
-	    //     })
-	    //   }
-	    // },
-	    // after hash (or url ) changed
-	    _afterPathChange: function(path, query){
 	      var pathAndQuery = path.split("?");
 	      var queries = pathAndQuery[1] && pathAndQuery[1].split("&");
 	      var query = {};
@@ -164,23 +124,52 @@ return /******/ (function(modules) { // webpackBootstrap
 	          query[tmp[0]] = tmp[1];
 	        }
 	      }
-	      path = pathAndQuery[0]  ;
-
 	      this.query = query;
 
+	      path = pathAndQuery[0];
+
 	      var found = this._findState(this, path);
-	      var baseState = this, self = this;
 
 	      if(!found){
 	        // loc.nav("$default", {silent: true})
 	        var $notfound = this.state("$notfound");
-	        if($notfound) this.go($notfound, {});
-	        return this.emit("state:404", {path: path, query: this.query});
+	        if($notfound) this.go($notfound, { query: query });
+
+	        return this.emit("state:404", { path: path, query: this.query});
 	      }
 
-	      this.param = found.param;
+	      this._go( found, { query: query, param: found.param } );
+
 	      found.param = null;
-	      this.go(found);
+	    },
+	    // @TODO direct go the point state
+	    go: function(state, option){
+	      if(!option.silent){
+	        option = state.getUrl(option)
+	      }
+	      this._go(state, option);
+	    },
+
+	    // goto the state with some option
+	    _go: function(state, option){
+
+	      if(typeof state === "string") state = this.state(state);
+
+	      if(this.isGoing && this.curState){
+	         console.error("step on [" + this.curState.stateName+ "] is not over")
+	      }
+
+	      var curState = this.curState,
+	        baseState = this._findBase(curState, state), 
+	        self = this;
+
+	      this.isGoing = true;
+	      this._leave(baseState, option, function(){
+	        self._enter(state, option, function(){
+	          self.isGoing = false;
+	        }) 
+	      })
+	      this._checkQueryAndParam(baseState, option);
 	    },
 	    _findState: function(state, path){
 	      var states = state._states, found, param;
@@ -216,7 +205,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	      callback = callback || _.noop;
 
-	      var current = this.preState || this;
+	      var current = this.curState || this;
 
 	      if(current == end) return callback();
 	      var stage = [], self = this;
@@ -232,7 +221,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      var cur = stage.pop(), self = this;
 	      if(!cur) return callback();
 
-	      this.preState = cur;
+	      this.curState = cur;
 
 	      var step = new Step(options);
 
@@ -248,20 +237,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 	    _leave: function(end, options, callback){
 	      callback = callback || _.noop;
-	      if(end == this.preState) return callback();
+	      if(end == this.curState) return callback();
 	      this._leaveOne(end, options,callback)
 	    },
 	    _leaveOne: function(end, options, callback){
-	      if(!end  || end === this.preState) return callback();
+	      if(!end  || end === this.curState) return callback();
 	      var step = new Step(options);
 	      var self = this;
 	      step.oncompelete = function(){
-	        if(self.preState.parent) self.preState = self.preState.parent
+	        if(self.curState.parent) self.curState = self.curState.parent
 	        self._leaveOne(end, options, callback)
 	      }
-	      if(!this.preState.leave) step.done()
+	      if(!this.curState.leave) step.done()
 	      else{
-	        this.preState.leave(step);
+	        this.curState.leave(step);
 	        if(!step.asynced) step.done();
 	      }
 	    },
@@ -284,12 +273,8 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 2 */
 /***/ function(module, exports, __webpack_require__) {
 
-	
 	var browser = __webpack_require__(6);
 	var _ = __webpack_require__(3);
-
-	// the location exports
-	var l = module.exports = {};
 
 
 	// the mode const
@@ -297,148 +282,109 @@ return /******/ (function(modules) { // webpackBootstrap
 	  HASH = 1,
 	  HISTORY = 2;
 
-	// All Regexp
-	var rHash = /#(.*)$/;   // hash
 
-	// regist the path change event
-	var registers = [];
+	// extract History for test
+	// resolve the conficlt with the Native History
+	function Histery(options){
 
+	  // Trick from backbone.history for anchor-faked testcase 
+	  this.location = options.location || browser.location;
 
-	// get the current Path from hash or location.url(mode === HISTORY)
-	function getPath(path){
+	  // mode for start
+	  this.mode = options.html5 && browser.history ? HISTORY: HASH; 
+	  if( !browser.hash ) this.mode = this.mode | HISTORY;
 
-	  var tmp;
-	  if(l.mode !== HISTORY){
-	    tmp = location.href.match(rHash);
-	    return tmp && tmp[1]? tmp[1]: "";
+	  // hash prefix , used for hash or quirk mode
+	  this.prefix = "#" + (options.prefix || "") ;
+	  this.rPrefix = new RegExp(this.prefix + '(.*)$');
 
-	  }else{
-	    return _.cleanPath(( location.pathname + location.search || "" ).replace( l.rRoot, "/" ))
+	  // the root regexp for remove the root for the path. used in History mode
+	  this.root = options.root ||  "/" ;
+	  this.rRoot = new RegExp("^" +  this.root);
+
+	  this.curPath = undefined;
+	}
+
+	_.extend( _.emitable(Histery), {
+	  // check the 
+	  start: function(){
+	    this._checkPath = _.bind(this.checkPath, this);
+
+	    if( this.isStart ) return;
+	    this.isStart = true;
+
+	    switch ( this.mode ){
+	      case HASH: 
+	        browser.on(window, "hashchange", this._checkPath); break;
+	      case HISTORY:
+	        browser.on(window, "popstate", this._checkPath); break;
+	      case QUIRK:
+	        this._checkLoop();
+	    }
+
+	    this.checkPath();
+	  },
+	  // the history teardown
+	  stop: function(){
+
+	    browser.off(window, 'hashchange', this._checkPath)  
+	    browser.off(window, 'popstate', this._checkPath)  
+	    clearTimeout(this.tid);
+	    this.isStart = false;
+	    this._checkPath = null;
+	  },
+	  // get the path modify
+	  checkPath: function(){
+
+	    var path = this.getPath();
+
+	    if( path !== this.curPath ) {
+	      this.emit('change', ( this.curPath = _.cleanPath(path)) );
+	    }
+	  },
+	  // get the current path
+	  getPath: function(){
+	    var location = this.location, tmp;
+	    if( this.mode !== HISTORY ){
+	      tmp = location.href.match(this.rPrefix);
+	      return tmp && tmp[1]? tmp[1]: "";
+
+	    }else{
+	      return _.cleanPath(( location.pathname + location.search || "" ).replace( this.rRoot, "/" ))
+	    }
+	  },
+
+	  nav: function(to, options ){
+
+	    options = options || {};
+
+	    to = _.cleanPath(to);
+
+	    if(this.curPath == to) return;
+
+	    this.curPath = to;
+
+	    // 3 or 1 is matched
+	    if( this.mode !== HISTORY ){
+	      this.location.hash = "#" + to;
+	    }else{
+	      history[ options.replace? 'replaceState': 'pushState' ]( {}, options.title || "" , _.cleanPath( this.root + to ) )
+	    }
+
+	    if(options.force) this.emit('change', to);
+	  },
+	  // for browser that not support onhashchange
+	  _checkLoop: function(){
+
+	    this.checkPath();
+	    this.tid = setTimeout( _.bind( this._checkLoop, this ), this.delay || 66 );
 	  }
-	}
-
-	function loop(){
-	  checkPath();
-	  l.tid = setTimeout(loop, 800);
-	}
-
-
-	// notifyAll registers when path changed 
-	function notifyAll( path ){
-
-	  var len = registers.length;
-
-	  for( ;len-- ; ){
-	    registers[len]( path );
-	  }
-
-	}
-
-	// check the current path
-	function checkPath(){
-	  var path = getPath();
-	  if(path !== l.currentPath) {
-	    l.currentPath = _.cleanPath(path);
-	    notifyAll(l.currentPath)
-	  }
-	}
-
-
-
-	//whether the location is running already
-	l.isStart = false;
-
-
-	// default location's mode is hash
-	// 
-	//  - 1: `#/a/b`   hash
-	//  - 2: `/a/b`   html5 history
-	//  - 3: `#/a/b` hash in ie < 8
-	l.mode = HASH;
-	l.suffix = "";
-	l.root = "/";
-	l.currentPath = undefined;
-	l.rRoot = null;
-
-
-	// start the location detect
-	// *the location service can  be only started once*
-	// 
-	l.start = function start( options ){
-	  options = options || {};
-	  if(l.isStart) return console.error("history is started");
-	  else l.isStart = true;
-
-
-	  l.mode = options.html5 && browser.history ? HISTORY: HASH; 
-	  if( !browser.hash ) l.mode = l.mode | HISTORY;
-
-	  l.root = options.root || "/";
-
-	  if(options.suffix) l.suffix = options.suffix;
 	  
-	  l.rRoot = new RegExp("^" + l.suffix + l.root);
-
-	  switch (l.mode){
-	    case HASH: 
-	      browser.on(window, "hashchange", checkPath); break;
-	    case HISTORY:
-	      browser.on(window, "popstate", checkPath); break;
-	    case QUIRK:
-	      loop();
-	  }
-
-	  // the initialized checking
-	  checkPath();
-	}
-
-	l.nav = function(path, options){
-	  options = options || {};
-	  if(typeof options === "function") options = {callback: options}
-
-	  if(l.currentPath == path) return;
-
-	  l.currentPath = path;
-
-	  // 3 or 1 is matched
-	  if(l.mode & HASH){
-	    location.hash = "#" + path;
-
-	  }else{
-	    history.pushState({}, document.title, _.cleanPath(l.root + path))
-	  }
-
-	  if(!options.silent){
-	     notifyAll(path);
-	     options.callback && options.callback(path);
-	  }
-	}
-	l.stop = function(){
-	  browser.off(window, 'hashchange', checkPath)  
-	  browser.off(window, 'popstate', checkPath)  
-	  clearTimeout(l.tid)
-	  l.isStart = false;
-	}
-
-	l.regist = function( cb ){
-	  cb && registers.push(cb);
-	}
+	})
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+	module.exports = Histery;
 
 /***/ },
 /* 3 */
@@ -490,10 +436,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	      return this;
 	    },
 	    off: function(event, fn) {
-	      if(event) this._handles = [];
+	      if(!event || !this._handles) this._handles = {};
 	      if(!this._handles) return;
 
-	      var handles = this._handles, calls;
+	      var handles = this._handles , calls;
 
 	      if (calls = handles[event]) {
 	        if (!fn) {
@@ -529,16 +475,65 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	_.noop = function(){}
 
+	_.bind = function(fn, context){
+	  return function(){
+	    return fn.apply(context, arguments);
+	  }
+	}
 
-
-	var rDbSlash = /\/{1,}/g, // double slash
+	var rDbSlash = /\/+/g, // double slash
 	  rEndSlash = /\/$/;    // end slash
 
 	_.cleanPath = function (path){
 	  return ("/" + path).replace( rDbSlash,"/" ).replace( rEndSlash, "" );
 	}
 
+	// normalize the path
+	function normalizePath(path) {
+	  // means is from 
+	  // (?:\:([\w-]+))?(?:\(([^\/]+?)\))|(\*{2,})|(\*(?!\*)))/g
+	  var preIndex = 0;
+	  var keys = [];
+	  var index = 0;
+	  var matches = "";
 
+	  path = _.cleanPath(path);
+
+	  var regStr = path
+	    //  :id(capture)? | (capture)   |  ** | * 
+	    .replace(/\:([\w-]+)(?:\(([^\/]+?)\))?|(?:\(([^\/]+)\))|(\*{2,})|(\*(?!\*))/g, 
+	      function(all, key, keyformat, capture, mwild, swild, startAt) {
+	        // move the uncaptured fragment in the path
+	        if(startAt > preIndex) matches += path.slice(preIndex, startAt);
+	        preIndex = startAt + all.length;
+	        if( key ){
+	          matches += "(" + key + ")";
+	          keys.push(key)
+	          return "("+( keyformat || "[\\w-]+")+")";
+	        }
+	        matches += "(" + index + ")";
+
+	        keys.push( index++ );
+
+	        if( capture ){
+	           // sub capture detect
+	          return "(" + capture +  ")";
+	        } 
+	        if(mwild) return "(.*)";
+	        if(swild) return "([^\\/]*)";
+	    })
+
+	  if(preIndex !== path.length) matches += path.slice(preIndex)
+
+	  return {
+	    regexp: new RegExp("^" + regStr +"/?$"),
+	    keys: keys,
+	    matches: matches || path
+	  }
+	}
+
+
+	_.normalize = normalizePath;
 
 /***/ },
 /* 4 */
@@ -546,48 +541,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _ = __webpack_require__(3);
 
-	// normal lize the path
-	function normalizeRegexp(path, keys){
-
-	  if(_.typeOf(path) === "regexp") return path
-
-	  var normPath = "^" + 
-	    // the optional end lash
-	    normalizePath(("/" + path + "/?"), keys) //
-	      .replace(/([\/.])/g, "\\$1")
-	      .replace(/(\*{2,})|(\*(?!\*))/g, function(all, mult, single){
-
-	        if(mult) return "(?:.*)";
-	        else return "(?:[^\\/]*)";
-
-	      }) + "$";
-
-	  return new RegExp( normPath );
-	}
-
-	// normalize the path
-	function normalizePath(path, keys, index) {
-	  index = index || 0
-
-	  return path.replace(/(\/)+/g, "\/") 
-	    //  /?        hello             :id                                    (regexp)
-	    .replace(/(\/)?(?:(?:\((.+)\))|:([\w-]+)(?:\(([^:\(\)]+)\))?|\(([^\(\)]+)\))/g, function(_, slash, capture, key, keyformat) {
-
-	      if(capture){
-	        keys && keys.push(index++)
-	        var res = normalizePath(capture, keys, index) // sub capture detect
-	        return (slash ? "(?:/(" : "(") + res + (slash ? "))" : ")")
-	      }
-
-	      keys && keys.push(key)
-	      return (slash ? "(?:/" : "") + "("+(keyformat || "[\\w-]+")+")" + (slash ? ")" : "")
-	    })
-
-	}
-
-	function State( ){
+	function State(option){
 	  this._states = {};
-	  this.keys = []
+	  if(option) this.config(option);
 	}
 
 
@@ -653,13 +609,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	  _getConfig: function(configure){
 	    return typeof configure === "function"? {enter: configure} : configure;
 	  },
+	  //from url 
 
 	  configUrl: function(){
 	    var url = "" , base = this, currentUrl;
 	    var _watchedParam = [];
-
-	    this.keys = [];
-
 
 	    while( base ){
 
@@ -685,7 +639,25 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if(pathAndQuery[1]){
 	      this._watchedQuery = pathAndQuery[1].split("&");
 	    }
-	    this.regexp = normalizeRegexp(this.path, this.keys);
+
+	    _.extend(this, _.normalize(this.path), true);
+	  },
+	  getUrl: function(option){
+	    option = option || {};
+	    var param = option.param || {},
+	      query = option.query || {};
+
+
+	    var url = this.matches.replace(/\(([\w-]+)\)/g, function(all, capture){
+	      return param[capture] || "";
+	    }) + "?";
+
+	    for(var i in query) if( query.hasOwnProperty(i) ){
+	      url += i + "=" + query[i] + "&";
+	    }
+
+	    return _.cleanPath( url.replace(/(?:\?|&)$/,"") )
+
 	  },
 	  match: function( path ){
 	    var matched = this.regexp.exec(path),
@@ -694,14 +666,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if(matched){
 
 	      var param = {};
-
 	      for(var i =0,len=keys.length;i<len;i++){
 	        param[keys[i]] = matched[i+1] 
 	      }
-
 	      return param;
 	    }else{
-
 	      return false;
 	    }
 	  }
@@ -747,6 +716,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var b = module.exports = {
 	  hash: "onhashchange" in win && (!doc.documentMode || doc.documentMode > 7),
 	  history: win.history && "onpopstate" in win,
+	  location: win.location,
 
 	  on: "attachEvent" in win ? 
 	      function(node,type,cb){return node.attachEvent( "on" + type, cb )}

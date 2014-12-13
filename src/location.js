@@ -75,6 +75,8 @@ l.currentPath = undefined;
 l.rRoot = null;
 
 
+l.checkPath = checkPath;
+
 // start the location detect
 // *the location service can  be only started once*
 // 

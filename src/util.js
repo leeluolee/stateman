@@ -44,10 +44,10 @@ _.emitable = (function(){
       return this;
     },
     off: function(event, fn) {
-      if(event) this._handles = [];
+      if(!event || !this._handles) this._handles = {};
       if(!this._handles) return;
 
-      var handles = this._handles, calls;
+      var handles = this._handles , calls;
 
       if (calls = handles[event]) {
         if (!fn) {
@@ -83,12 +83,62 @@ _.emitable = (function(){
 
 _.noop = function(){}
 
+_.bind = function(fn, context){
+  return function(){
+    return fn.apply(context, arguments);
+  }
+}
 
-
-var rDbSlash = /\/{1,}/g, // double slash
+var rDbSlash = /\/+/g, // double slash
   rEndSlash = /\/$/;    // end slash
 
 _.cleanPath = function (path){
   return ("/" + path).replace( rDbSlash,"/" ).replace( rEndSlash, "" );
 }
 
+// normalize the path
+function normalizePath(path) {
+  // means is from 
+  // (?:\:([\w-]+))?(?:\(([^\/]+?)\))|(\*{2,})|(\*(?!\*)))/g
+  var preIndex = 0;
+  var keys = [];
+  var index = 0;
+  var matches = "";
+
+  path = _.cleanPath(path);
+
+  var regStr = path
+    //  :id(capture)? | (capture)   |  ** | * 
+    .replace(/\:([\w-]+)(?:\(([^\/]+?)\))?|(?:\(([^\/]+)\))|(\*{2,})|(\*(?!\*))/g, 
+      function(all, key, keyformat, capture, mwild, swild, startAt) {
+        // move the uncaptured fragment in the path
+        if(startAt > preIndex) matches += path.slice(preIndex, startAt);
+        preIndex = startAt + all.length;
+        if( key ){
+          matches += "(" + key + ")";
+          keys.push(key)
+          return "("+( keyformat || "[\\w-]+")+")";
+        }
+        matches += "(" + index + ")";
+
+        keys.push( index++ );
+
+        if( capture ){
+           // sub capture detect
+          return "(" + capture +  ")";
+        } 
+        if(mwild) return "(.*)";
+        if(swild) return "([^\\/]*)";
+    })
+
+  if(preIndex !== path.length) matches += path.slice(preIndex)
+
+  return {
+    regexp: new RegExp("^" + regStr +"/?$"),
+    keys: keys,
+    matches: matches || path
+  }
+}
+
+
+_.normalize = normalizePath;

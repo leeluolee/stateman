@@ -1,3 +1,5 @@
-require("./dom-location.js");
-require("./dom-maze.js");
+require("./test-state.js");
+require("./dom-histery.js");
+
+
 

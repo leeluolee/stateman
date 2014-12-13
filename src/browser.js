@@ -7,6 +7,7 @@ var win = window,
 var b = module.exports = {
   hash: "onhashchange" in win && (!doc.documentMode || doc.documentMode > 7),
   history: win.history && "onpopstate" in win,
+  location: win.location,
 
   on: "attachEvent" in win ? 
       function(node,type,cb){return node.attachEvent( "on" + type, cb )}
