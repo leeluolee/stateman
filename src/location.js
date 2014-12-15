@@ -82,7 +82,7 @@ l.checkPath = checkPath;
 // 
 l.start = function start( options ){
   options = options || {};
-  if(l.isStart) return console.error("history is started");
+  if(l.isStart) return ;
   else l.isStart = true;
 
 

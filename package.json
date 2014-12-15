@@ -1,17 +1,17 @@
 {
   "name": "maze",
   "version": "0.0.1",
-  "description": "A standalone library providing state-based router, built for complex SPA development",
-  "main": "src/index.js",
-  "repository": {
-    "type": "git",
-    "url": "git@github.com:leeluolee/maze"
-  },
+  "description": "An state-based router library, designed for complex SPA development",
   "keywords": [
     "router",
     "state",
     "spa"
   ],
+  "main": "src/index.js",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:leeluolee/maze"
+  },
   "scripts": {
     "test": "gulp travis --phantomjs"
   },

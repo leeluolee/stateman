@@ -1,0 +1,22 @@
+{
+  "name": "maze",
+  "version": "0.0.1",
+  "main": "maze.js",
+  "description": "An state-based router library, designed for complex SPA development",
+  "keywords": [
+    "router",
+    "state",
+    "spa"
+  ],
+  "authors": "@leeluolee <87399126@163.com>",
+  "license": "MIT",
+  "ignore": [
+    ".*",
+    "node_modules",
+    "bin",
+    "test",
+    "gulpfile.js",
+    "*.json",
+    "*.md"
+  ]
+}

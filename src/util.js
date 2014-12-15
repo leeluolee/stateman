@@ -93,7 +93,7 @@ var rDbSlash = /\/+/g, // double slash
   rEndSlash = /\/$/;    // end slash
 
 _.cleanPath = function (path){
-  return ("/" + path).replace( rDbSlash,"/" ).replace( rEndSlash, "" );
+  return ("/" + path).replace( rDbSlash,"/" ).replace( rEndSlash, "" ) || "/";
 }
 
 // normalize the path

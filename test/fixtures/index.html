@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <script src="../../maze.js"></script>
+  <script src="/maze.js"></script>
 </head>
 <style>
   .side{
@@ -17,7 +17,6 @@
   }
 </style>
 <body>
-
 
 
 <ul class='side'>
@@ -92,10 +91,7 @@
     .on("notover", function(ev){
 
     })
-    .start({ root:"/a", html5: false });
-
-
-
+    .start({ root:"/a", html5: true, mode: 3 });
 
 
 
@@ -110,6 +106,8 @@ s.state("contact", {url: '/contact'})
 s.state("contact.list", {url: '(type| /\\w+/home)'})
 s.state("contact.list.detail", {url: '/:name(\\w+)'})
 s.state("contact.list.detail.message", {url: '([0-9]+)/message'})
+
+
 
 
 

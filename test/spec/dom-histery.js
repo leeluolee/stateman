@@ -89,6 +89,23 @@ describe("Histery", function(){
     var histery = new Histery({
       location: loc("http://regularjs.github.io/app/histery"),
       root: "/app",
+      html5: true,
+      mode: 2
+    })
+    histery.on("change", num1)
+    histery.checkPath();
+    expect(locals["/histery"]).to.equal(1);
+
+    histery.location.replace("http://regularjs.github.io/app/histery/code");
+    histery.checkPath();
+    expect(locals["/histery/code"]).to.equal(1);
+
+    histery.off("change", num1);
+  })
+  it("works in html5 histery mode", function(){
+    var histery = new Histery({
+      location: loc("http://regularjs.github.io/app/histery"),
+      root: "/app",
       html5: true
     })
 

@@ -171,6 +171,9 @@ gulp.task('karma', function (done) {
 gulp.task("test", ["mocha", "karma"])
 
 
+// task for realse
+gulp.task("release", function(){})
+
 
 
 function wrap(fn){

@@ -57,19 +57,20 @@ Maze.prototype = _.extend(
       if(!found){
         // loc.nav("$default", {silent: true})
         var $notfound = this.state("$notfound");
-        if($notfound) this.go($notfound, { query: query });
+        if($notfound) this.go($notfound, { query: query, param:{} , silent:true });
 
         return this.emit("state:404", { path: path, query: this.query});
       }
 
-      this._go( found, { query: query, param: found.param } );
+      this._go( found, { query: query, param: found.param||{} } );
 
       found.param = null;
     },
     // @TODO direct go the point state
     go: function(state, option){
       if(!option.silent){
-        option = state.getUrl(option)
+        var url = state.getUrl(option)
+        this.nav(url);
       }
       this._go(state, option);
     },
@@ -80,7 +81,8 @@ Maze.prototype = _.extend(
       if(typeof state === "string") state = this.state(state);
 
       if(this.isGoing && this.curState){
-         console.error("step on [" + this.curState.stateName+ "] is not over")
+        return;
+         // console.error("step on [" + this.curState.stateName+ "] is not over")
       }
 
       var curState = this.curState,

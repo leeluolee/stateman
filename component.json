@@ -1,0 +1,19 @@
+{
+  "name": "regularjs",
+  "version": "0.0.1",
+  "main": "src/index.js",
+  "description": "An state-based router library, designed for complex SPA development",
+  "keywords": [
+    "router",
+    "state",
+    "spa"
+  ],
+  "scripts": [
+    "src/index.js",
+    "src/browser.js",
+    "src/maze.js",
+    "src/state.js",
+    "src/step.js",
+    "src/util.js"
+  ]
+}
