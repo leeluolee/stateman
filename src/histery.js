@@ -131,10 +131,11 @@ _.extend( _.emitable(Histery), {
     browser.on( document.body, "click", function(ev){
       var target = ev.target || ev.srcElement;
       if( target.tagName.toLowerCase() !== "a" ) return;
-      var tmp = browser.getHref(target).match(self.rPrefix);
+      var tmp = (browser.getHref(target)||"").match(self.rPrefix);
       var hash = tmp && tmp[1]? tmp[1]: "";
 
       if(!hash) return;
+      
       ev.preventDefault && ev.preventDefault();
       self.nav( hash , {force: true})
       return (ev.returnValue = false);
