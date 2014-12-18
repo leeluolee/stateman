@@ -86,10 +86,9 @@ state.state("l1.l2", {
   // Stateman
 
     // API
-    stateman.redirect("state.hello", option);
     stateman.notifiy("state.hello.*", {});
     
-    stateman.navigate("/home/code/1?hello", {});
+    stateman.nav("/home/code/1?hello", {});
     stateman.go("state.list", {param:{}});
 
     stateman.encode("state.list", param);

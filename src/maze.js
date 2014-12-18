@@ -68,6 +68,7 @@ Maze.prototype = _.extend(
     },
     // @TODO direct go the point state
     go: function(state, option){
+      option = option || {};
       if(typeof state === "string") state = this.state(state);
       if(!option.silent){
         var url = state.getUrl(option)
