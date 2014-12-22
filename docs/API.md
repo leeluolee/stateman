@@ -1,13 +1,10 @@
 # StateMan
 
 
-
-
 ## Class: StateMan
 
 ### 1. new StateMan() or StateMan()
 
-__arguments__: Null
 __return__:  the StateMan instance
 
 
@@ -26,7 +23,7 @@ var stateman = new StateMan();  // or StateMan()
 __Arguments__
 
 - stateName [String]: the state's name , like `contact.detail`
-- config [Function|Object]: if config is not specified, the state defined by stateName will be return, whereus, wiill
+- config [Function|Object]: if config is not specified, the state defined by stateName will be return
 	* config.url:  default url is the lastName: like `detail` in `contact.detail`
       ```js
 		
@@ -36,8 +33,19 @@ __Arguments__
 	  ```javascript
 	  stateman.state('contact')
       ```
-      
-	* other
+            
+	* config.enter [see:lifecyle](#lifecylce): An function that will be called when the state be entered into.
+	* config.leave [see:lifecyle](#lifecylce): An function that will be called when the state be leaved out.
+	* config.update [see:lifecyle](#lifecylce): the state is on the way to the current state, but not be entered into or leave out.
+
+### Lifecycle
+
+you can also directly defined a nested state　without createing its parent first. 
+
+```javascript
+stateman.state('lv1.lv2.lv3', {})
+```
+
 
 
 ### __Important: The param captured in routing__

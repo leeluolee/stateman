@@ -32,12 +32,25 @@ stateman is borned in requirements, it reuse the concept __state__ in [ui-router
 
 ## installation
 
-1. bower
-2. npm (browserify or other based on commonjs)
-3. component
+- bower
 
+```javascript
+bower install stateman
+```
 
-4. script
+- npm (browserify or other based on commonjs)
+
+```js
+npm install stateman
+```
+
+- component
+
+```js
+component install leeluolee/stateman
+```
+
+- exprimental 
 
 
 change name to stateman.
