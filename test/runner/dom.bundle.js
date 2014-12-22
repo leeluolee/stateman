@@ -44,8 +44,10 @@
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
+	
 	__webpack_require__(1);
 	__webpack_require__(2);
+	__webpack_require__(3);
 
 
 
@@ -55,30 +57,30 @@
 /* 1 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var State = __webpack_require__(3);
-	var expect = __webpack_require__(7)
+	var State = __webpack_require__(4);
+	var expect = __webpack_require__(9)
 
 
 
 	function expectUrl(url, option){
-	  return expect(new State({url: url}).getUrl(option))
+	  return expect(new State({url: url}).encode(option))
 	}
 
 	function expectMatch(url, path){
-	  return expect(new State({url: url}).match(path))
+	  return expect(new State({url: url}).decode(path))
 	}
 
 	describe("State", function(){
 
 
-	  describe("state.getUrl", function(){
+	  describe("state.encode", function(){
 
 
 	    it("no param and query should work", function(){
 
 	      expectUrl("/home/code").to.equal("/home/code")
 
-	      expectUrl("/home/code", {query: {name: 'hello', age: 1}} )
+	      expectUrl("/home/code", {name: 'hello', age: 1} )
 	        .to.equal("/home/code?name=hello&age=1");
 	      
 	    })
@@ -87,8 +89,7 @@
 	      expectUrl("/home/code/:id").to.equal("/home/code")
 
 	      expectUrl("/home/code/:id", {
-	        query: {name: 'hello', age: 1}, 
-	        param: {id: 100}
+	        id: 100, name: 'hello', age: 1
 	      }).to.equal("/home/code/100?name=hello&age=1");
 	      
 	    })
@@ -96,17 +97,16 @@
 	    it("with unnamed param should work", function(){
 	      
 	      expectUrl("/home/code/(\\d+)", {
-	        query: {name: 'hello', age: 1}, 
-	        param: {0: 100}
+	        name: 'hello', age: 1, 0:100
 	      }).to.equal("/home/code/100?name=hello&age=1");
-
 	    })
 
 	    it("with named and catched param should work", function(){
 	      
 	      expectUrl("/home/code/:id(\\d+)", {
-	        query: {name: 'hello', age: 1}, 
-	        param: {id: 100}
+	        name: 'hello', 
+	        age: 1, 
+	        id: 100
 	      }).to.equal("/home/code/100?name=hello&age=1");
 
 	    })
@@ -114,13 +114,11 @@
 	    it("with wildcard should work", function(){
 	      
 	      expectUrl("/home/**/code", {
-	        query: {name: 'hello', age: 1}, 
-	        param: {0: "/name/100"}
+	        name: 'hello', age: 1, 0: "/name/100"
 	      }).to.equal("/home/name/100/code?name=hello&age=1");
 
 	      expectUrl("/home/*/code", {
-	        query: {name: 'hello', age: 1}, 
-	        param: {0: "name"}
+	        name: 'hello', age: 1, 0: "name"
 	      }).to.equal("/home/name/code?name=hello&age=1");
 
 	    })
@@ -128,9 +126,8 @@
 	    it("complex testing should work as expect", function(){
 
 	      expectUrl("/home/code/:id(\\d+)/:name/prefix(1|2|3)suffix/**", {
-	        query: {name: 'hello', age: 1}, 
-	        param: {id: 100, name: "leeluolee", 0: 1, 1: "last"}
-	      }).to.equal("/home/code/100/leeluolee/prefix1suffix/last?name=hello&age=1");
+	        name: 'leeluolee', age: 1 ,id: 100,  0: 1, 1: "last"
+	      }).to.equal("/home/code/100/leeluolee/prefix1suffix/last?age=1");
 
 	    })
 
@@ -140,9 +137,8 @@
 	        .state("home.list", {url: ""})
 	        .state("home.list.message", {url: "/:id/message"})
 
-	      var url =state.state("home.list.message").getUrl({
-	        param: {id: 1000},
-	        query: {name:1, age: "ten"}
+	      var url =state.state("home.list.message").encode({
+	        id: 1000 ,name:1, age: "ten"
 	      })
 	      expect(url).to.equal("/home/home/1000/message?name=1&age=ten");
 	    })
@@ -239,10 +235,10 @@
 	//    http://backbonejs.org
 
 
-	var _ = __webpack_require__(4);
-	var browser = __webpack_require__(5);
-	var Histery = __webpack_require__(6);
-	var expect = __webpack_require__(7)
+	var _ = __webpack_require__(5);
+	var browser = __webpack_require__(6);
+	var Histery = __webpack_require__(7);
+	var expect = __webpack_require__(9)
 
 
 	// Backbone.js Trick for mock the location service
@@ -360,13 +356,478 @@
 /* 3 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var _ = __webpack_require__(4);
+	
+	// THX for Backbone for some testcase from https://github.com/jashkenas/backbone/blob/master/test/router.js
+	// to help stateman becoming robust soon.
+
+	//    Backbone.js 1.1.2
+	//    (c) 2010-2014 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+	//    Backbone may be freely distributed under the MIT license.
+	//    For all details and documentation:
+	//    http://backbonejs.org
+
+	var StateMan = __webpack_require__(8);
+	var expect = __webpack_require__(9)
+	var _ = __webpack_require__(5);
+
+
+	// Backbone.js Trick for mock the location service
+	var a = document.createElement('a');
+	function loc(href){
+	  return ({
+	    replace: function(href) {
+	      a.href = href;
+	      _.extend(this, {
+	        href: a.href,
+	        hash: a.hash,
+	        host: a.host,
+	        fragment: a.fragment,
+	        pathname: a.pathname,
+	        search: a.search
+	      }, true)
+	      if (!/^\//.test(this.pathname)) this.pathname = '/' + this.pathname;
+	      return this;
+	    }
+	  }).replace(href)
+	}
+
+
+	function reset(stateman){
+	  stateman._states = {};
+	  stateman.off();
+	}
+
+	describe("stateman", function(){
+
+
+
+	describe("stateman:basic", function(){
+	  var stateman = new StateMan( {} );
+	  var location = loc("http://leeluolee.github.io/homepage");
+
+
+	  var obj = {}; 
+
+	  stateman
+	    .state('l0_not_next', function(){
+	      obj.l0 = true
+	    })
+	    .state('l1_has_next', {
+	      enter: function(){obj.l1 = true},
+	      leave: function(){obj.l1 = false}
+	    })
+	    .state('l1_has_next.l11_has_next', {
+	      enter: function(){obj.l12 = true},
+	      leave: function(){obj.l12 = false}
+	    })
+	    .state('l1_has_next.l11_has_next.l12_not_next', {
+	      enter: function(){obj.l13 = true},
+	      leave: function(){obj.l13 = false}
+	    })
+	    .state('book', {
+	      enter: function(){obj.book = true},
+	      leave: function(){obj.book = false}
+	    })
+	    .state('book.detail', {
+	      url: "/:bid",
+	      enter: function(option){obj.book_detail = option.param.bid},
+	      leave: function(){obj.book_detail = false},
+	      update: function(option){obj.book_detail_update = option.param.bid}
+	    })
+	    .state('book.detail.index', {
+	      url: "",
+	      enter: function(option){obj.book_detail_index = option.param.bid},
+	      leave: function(){obj.book_detail_index = false}
+
+	    })
+	    .state('book.detail.message', {
+	      enter: function(option){ obj.book_detail_message = option.param.bid },
+	      leave: function(){obj.book_detail_message = false},
+	      update: function(option){obj.book_detail_message_update = option.param.bid}
+	    })
+	    .state('book.list', {
+	      url: "", 
+	      enter: function(){obj.book_list = true},
+	      leave: function(){obj.book_list = false}
+	    })
+	    .state('$notfound', {
+	      enter: function(){
+	        obj.notfound = true
+	      },
+	      leave: function(){
+	        obj.notfound = false;
+	      }
+	    })
+	    .start({
+	      location: location
+	    });
+
+	  it("we can directly vist the leave1 leaf state", function(){
+
+	    stateman.nav("/l0_not_next")
+	    expect(obj.l0).to.equal(true)
+
+	  })
+
+	  it("we can't directly vist the branch state", function(){
+
+	    stateman.nav("/l1_has_next")
+	    expect(obj.notfound).to.equal(true);
+
+	  })
+
+	  it("but we can vist the nested leaf state", function(){
+	    stateman.nav("/l1_has_next/l11_has_next/l12_not_next")
+	    expect(obj.l12).to.equal(true)
+	    expect(obj.notfound).to.equal(false)
+
+	  })
+	  it("we can define the id in url", function(){
+	    stateman.nav("/book/1");
+	    expect(obj.book).to.equal(true)
+	    expect(obj.book_detail).to.equal("1")
+	  })
+	  it("we can also assign the blank url", function(){
+	    stateman.nav("/book");
+	    expect(obj.book).to.equal(true)
+	    expect(obj.book_detail).to.equal(false)
+	    expect(obj.book_list).to.equal(true)
+	  })
+
+	  it("the ancestor should update if the path is change, but the state is not change", function(){
+	    stateman.nav("/book/1");
+	    expect(obj.book).to.equal(true)
+	    expect(obj.book_detail_index).to.equal("1")
+	    stateman.nav("/book/2/message");
+	    expect(obj.book).to.equal(true)
+	    expect(obj.book_detail_update).to.equal("2")
+	    expect(obj.book_detail_message).to.equal("2")
+	    stateman.nav("/book/3/message");
+	    expect(obj.book_detail_update).to.equal("3")
+	    expect(obj.book_detail_message_update).to.equal("3")
+	  })
+	  it("the ancestor before basestate between current and previouse should update", function(){
+	    stateman.nav("/book/4/message");
+	    expect(obj.book_detail_update).to.equal("4")
+	    expect(obj.book_detail_message_update).to.equal("4")
+	    stateman.nav("/book/5");
+	    expect(obj.book_detail_update).to.equal("5")
+	    expect(obj.book_detail_message_update).to.equal("4")
+	  })
+
+
+	  it("we can directly define the nested state", function(){
+	      stateman.state('directly.skip.parent.state', function(){
+	        obj.directly_skip_parent_state = true;
+	      }).nav("/directly/skip/parent/state")
+
+	      expect(obj.directly_skip_parent_state).to.equal(true)
+
+	  })
+
+
+
+	})
+
+
+	describe("stateman:navigation", function(){
+
+	  var location = loc("http://leeluolee.github.io/stateman");
+
+	  var obj = {}; 
+
+	  var stateman = new StateMan()
+	    .state("home", {})
+	    .state("contact.id", {
+	    })
+	})
+
+
+	// current previous pending and others
+	describe("stateman:property", function(){
+
+	})
+
+
+	describe("stateman:transition", function(){
+
+	  var location = loc("http://leeluolee.github.io/homepage");
+
+
+	  var obj = {}; 
+
+	  var stateman = new StateMan();
+	    stateman
+
+	    .state("home", {})
+	    .state("contact", {
+	      // animation basic
+	      enter: function(){
+	        var done = this.async();
+	        setTimeout(done, 100)
+	      },
+
+	      leave: function(){
+	        var done = this.async();
+	        setTimeout(done, 100)
+	      }
+	    })
+	    .state("contact.list", {
+	      url: "",
+	      // animation basic
+	      enter: function(){
+	      },
+
+	      leave: function(){
+	      }
+	    })
+	    .state("contact.detail", {
+	      url: ":id",
+	      // animation basic
+	      enter: function(option){
+	        var done = this.async();
+	        setTimeout(function(){
+	          obj.contact_detail = option.param.id
+	          done();
+	        }, 100)
+	        
+	      },
+
+	      leave: function(option){
+	        obj.contact_detail = option.param.id
+	      }
+	    })
+	    .state("book", {
+	      // animation basic
+	      enter: function(option){
+	        var done = this.async();
+	        setTimeout(function(){
+	          obj.book = true;
+	          done()
+	        }, 100)
+	      },
+
+	      leave: function(option){
+	        var done = this.async();
+	        setTimeout(function(){
+	          obj.book = false;
+	          done();
+	        }, 100)
+	      }
+	    })
+	    .state("book.id", {
+	      url: ":id",
+	      // animation basic
+	      enter: function(option){
+	        obj.book_detail = option.param.id
+	      },
+
+	      leave: function(option){
+	        delete obj.book_detail;
+	      }
+	    })
+	    .start({
+	      location: location
+	    })
+
+	  it("we can use transition in enter and leave", function(done){
+
+	    stateman.on("end", function a(){
+
+	      expect(obj.book).to.equal(true)
+	      expect(obj.book_detail).to.equal("1")
+
+	      stateman.off("end").on("end", function b(){
+	        expect(obj.book).to.equal(false)
+	        expect(obj.contact_detail).to.equal("2")
+	        stateman.off("end");
+
+	        done();
+
+	      }).nav("/contact/2");
+
+	      expect(obj.book).to.equal(true)
+	      expect(obj.contact_detail).to.equal(undefined)
+	      // sync enter will directly done
+	      expect(obj.book_detail).to.equal(undefined)
+	      
+	    }).nav("/book/1")
+
+	    expect(obj.book).to.equal(undefined)
+	    expect(obj.book_detail).to.equal(undefined)
+
+
+	  })
+
+	  it("will forbit nav duration transition", function(done){
+	    stateman.on("end", function(){
+	      stateman.off();
+	      stateman.nav("/book/1");
+	      stateman.on("forbid", function(){
+	        stateman.off();
+	        done();
+	      }).nav("/contact/2");
+
+	      expect(location.hash).to.equal("#/book/1")
+	    }).nav("/home");
+	  })
+
+
+	})
+
+	describe("stateman:redirect", function(){
+
+	  var location = loc("http://leeluolee.github.io/homepage");
+	  var obj = {}; 
+	  var stateman = new StateMan();
+
+	  stateman.start({location: location})
+
+
+	  it("we can redirect at branch state, if it is not async", function(){
+	    reset(stateman);
+	    stateman
+	      .state("branch1", {
+	        enter: function(opt){
+	          if(opt.param.id == "1"){
+	            stateman.nav("branch2")
+	          }
+	        },
+	        leave: function(){
+	          obj["branch1_leave"] = true;
+	        }
+
+	      })
+	      .state("branch1.leaf", function(){
+	        obj["branch1_leaf"] = true;
+	      })
+	      .state("branch2", function(){
+	        obj.branch2 = true
+	      })
+
+	    stateman.nav("/branch1/leaf?id=1");
+
+	    expect(stateman.current.name).to.equal("branch2");
+	    expect(obj.branch1_leave).to.equal(true);
+	    expect(obj.branch1_leaf).to.equal(undefined);
+	  })
+
+	  it("we can redirect at leaf state also", function(){
+	    reset(stateman);
+
+	    stateman.state("branch1.leaf", function(){
+	      stateman.go("branch2.leaf")
+	    }).state("branch2.leaf", function(){
+	      obj.branch2_leaf = true;
+	    })
+
+	    stateman.nav("/branch1/leaf");
+
+	    expect(stateman.current.name).to.equal("branch2.leaf");
+
+	  })
+	  it("we can redirect if the async state is done before redirect", function(done){
+
+	    var location = loc("http://leeluolee.github.io/homepage");
+	    var obj = {}; 
+	    var stateman = new StateMan();
+
+	    stateman.start({location: location})
+
+	    // beacuse the last state dont need async will dont need to async forever
+	    stateman.state("branch2", function(){
+	      var over = this.async()
+	      setTimeout(function(){
+	        over();
+	        stateman.go("branch3.leaf", null, function(){
+	          expect(this.current.name).to.equal("branch3.leaf");
+	          expect(obj.branch2_leaf).to.equal(true)
+	          expect(obj.branch3_leaf).to.equal(true)
+	          done()
+	        })
+	        over();
+	      },100)
+	    })
+	    .state("branch2.leaf", function(){
+	      obj.branch2_leaf = true
+	    })
+	    .state("branch3.leaf", function(){
+	      obj.branch3_leaf = true;
+	    })
+
+	    stateman.nav("/branch2/leaf")
+
+	  })
+
+	})
+
+	describe("stateman:other", function(){
+	  var location = loc("http://leeluolee.github.io/homepage");
+	  var obj = {}; 
+	  var stateman = new StateMan();
+
+	  stateman
+	    .start({location: location})
+	    .state("contact.detail", {
+	      events: {
+	        notify: function(option){
+	          obj.contact_detail = true;
+	        }
+	      },
+	      enter: function(){
+	        obj.manager = this.manager;
+	      }
+	    })
+
+
+	  it("notify specifed state works", function(){
+	    stateman.notify("contact.detail")
+	    expect(obj.contact_detail).to.equal(true)
+	  })
+
+	  it("visited flag will add if the state is entered", function(){
+	    expect(stateman.state("contact.detail").visited).to.equal(false)
+	    stateman.go("contact.detail")
+	    expect(stateman.state("contact.detail").visited).to.equal(true)
+	    expect(obj.manager).to.equal(stateman)
+	  })
+
+
+	  it("stateman.decode should return the parsed state", function(){
+
+	    var state = stateman.state("book.detail", {url: ":id"}).decode("/book/a?name=12")
+	    expect(state.param).to.eql({id:"a", name: "12"})
+	  })
+	  it("stateman.encode should return the url", function(){
+
+	    expect(stateman.encode("contact.detail", {id:1, name:2})).to.equal("/contact/detail?id=1&name=2")
+
+	  })
+
+	  
+	  
+
+	})
+
+
+	})
+
+/***/ },
+/* 4 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var _ = __webpack_require__(5);
 
 	function State(option){
 	  this._states = {};
+	  this._pending = false;
+	  this.visited = false;
 	  if(option) this.config(option);
 	}
 
+
+	//regexp cache
+	State.rCache = {};
 
 	_.extend( _.emitable( State ), {
 
@@ -386,7 +847,8 @@
 	        next = states[nextName] = new State();
 	        _.extend(next, {
 	          parent: current,
-	          stateName: stateName.join("."),
+	          manager: current.manager || current,
+	          name: stateName.join("."),
 	          currentName: nextName
 	        })
 	        current.hasNext = true;
@@ -430,6 +892,7 @@
 	  _getConfig: function(configure){
 	    return typeof configure === "function"? {enter: configure} : configure;
 	  },
+
 	  //from url 
 
 	  configUrl: function(){
@@ -463,24 +926,29 @@
 
 	    _.extend(this, _.normalize(this.path), true);
 	  },
-	  getUrl: function(option){
-	    option = option || {};
-	    var param = option.param || {},
-	      query = option.query || {};
+	  encode: function(stateName, param){
+	    var state;
+	    if(typeof param === "undefined"){
+	      state = this;
+	      param = stateName;
+	    }else{
+	      state = this.state(stateName);
+	    }
+	    var param = param || {};
 
-
-	    var url = this.matches.replace(/\(([\w-]+)\)/g, function(all, capture){
-	      return param[capture] || "";
+	    var url = state.matches.replace(/\(([\w-]+)\)/g, function(all, capture){
+	      var sec = param[capture] || "";
+	      param[capture] = null; 
+	      return sec;
 	    }) + "?";
 
-	    for(var i in query) if( query.hasOwnProperty(i) ){
-	      url += i + "=" + query[i] + "&";
+	    // remained is the query, we need concat them after url as query
+	    for(var i in param) {
+	      if( param[i] != null ) url += i + "=" + param[i] + "&";
 	    }
-
 	    return _.cleanPath( url.replace(/(?:\?|&)$/,"") )
-
 	  },
-	  match: function( path ){
+	  decode: function( path ){
 	    var matched = this.regexp.exec(path),
 	      keys = this.keys;
 
@@ -494,6 +962,11 @@
 	    }else{
 	      return false;
 	    }
+	  },
+	  async: function(){
+	    var self = this;
+	    this._pending = true;
+	    return this.done;
 	  }
 
 	})
@@ -502,7 +975,7 @@
 	module.exports = State;
 
 /***/ },
-/* 4 */
+/* 5 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var _ = module.exports = {};
@@ -647,11 +1120,17 @@
 	  }
 	}
 
+	_.log = function(msg, type){
+	  typeof console !== "undefined" && console[type || "log"](msg)
+	}
+
 
 	_.normalize = normalizePath;
 
+
+
 /***/ },
-/* 5 */
+/* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -683,11 +1162,11 @@
 
 
 /***/ },
-/* 6 */
+/* 7 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var browser = __webpack_require__(5);
-	var _ = __webpack_require__(4);
+	var browser = __webpack_require__(6);
+	var _ = __webpack_require__(5);
 
 
 	// the mode const
@@ -700,6 +1179,7 @@
 	// extract History for test
 	// resolve the conficlt with the Native History
 	function Histery(options){
+	  options = options || {};
 
 	  // Trick from backbone.history for anchor-faked testcase 
 	  this.location = options.location || browser.location;
@@ -810,7 +1290,7 @@
 	      history.pushState( {}, options.title || "" , _.cleanPath( this.root + to ) )
 	    }
 
-	    if(options.force) this.emit('change', to);
+	    if( !options.silent ) this.emit('change', to);
 	  },
 	  _autolink: function(autolink){
 	    // only in html5 mode, the autolink is works
@@ -819,10 +1299,11 @@
 	    browser.on( document.body, "click", function(ev){
 	      var target = ev.target || ev.srcElement;
 	      if( target.tagName.toLowerCase() !== "a" ) return;
-	      var tmp = browser.getHref(target).match(self.rPrefix);
+	      var tmp = (browser.getHref(target)||"").match(self.rPrefix);
 	      var hash = tmp && tmp[1]? tmp[1]: "";
 
 	      if(!hash) return;
+	      
 	      ev.preventDefault && ev.preventDefault();
 	      self.nav( hash , {force: true})
 	      return (ev.returnValue = false);
@@ -854,7 +1335,7 @@
 
 	    }
 	  },
-	  // Thanks for backbone.history && https://github.com/cowboy/jquery-hashchange/blob/master/jquery.ba-hashchange.js
+	  // Thanks for backbone.history  https://github.com/cowboy/jquery-hashchange/blob/master/jquery.ba-hashchange.js
 	  // for fixing the oldie hash history issues when with iframe hack
 	  _fixHashProbelm: function(path){
 	    var iframe = document.createElement('iframe'), body = document.body;
@@ -876,7 +1357,245 @@
 	module.exports = Histery;
 
 /***/ },
-/* 7 */
+/* 8 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var State = __webpack_require__(4),
+	  Histery = __webpack_require__(7),
+	  brow = __webpack_require__(6),
+	  _ = __webpack_require__(5);
+
+
+
+	function StateMan(options){
+	  if(this instanceof StateMan === false){ return new StateMan(options)}
+	  options = options || {};
+	  State.call(this);
+	  if(options.history) this.history = options.history;
+	  this.current = this.pending = this;
+	}
+
+
+	StateMan.prototype = _.extend(
+
+	  _.ocreate(State.prototype), {
+
+	    constructor: StateMan,
+
+	    // start StateMan
+	    start: function(options){
+	      if( !this.history ) this.history = new Histery(options); 
+	      this.history.on("change", _.bind(this._afterPathChange, this));
+
+	      // if the history service is not runing, start it
+	      if(!this.history.isStart) this.history.start();
+	      return this;
+	    },
+	    // @TODO direct go the point state
+	    go: function(state, option, callback){
+	      option = option || {};
+	      if(typeof state === "string") state = this.state(state);
+	      if(!option.silent){
+	        var url = state.encode(option.param)
+	        this.nav(url, {silent: true});
+	      }
+	      this._go(state, option, callback);
+	    },
+	    nav: function(url, options, callback){
+	      callback && (this._cb = callback)
+	      this.history.nav( url, options);
+	      this._cb = null;
+	      return this;
+	    },
+	    decode: function(path){
+	      var pathAndQuery = path.split("?");
+	      var query = this._findQuery(pathAndQuery[1]);
+	      path = pathAndQuery[0];
+	      var state = this._findState(this, path);
+	      if(state) _.extend(state.param, query);
+	      return state;
+	    },
+	    notify: function(path, param){
+	      this.state(path).emit("notify", {
+	        from: this,
+	        param: param
+	      });
+	    },
+	    // after pathchange changed
+	    // @TODO: afterPathChange need based on decode
+	    _afterPathChange: function(path){
+
+	      this.emit("history:change", path);
+
+
+	      var found = this.decode(path), callback = this._cb;
+
+	      if(!found){
+	        // loc.nav("$default", {silent: true})
+	        var $notfound = this.state("$notfound");
+	        if($notfound) this._go($notfound, {}, callback);
+
+	        return this.emit("404", {path: path});
+	      }
+
+
+	      this._go( found, { param: found.param}, callback );
+	    },
+
+	    // goto the state with some option
+	    _go: function(state, option, callback){
+
+	      if(typeof state === "string") state = this.state(state);
+
+	      // not touch the end in previous transtion
+
+	      if(this.pending !== this.current){
+	        // we need return
+
+	        if(this.pending._pending){
+	          _.log("beacuse "+ this.pending.name+" is pending, the nav to [" +state.name+ "] is be forbit");
+	          this.emit("forbid", state);
+	          return this.nav(this.current.encode(this.param), {silent: true})
+	        }else{
+	          _.log("naving to [" + this.current.name + "] will be stoped, trying to ["+state.name+"] now");
+	          this.current = this.pending;
+	        }
+	        // back to before
+	      }
+	      this.param = option.param;
+
+	      var current = this.current,
+	        baseState = this._findBase(current, state),
+	        self = this;
+
+
+	      if(current !== state){
+	        this.previous = current;
+	        this.current = state;
+	        self.emit("begin")
+	        this._leave(baseState, option, function(){
+	          self._enter(state, option, function(){
+	            self.emit("end")
+	            if(typeof callback === "function") callback.call(self);
+	          })
+	        })
+	      }
+	      this._checkQueryAndParam(baseState, option);
+	    },
+	    _findQuery: function(querystr){
+	      var queries = querystr && querystr.split("&"), query= {};
+	      if(queries){
+	        var len = queries.length;
+	        var query = {};
+	        for(var i =0; i< len; i++){
+	          var tmp = queries[i].split("=");
+	          query[tmp[0]] = tmp[1];
+	        }
+	      }
+	      return query;
+	    },
+	    _findState: function(state, path){
+	      var states = state._states, found, param;
+	      if(!state.hasNext){
+	        param = state.regexp && state.decode(path);
+	      }
+	      if(param){
+	        state.param = param;
+	        return state;
+
+	      }else{
+	        for(var i in states) if(states.hasOwnProperty(i)){
+	          found = this._findState( states[i], path );
+	          if( found ) return found;
+	        }
+	        return false;
+	      }
+	    },
+	    // find the same branch;
+	    _findBase: function(now, before){
+	      if(!now || !before || now == this || before == this) return this;
+	      var np = now, bp = before, tmp;
+	      while(np && bp){
+	        tmp = bp;
+	        while(tmp){
+	          if(np === tmp) return tmp;
+	          tmp = tmp.parent;
+	        }
+	        np = np.parent;
+	      }
+	      return this;
+	    },
+	    _enter: function(end, options, callback){
+
+	      callback = callback || _.noop;
+
+	      var pending = this.pending;
+
+	      if(pending == end) return callback();
+	      var stage = [];
+	      while(end !== pending && end){
+	        stage.push(end);
+	        end = end.parent;
+	      }
+	      this._enterOne(stage, options, callback)
+	    },
+	    _enterOne: function(stage, options, callback){
+
+	      var cur = stage.pop(), self = this;
+	      if(!cur) return callback();
+
+	      this.pending = cur;
+
+	      cur.done = function(){
+	        self._enterOne(stage, options, callback)
+	        cur._pending = false;
+	        cur.done = null;
+	        cur.visited = true;
+	      }
+
+	      if(!cur.enter) cur.done();
+	      else {
+	        cur.enter(options);
+	        if(!cur._pending && cur.done) cur.done();
+	      }
+	    },
+	    _leave: function(end, options, callback){
+	      callback = callback || _.noop;
+	      if(end == this.pending) return callback();
+	      this._leaveOne(end, options,callback)
+	    },
+	    _leaveOne: function(end, options, callback){
+	      if( end === this.pending ) return callback();
+	      var cur = this.pending, self = this;
+	      cur.done = function(){
+	        if(cur.parent) self.pending = cur.parent;
+	        self._leaveOne(end, options, callback)
+	        cur._pending = false;
+	        cur.done = null;
+	      }
+	      if(!cur.leave) cur.done();
+	      else{
+	        cur.leave(options);
+	        if(!cur._pending && cur.done) cur.done();
+	      }
+	    },
+	    // check the query and Param
+	    _checkQueryAndParam: function(baseState, options){
+	      var from = baseState;
+	      while( from !== this ){
+	        from.update && from.update(options);
+	        from = from.parent;
+	      }
+	    }
+
+	}, true)
+
+
+
+	module.exports = StateMan;
+
+/***/ },
+/* 9 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(module, Buffer) {(function (global, module) {
@@ -2163,10 +2882,10 @@
 	    this
 	  , true ? module : {exports: {}}
 	);
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(9)(module), __webpack_require__(8).Buffer))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(11)(module), __webpack_require__(10).Buffer))
 
 /***/ },
-/* 8 */
+/* 10 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(Buffer) {/*!
@@ -2176,9 +2895,9 @@
 	 * @license  MIT
 	 */
 
-	var base64 = __webpack_require__(12)
-	var ieee754 = __webpack_require__(10)
-	var isArray = __webpack_require__(11)
+	var base64 = __webpack_require__(14)
+	var ieee754 = __webpack_require__(13)
+	var isArray = __webpack_require__(12)
 
 	exports.Buffer = Buffer
 	exports.SlowBuffer = Buffer
@@ -3221,10 +3940,10 @@
 	  }
 	}
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(8).Buffer))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(10).Buffer))
 
 /***/ },
-/* 9 */
+/* 11 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = function(module) {
@@ -3240,7 +3959,46 @@
 
 
 /***/ },
-/* 10 */
+/* 12 */
+/***/ function(module, exports, __webpack_require__) {
+
+	
+	/**
+	 * isArray
+	 */
+
+	var isArray = Array.isArray;
+
+	/**
+	 * toString
+	 */
+
+	var str = Object.prototype.toString;
+
+	/**
+	 * Whether or not the given `val`
+	 * is an array.
+	 *
+	 * example:
+	 *
+	 *        isArray([]);
+	 *        // > true
+	 *        isArray(arguments);
+	 *        // > false
+	 *        isArray('');
+	 *        // > false
+	 *
+	 * @param {mixed} val
+	 * @return {bool}
+	 */
+
+	module.exports = isArray || function (val) {
+	  return !! val && '[object Array]' == str.call(val);
+	};
+
+
+/***/ },
+/* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
 	exports.read = function(buffer, offset, isLE, mLen, nBytes) {
@@ -3330,46 +4088,7 @@
 
 
 /***/ },
-/* 11 */
-/***/ function(module, exports, __webpack_require__) {
-
-	
-	/**
-	 * isArray
-	 */
-
-	var isArray = Array.isArray;
-
-	/**
-	 * toString
-	 */
-
-	var str = Object.prototype.toString;
-
-	/**
-	 * Whether or not the given `val`
-	 * is an array.
-	 *
-	 * example:
-	 *
-	 *        isArray([]);
-	 *        // > true
-	 *        isArray(arguments);
-	 *        // > false
-	 *        isArray('');
-	 *        // > false
-	 *
-	 * @param {mixed} val
-	 * @return {bool}
-	 */
-
-	module.exports = isArray || function (val) {
-	  return !! val && '[object Array]' == str.call(val);
-	};
-
-
-/***/ },
-/* 12 */
+/* 14 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';

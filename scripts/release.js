@@ -1,13 +1,12 @@
 // form https://github.com/lfender6445/gulp-release-tasks/blob/master/package.json
 // but stateman also need release to component.json
 module.exports = function(gulp){
-  var argv, bump, filter, fs, git, paths, prompt, tag_version, versioning;
+  var argv, bump, fs, git, paths, prompt, tag_version, versioning;
 
   fs = require('fs');
   prompt = require('gulp-prompt');
   git = require('gulp-git');
   bump = require('gulp-bump');
-  filter = require('gulp-filter');
   tag_version = require('gulp-tag-version');
   argv = require('yargs').argv;
 

@@ -12,6 +12,7 @@ var QUIRK = 3,
 // extract History for test
 // resolve the conficlt with the Native History
 function Histery(options){
+  options = options || {};
 
   // Trick from backbone.history for anchor-faked testcase 
   this.location = options.location || browser.location;
@@ -122,7 +123,7 @@ _.extend( _.emitable(Histery), {
       history.pushState( {}, options.title || "" , _.cleanPath( this.root + to ) )
     }
 
-    if(options.force) this.emit('change', to);
+    if( !options.silent ) this.emit('change', to);
   },
   _autolink: function(autolink){
     // only in html5 mode, the autolink is works
@@ -167,7 +168,7 @@ _.extend( _.emitable(Histery), {
 
     }
   },
-  // Thanks for backbone.history && https://github.com/cowboy/jquery-hashchange/blob/master/jquery.ba-hashchange.js
+  // Thanks for backbone.history  https://github.com/cowboy/jquery-hashchange/blob/master/jquery.ba-hashchange.js
   // for fixing the oldie hash history issues when with iframe hack
   _fixHashProbelm: function(path){
     var iframe = document.createElement('iframe'), body = document.body;

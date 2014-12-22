@@ -1,9 +1,16 @@
-var Maze = require("./maze.js");
+var StateMan = require("./stateman.js");
 
 
-Maze.Histery = require("./histery.js");
-Maze.util = require("./util.js");
-Maze.State = require("./state.js");
-Maze.Step = require("./step.js");
 
-module.exports = Maze;
+
+function stateman( option ){
+  return new StateMan( option );
+}
+
+
+stateman.Histery = require("./histery.js");
+stateman.util = require("./util.js");
+stateman.State = require("./state.js");
+stateman.StateMan = StateMan;
+
+module.exports = stateman;

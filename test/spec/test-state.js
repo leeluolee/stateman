@@ -4,24 +4,24 @@ var expect = require("../runner/vendor/expect.js")
 
 
 function expectUrl(url, option){
-  return expect(new State({url: url}).getUrl(option))
+  return expect(new State({url: url}).encode(option))
 }
 
 function expectMatch(url, path){
-  return expect(new State({url: url}).match(path))
+  return expect(new State({url: url}).decode(path))
 }
 
 describe("State", function(){
 
 
-  describe("state.getUrl", function(){
+  describe("state.encode", function(){
 
 
     it("no param and query should work", function(){
 
       expectUrl("/home/code").to.equal("/home/code")
 
-      expectUrl("/home/code", {query: {name: 'hello', age: 1}} )
+      expectUrl("/home/code", {name: 'hello', age: 1} )
         .to.equal("/home/code?name=hello&age=1");
       
     })
@@ -30,8 +30,7 @@ describe("State", function(){
       expectUrl("/home/code/:id").to.equal("/home/code")
 
       expectUrl("/home/code/:id", {
-        query: {name: 'hello', age: 1}, 
-        param: {id: 100}
+        id: 100, name: 'hello', age: 1
       }).to.equal("/home/code/100?name=hello&age=1");
       
     })
@@ -39,17 +38,16 @@ describe("State", function(){
     it("with unnamed param should work", function(){
       
       expectUrl("/home/code/(\\d+)", {
-        query: {name: 'hello', age: 1}, 
-        param: {0: 100}
+        name: 'hello', age: 1, 0:100
       }).to.equal("/home/code/100?name=hello&age=1");
-
     })
 
     it("with named and catched param should work", function(){
       
       expectUrl("/home/code/:id(\\d+)", {
-        query: {name: 'hello', age: 1}, 
-        param: {id: 100}
+        name: 'hello', 
+        age: 1, 
+        id: 100
       }).to.equal("/home/code/100?name=hello&age=1");
 
     })
@@ -57,13 +55,11 @@ describe("State", function(){
     it("with wildcard should work", function(){
       
       expectUrl("/home/**/code", {
-        query: {name: 'hello', age: 1}, 
-        param: {0: "/name/100"}
+        name: 'hello', age: 1, 0: "/name/100"
       }).to.equal("/home/name/100/code?name=hello&age=1");
 
       expectUrl("/home/*/code", {
-        query: {name: 'hello', age: 1}, 
-        param: {0: "name"}
+        name: 'hello', age: 1, 0: "name"
       }).to.equal("/home/name/code?name=hello&age=1");
 
     })
@@ -71,9 +67,8 @@ describe("State", function(){
     it("complex testing should work as expect", function(){
 
       expectUrl("/home/code/:id(\\d+)/:name/prefix(1|2|3)suffix/**", {
-        query: {name: 'hello', age: 1}, 
-        param: {id: 100, name: "leeluolee", 0: 1, 1: "last"}
-      }).to.equal("/home/code/100/leeluolee/prefix1suffix/last?name=hello&age=1");
+        name: 'leeluolee', age: 1 ,id: 100,  0: 1, 1: "last"
+      }).to.equal("/home/code/100/leeluolee/prefix1suffix/last?age=1");
 
     })
 
@@ -83,9 +78,8 @@ describe("State", function(){
         .state("home.list", {url: ""})
         .state("home.list.message", {url: "/:id/message"})
 
-      var url =state.state("home.list.message").getUrl({
-        param: {id: 1000},
-        query: {name:1, age: "ten"}
+      var url =state.state("home.list.message").encode({
+        id: 1000 ,name:1, age: "ten"
       })
       expect(url).to.equal("/home/home/1000/message?name=1&age=ten");
     })

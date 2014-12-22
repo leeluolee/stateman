@@ -2,9 +2,14 @@ var _ = require("./util.js");
 
 function State(option){
   this._states = {};
+  this._pending = false;
+  this.visited = false;
   if(option) this.config(option);
 }
 
+
+//regexp cache
+State.rCache = {};
 
 _.extend( _.emitable( State ), {
 
@@ -24,7 +29,8 @@ _.extend( _.emitable( State ), {
         next = states[nextName] = new State();
         _.extend(next, {
           parent: current,
-          stateName: stateName.join("."),
+          manager: current.manager || current,
+          name: stateName.join("."),
           currentName: nextName
         })
         current.hasNext = true;
@@ -68,6 +74,7 @@ _.extend( _.emitable( State ), {
   _getConfig: function(configure){
     return typeof configure === "function"? {enter: configure} : configure;
   },
+
   //from url 
 
   configUrl: function(){
@@ -101,24 +108,29 @@ _.extend( _.emitable( State ), {
 
     _.extend(this, _.normalize(this.path), true);
   },
-  getUrl: function(option){
-    option = option || {};
-    var param = option.param || {},
-      query = option.query || {};
+  encode: function(stateName, param){
+    var state;
+    if(typeof param === "undefined"){
+      state = this;
+      param = stateName;
+    }else{
+      state = this.state(stateName);
+    }
+    var param = param || {};
 
-
-    var url = this.matches.replace(/\(([\w-]+)\)/g, function(all, capture){
-      return param[capture] || "";
+    var url = state.matches.replace(/\(([\w-]+)\)/g, function(all, capture){
+      var sec = param[capture] || "";
+      param[capture] = null; 
+      return sec;
     }) + "?";
 
-    for(var i in query) if( query.hasOwnProperty(i) ){
-      url += i + "=" + query[i] + "&";
+    // remained is the query, we need concat them after url as query
+    for(var i in param) {
+      if( param[i] != null ) url += i + "=" + param[i] + "&";
     }
-
     return _.cleanPath( url.replace(/(?:\?|&)$/,"") )
-
   },
-  match: function( path ){
+  decode: function( path ){
     var matched = this.regexp.exec(path),
       keys = this.keys;
 
@@ -132,6 +144,11 @@ _.extend( _.emitable( State ), {
     }else{
       return false;
     }
+  },
+  async: function(){
+    var self = this;
+    this._pending = true;
+    return this.done;
   }
 
 })

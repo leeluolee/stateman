@@ -1,39 +1,39 @@
-Maze
+StateMan
 =======
 
-A standalone library providing state-based router, built for complex SPA development.
+state manager: A concise, flexible foundation for complex application routing.
 
 
+## Why Another wheel. 
 
-> Maze is design to , highly inspired by [ui-router]()
+Firstly, I promise stateman is considered irreplaceable
+
+stateman is a state-based libraring that focusing on complex  application routing.
+
+SPA(Single Page Application) is become an common technology choice in morden web development , we need a routing library to help us organizing our logic, and make every page locatable(through the url).
+
+But, the SPA is also become more and more complex, the routing-style that similar with server-side routing (express.Router.. etc) don't meet the requirements anymore. we need a well-designed foundation to simplify our logic.
+
+[ui-router] go the right way, they abstarct a concept named __state__ to replace the real url to represent the application state. the state is 
 
 
+##Feature
 
-## Why not [ui-router]()?
+stateman is borned in requirements, it reuse the concept __state__ in [ui-router], it is
 
-1. ui-router is tightly bind to angularjs
-2. ui-router is based upon angularjs , but also have a large codebase(4000 line)
-3. we 
-
-## Why not [director.js]
-
-first, I'm director's fans
-
-1. client router is not similar with server, client application need maintain the state. but server is almost not state(expect session or cookie)
-2. url is not satasify to decribe the client state.
-3. We need the whole control on every state's enter and leave
-
+0. nested routing support based on state.
+1. standalone with 9kb (minify && no gzip) source code
+2. async routing when you need asynchronous logic in state.
+3. support IE6+ and all other modern browser.
+4. history supported, fallback to hash-based in old browser.
+5. concise API, deadly simple to getting start with it.
 
 
 
 ## installation
 
 1. bower
-
-
 2. npm (browserify or other based on commonjs)
-
-
 3. component
 
 
@@ -42,7 +42,12 @@ first, I'm director's fans
 
 change name to stateman.
 
-## document
+## Document
+
+
+
+
+
 
 1. describe your 
 
@@ -87,16 +92,13 @@ state.state("l1.l2", {
 
     // API
     stateman.notifiy("state.hello.*", {});
-    
     stateman.nav("/home/code/1?hello", {});
     stateman.go("state.list", {param:{}});
-
     stateman.encode("state.list", param);
-    stateman.decode("/home/code") === stateman.match("/home"); {param, state}
+    stateman.decode("/home/code")
 
     stateman.start;
     stateman.stop;
-
 
 
     // property 
@@ -112,23 +114,16 @@ state.state("l1.l2", {
 
     events:
       "history:change"
-      notfound
-      redirect
+      "notfound"
+      "redirect"
 
   
     //some 
-    stateman.history
-
-    stateman.history.on("change", function(){})
 
 
-
-     state.include("**.state.list");
-     state.decode(url); // you can pass your own match return param
      state.state(); // 
-     state.config(); // move to state
-     stateman.state();
      state.async(); //need pending === this; so , leave or enter is permit
+     state.decode(url); // you can pass your own match return param
      state.encode(param);
      state.enter
      state.leave
@@ -158,3 +153,7 @@ stateman
 
 
 ```
+
+## if the state is pending, we cant redirect to other . to avoid 
+
+if the s

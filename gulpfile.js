@@ -10,12 +10,15 @@ var karma = require("karma").server;
 
 var pkg = require("./package.json");  
 
+// release
+require("./scripts/release.js")(gulp);
+
 
     
 var wpConfig = {
  output: {
-    filename: "maze.js",
-    library: "Maze",
+    filename: "stateman.js",
+    library: "stateman",
     libraryTarget: "umd"
   }
 }
@@ -171,9 +174,9 @@ gulp.task('karma', function (done) {
 gulp.task("test", ["mocha", "karma"])
 
 
-// task for realse
-gulp.task("release", function(){})
 
+// 
+gulp.task("release", ["tag"])
 
 
 function wrap(fn){

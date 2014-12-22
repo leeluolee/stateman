@@ -9,9 +9,9 @@
 	else if(typeof define === 'function' && define.amd)
 		define(factory);
 	else if(typeof exports === 'object')
-		exports["Maze"] = factory();
+		exports["stateman"] = factory();
 	else
-		root["Maze"] = factory();
+		root["stateman"] = factory();
 })(this, function() {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
@@ -59,15 +59,22 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Maze = __webpack_require__(1);
+	var StateMan = __webpack_require__(1);
 
 
-	Maze.Histery = __webpack_require__(2);
-	Maze.util = __webpack_require__(3);
-	Maze.State = __webpack_require__(4);
-	Maze.Step = __webpack_require__(5);
 
-	module.exports = Maze;
+
+	function stateman( option ){
+	  return new StateMan( option );
+	}
+
+
+	stateman.Histery = __webpack_require__(2);
+	stateman.util = __webpack_require__(3);
+	stateman.State = __webpack_require__(4);
+	stateman.StateMan = StateMan;
+
+	module.exports = stateman;
 
 
 /***/ },
@@ -76,33 +83,27 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var State = __webpack_require__(4),
 	  Histery = __webpack_require__(2),
-	  brow = __webpack_require__(6),
-	  Step = __webpack_require__(5),
+	  brow = __webpack_require__(5),
 	  _ = __webpack_require__(3);
 
 
 
-	function Maze(options){
-	  if(this instanceof Maze === false){ return new Maze(options)}
+	function StateMan(options){
+	  if(this instanceof StateMan === false){ return new StateMan(options)}
 	  options = options || {};
 	  State.call(this);
 	  if(options.history) this.history = options.history;
-	  this.curState = this;
+	  this.current = this.pending = this;
 	}
 
 
-	Maze.prototype = _.extend(
+	StateMan.prototype = _.extend(
 
 	  _.ocreate(State.prototype), {
 
-	    constructor: Maze,
+	    constructor: StateMan,
 
-	    nav: function(url, options){
-	      this.history.nav( url, options );
-	      return this;
-	    },
-
-	    // start Maze
+	    // start StateMan
 	    start: function(options){
 	      if( !this.history ) this.history = new Histery(options); 
 	      this.history.on("change", _.bind(this._afterPathChange, this));
@@ -111,76 +112,118 @@ return /******/ (function(modules) { // webpackBootstrap
 	      if(!this.history.isStart) this.history.start();
 	      return this;
 	    },
+	    // @TODO direct go the point state
+	    go: function(state, option, callback){
+	      option = option || {};
+	      if(typeof state === "string") state = this.state(state);
+	      if(!option.silent){
+	        var url = state.encode(option.param)
+	        this.nav(url, {silent: true});
+	      }
+	      this._go(state, option, callback);
+	    },
+	    nav: function(url, options, callback){
+	      callback && (this._cb = callback)
+	      this.history.nav( url, options);
+	      this._cb = null;
+	      return this;
+	    },
+	    decode: function(path){
+	      var pathAndQuery = path.split("?");
+	      var query = this._findQuery(pathAndQuery[1]);
+	      path = pathAndQuery[0];
+	      var state = this._findState(this, path);
+	      if(state) _.extend(state.param, query);
+	      return state;
+	    },
+	    notify: function(path, param){
+	      this.state(path).emit("notify", {
+	        from: this,
+	        param: param
+	      });
+	    },
 	    // after pathchange changed
+	    // @TODO: afterPathChange need based on decode
 	    _afterPathChange: function(path){
 
-	      var pathAndQuery = path.split("?");
-	      var queries = pathAndQuery[1] && pathAndQuery[1].split("&");
-	      var query = {};
-	      if(queries){
-	        var len = queries.length;
-	        for(;len--;){
-	          var tmp = queries[len].split("=");
-	          query[tmp[0]] = tmp[1];
-	        }
-	      }
-	      this.query = query;
+	      this.emit("history:change", path);
 
-	      path = pathAndQuery[0];
 
-	      var found = this._findState(this, path);
+	      var found = this.decode(path), callback = this._cb;
 
 	      if(!found){
 	        // loc.nav("$default", {silent: true})
 	        var $notfound = this.state("$notfound");
-	        if($notfound) this.go($notfound, { query: query, param:{} , silent:true });
+	        if($notfound) this._go($notfound, {}, callback);
 
-	        return this.emit("state:404", { path: path, query: this.query});
+	        return this.emit("404", {path: path});
 	      }
 
-	      this._go( found, { query: query, param: found.param||{} } );
 
-	      found.param = null;
-	    },
-	    // @TODO direct go the point state
-	    go: function(state, option){
-	      if(!option.silent){
-	        var url = state.getUrl(option)
-	        this.nav(url);
-	      }
-	      this._go(state, option);
+	      this._go( found, { param: found.param}, callback );
 	    },
 
 	    // goto the state with some option
-	    _go: function(state, option){
+	    _go: function(state, option, callback){
 
 	      if(typeof state === "string") state = this.state(state);
 
-	      if(this.isGoing && this.curState){
-	        return;
-	         // console.error("step on [" + this.curState.stateName+ "] is not over")
-	      }
+	      // not touch the end in previous transtion
 
-	      var curState = this.curState,
-	        baseState = this._findBase(curState, state), 
+	      if(this.pending !== this.current){
+	        // we need return
+
+	        if(this.pending._pending){
+	          _.log("beacuse "+ this.pending.name+" is pending, the nav to [" +state.name+ "] is be forbit");
+	          this.emit("forbid", state);
+	          return this.nav(this.current.encode(this.param), {silent: true})
+	        }else{
+	          _.log("naving to [" + this.current.name + "] will be stoped, trying to ["+state.name+"] now");
+	          this.current = this.pending;
+	        }
+	        // back to before
+	      }
+	      this.param = option.param;
+
+	      var current = this.current,
+	        baseState = this._findBase(current, state),
 	        self = this;
 
-	      this.isGoing = true;
-	      this._leave(baseState, option, function(){
-	        self._enter(state, option, function(){
-	          self.isGoing = false;
-	        }) 
-	      })
+
+	      if(current !== state){
+	        this.previous = current;
+	        this.current = state;
+	        self.emit("begin")
+	        this._leave(baseState, option, function(){
+	          self._enter(state, option, function(){
+	            self.emit("end")
+	            if(typeof callback === "function") callback.call(self);
+	          })
+	        })
+	      }
 	      this._checkQueryAndParam(baseState, option);
+	    },
+	    _findQuery: function(querystr){
+	      var queries = querystr && querystr.split("&"), query= {};
+	      if(queries){
+	        var len = queries.length;
+	        var query = {};
+	        for(var i =0; i< len; i++){
+	          var tmp = queries[i].split("=");
+	          query[tmp[0]] = tmp[1];
+	        }
+	      }
+	      return query;
 	    },
 	    _findState: function(state, path){
 	      var states = state._states, found, param;
 	      if(!state.hasNext){
-	        param = state.regexp && state.match(path);
+	        param = state.regexp && state.decode(path);
 	      }
 	      if(param){
 	        state.param = param;
 	        return state;
+
 	      }else{
 	        for(var i in states) if(states.hasOwnProperty(i)){
 	          found = this._findState( states[i], path );
@@ -207,15 +250,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	      callback = callback || _.noop;
 
-	      var current = this.curState || this;
+	      var pending = this.pending;
 
-	      if(current == end) return callback();
-	      var stage = [], self = this;
-	      while(end !== current){
+	      if(pending == end) return callback();
+	      var stage = [];
+	      while(end !== pending && end){
 	        stage.push(end);
 	        end = end.parent;
 	      }
-
 	      this._enterOne(stage, options, callback)
 	    },
 	    _enterOne: function(stage, options, callback){
@@ -223,37 +265,39 @@ return /******/ (function(modules) { // webpackBootstrap
 	      var cur = stage.pop(), self = this;
 	      if(!cur) return callback();
 
-	      this.curState = cur;
+	      this.pending = cur;
 
-	      var step = new Step(options);
-
-	      step.oncompelete = function(){
+	      cur.done = function(){
 	        self._enterOne(stage, options, callback)
+	        cur._pending = false;
+	        cur.done = null;
+	        cur.visited = true;
 	      }
 
-	      if(!cur.enter) step.done();
+	      if(!cur.enter) cur.done();
 	      else {
-	        cur.enter(step);
-	        if(!step.asynced) step.done();
+	        cur.enter(options);
+	        if(!cur._pending && cur.done) cur.done();
 	      }
 	    },
 	    _leave: function(end, options, callback){
 	      callback = callback || _.noop;
-	      if(end == this.curState) return callback();
+	      if(end == this.pending) return callback();
 	      this._leaveOne(end, options,callback)
 	    },
 	    _leaveOne: function(end, options, callback){
-	      if(!end  || end === this.curState) return callback();
-	      var step = new Step(options);
-	      var self = this;
-	      step.oncompelete = function(){
-	        if(self.curState.parent) self.curState = self.curState.parent
+	      if( end === this.pending ) return callback();
+	      var cur = this.pending, self = this;
+	      cur.done = function(){
+	        if(cur.parent) self.pending = cur.parent;
 	        self._leaveOne(end, options, callback)
+	        cur._pending = false;
+	        cur.done = null;
 	      }
-	      if(!this.curState.leave) step.done()
+	      if(!cur.leave) cur.done();
 	      else{
-	        this.curState.leave(step);
-	        if(!step.asynced) step.done();
+	        cur.leave(options);
+	        if(!cur._pending && cur.done) cur.done();
 	      }
 	    },
 	    // check the query and Param
@@ -265,17 +309,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	      }
 	    }
 
-	})
+	}, true)
 
 
 
-	module.exports = Maze;
+	module.exports = StateMan;
 
 /***/ },
 /* 2 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var browser = __webpack_require__(6);
+	var browser = __webpack_require__(5);
 	var _ = __webpack_require__(3);
 
 
@@ -289,6 +333,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	// extract History for test
 	// resolve the conficlt with the Native History
 	function Histery(options){
+	  options = options || {};
 
 	  // Trick from backbone.history for anchor-faked testcase 
 	  this.location = options.location || browser.location;
@@ -399,7 +444,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      history.pushState( {}, options.title || "" , _.cleanPath( this.root + to ) )
 	    }
 
-	    if(options.force) this.emit('change', to);
+	    if( !options.silent ) this.emit('change', to);
 	  },
 	  _autolink: function(autolink){
 	    // only in html5 mode, the autolink is works
@@ -408,10 +453,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    browser.on( document.body, "click", function(ev){
 	      var target = ev.target || ev.srcElement;
 	      if( target.tagName.toLowerCase() !== "a" ) return;
-	      var tmp = browser.getHref(target).match(self.rPrefix);
+	      var tmp = (browser.getHref(target)||"").match(self.rPrefix);
 	      var hash = tmp && tmp[1]? tmp[1]: "";
 
 	      if(!hash) return;
+	      
 	      ev.preventDefault && ev.preventDefault();
 	      self.nav( hash , {force: true})
 	      return (ev.returnValue = false);
@@ -443,7 +489,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    }
 	  },
-	  // Thanks for backbone.history && https://github.com/cowboy/jquery-hashchange/blob/master/jquery.ba-hashchange.js
+	  // Thanks for backbone.history  https://github.com/cowboy/jquery-hashchange/blob/master/jquery.ba-hashchange.js
 	  // for fixing the oldie hash history issues when with iframe hack
 	  _fixHashProbelm: function(path){
 	    var iframe = document.createElement('iframe'), body = document.body;
@@ -610,8 +656,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 	}
 
+	_.log = function(msg, type){
+	  typeof console !== "undefined" && console[type || "log"](msg)
+	}
+
 
 	_.normalize = normalizePath;
+
+
 
 /***/ },
 /* 4 */
@@ -621,9 +673,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	function State(option){
 	  this._states = {};
+	  this._pending = false;
+	  this.visited = false;
 	  if(option) this.config(option);
 	}
 
+
+	//regexp cache
+	State.rCache = {};
 
 	_.extend( _.emitable( State ), {
 
@@ -643,7 +700,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        next = states[nextName] = new State();
 	        _.extend(next, {
 	          parent: current,
-	          stateName: stateName.join("."),
+	          manager: current.manager || current,
+	          name: stateName.join("."),
 	          currentName: nextName
 	        })
 	        current.hasNext = true;
@@ -687,6 +745,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  _getConfig: function(configure){
 	    return typeof configure === "function"? {enter: configure} : configure;
 	  },
+
 	  //from url 
 
 	  configUrl: function(){
@@ -720,24 +779,29 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    _.extend(this, _.normalize(this.path), true);
 	  },
-	  getUrl: function(option){
-	    option = option || {};
-	    var param = option.param || {},
-	      query = option.query || {};
+	  encode: function(stateName, param){
+	    var state;
+	    if(typeof param === "undefined"){
+	      state = this;
+	      param = stateName;
+	    }else{
+	      state = this.state(stateName);
+	    }
+	    var param = param || {};
 
-
-	    var url = this.matches.replace(/\(([\w-]+)\)/g, function(all, capture){
-	      return param[capture] || "";
+	    var url = state.matches.replace(/\(([\w-]+)\)/g, function(all, capture){
+	      var sec = param[capture] || "";
+	      param[capture] = null; 
+	      return sec;
 	    }) + "?";
 
-	    for(var i in query) if( query.hasOwnProperty(i) ){
-	      url += i + "=" + query[i] + "&";
+	    // remained is the query, we need concat them after url as query
+	    for(var i in param) {
+	      if( param[i] != null ) url += i + "=" + param[i] + "&";
 	    }
-
 	    return _.cleanPath( url.replace(/(?:\?|&)$/,"") )
-
 	  },
-	  match: function( path ){
+	  decode: function( path ){
 	    var matched = this.regexp.exec(path),
 	      keys = this.keys;
 
@@ -751,6 +815,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }else{
 	      return false;
 	    }
+	  },
+	  async: function(){
+	    var self = this;
+	    this._pending = true;
+	    return this.done;
 	  }
 
 	})
@@ -760,29 +829,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 5 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var _ = __webpack_require__(3);
-
-	function Step(options){
-	  _.extend(this, options || {});
-	}
-
-	var so = Step.prototype;
-
-	so.async = function(){
-	  this.asynced = true;
-	}
-
-	so.done = function(){
-	  if(this.oncompelete) this.oncompelete();
-	}
-
-	module.exports = Step;
-
-
-/***/ },
-/* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
 	

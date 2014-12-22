@@ -140,5 +140,10 @@ function normalizePath(path) {
   }
 }
 
+_.log = function(msg, type){
+  typeof console !== "undefined" && console[type || "log"](msg)
+}
+
 
 _.normalize = normalizePath;
+
