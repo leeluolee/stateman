@@ -19,18 +19,20 @@ _.extend( _.emitable( State ), {
     if( typeof stateName === "string" ) stateName = stateName.split(".");
 
     var slen = stateName.length, current = this;
+    var stack = [];
 
 
     do{
       nextName = stateName[i];
       next = states[nextName];
+      stack.push(nextName);
       if(!next){
         if(!config) return;
         next = states[nextName] = new State();
         _.extend(next, {
           parent: current,
           manager: current.manager || current,
-          name: stateName.join("."),
+          name: stack.join("."),
           currentName: nextName
         })
         current.hasNext = true;

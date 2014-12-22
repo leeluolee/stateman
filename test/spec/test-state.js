@@ -13,6 +13,18 @@ function expectMatch(url, path){
 
 describe("State", function(){
 
+  describe("state.state", function(){
+    it("can defined nested statename that parentState is not defined", function(){
+      var state = new State();
+
+      state.state('contact.detail.message', {});
+
+      expect(state.state("contact").name).to.equal("contact")
+      expect(state.state("contact.detail").name).to.equal("contact.detail")
+      expect(state.state("contact.detail.message").name).to.equal("contact.detail.message")
+    })
+  })
+
 
   describe("state.encode", function(){
 
