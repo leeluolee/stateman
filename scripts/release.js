@@ -38,9 +38,14 @@ module.exports = function(gulp){
   };
 
   gulp.task('tag', ['commit'], function() {
-    return gulp.src(paths.versionsToBump).pipe(tag_version()).pipe(git.push('origin', 'master', {
-      args: '--tags'
-    }));
+    return gulp.src(paths.versionsToBump).pipe(tag_version())  
+    // .pipe(git.push('origin', 'master', {
+    //       args: '--tags'
+    //     })).on('error', function(err){
+    //       console.log(err)
+    //     });
+
+
   });
 
   gulp.task('add', ['bump'], function() {
