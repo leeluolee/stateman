@@ -14,6 +14,12 @@ State.rCache = {};
 _.extend( _.emitable( State ), {
 
   state: function(stateName, config){
+    if(_.typeOf(stateName) === "object"){
+      for(var i in stateName){
+        this.state(i, stateName[i])
+      }
+      return this;
+    }
     var current, next, nextName, states = this._states, i=0;
 
     if( typeof stateName === "string" ) stateName = stateName.split(".");

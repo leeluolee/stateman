@@ -68,10 +68,12 @@ StateMan.prototype = _.extend(
 
       var found = this.decode(path), callback = this._cb;
 
+      this.path = path;
+
       if(!found){
         // loc.nav("$default", {silent: true})
         var $notfound = this.state("$notfound");
-        if($notfound) this._go($notfound, {}, callback);
+        if($notfound) this._go($notfound, {path: path}, callback);
 
         return this.emit("404", {path: path});
       }
@@ -84,6 +86,8 @@ StateMan.prototype = _.extend(
     _go: function(state, option, callback){
 
       if(typeof state === "string") state = this.state(state);
+
+      if(!state) return _.log("destination is not defined")
 
       // not touch the end in previous transtion
 
