@@ -126,15 +126,17 @@ _.extend( _.emitable( State ), {
     }
     var param = param || {};
 
+    var matched = "%";
+
     var url = state.matches.replace(/\(([\w-]+)\)/g, function(all, capture){
       var sec = param[capture] || "";
-      param[capture] = null; 
+      matched+= capture + "%";
       return sec;
     }) + "?";
 
     // remained is the query, we need concat them after url as query
     for(var i in param) {
-      if( param[i] != null ) url += i + "=" + param[i] + "&";
+      if( matched.indexOf("%"+i+"%") === -1) url += i + "=" + param[i] + "&";
     }
     return _.cleanPath( url.replace(/(?:\?|&)$/,"") )
   },

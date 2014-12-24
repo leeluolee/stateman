@@ -151,10 +151,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	      var found = this.decode(path), callback = this._cb;
 
+	      this.path = path;
+
 	      if(!found){
 	        // loc.nav("$default", {silent: true})
 	        var $notfound = this.state("$notfound");
-	        if($notfound) this._go($notfound, {}, callback);
+	        if($notfound) this._go($notfound, {path: path}, callback);
 
 	        return this.emit("404", {path: path});
 	      }
@@ -167,6 +169,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    _go: function(state, option, callback){
 
 	      if(typeof state === "string") state = this.state(state);
+
+	      if(!state) return _.log("destination is not defined")
 
 	      // not touch the end in previous transtion
 
@@ -685,6 +689,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	_.extend( _.emitable( State ), {
 
 	  state: function(stateName, config){
+	    if(_.typeOf(stateName) === "object"){
+	      for(var i in stateName){
+	        this.state(i, stateName[i])
+	      }
+	      return this;
+	    }
 	    var current, next, nextName, states = this._states, i=0;
 
 	    if( typeof stateName === "string" ) stateName = stateName.split(".");
@@ -791,15 +801,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	    var param = param || {};
 
+	    var matched = "%";
+
 	    var url = state.matches.replace(/\(([\w-]+)\)/g, function(all, capture){
 	      var sec = param[capture] || "";
-	      param[capture] = null; 
+	      matched+= capture + "%";
 	      return sec;
 	    }) + "?";
 
 	    // remained is the query, we need concat them after url as query
 	    for(var i in param) {
-	      if( param[i] != null ) url += i + "=" + param[i] + "&";
+	      if( matched.indexOf("%"+i+"%") === -1) url += i + "=" + param[i] + "&";
 	    }
 	    return _.cleanPath( url.replace(/(?:\?|&)$/,"") )
 	  },

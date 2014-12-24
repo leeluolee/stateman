@@ -446,6 +446,15 @@ describe("stateman:other", function(){
 
   })
 
+  it("staman.go should remain the param", function(){
+    stateman.state("contact.list", {
+      url: ":id"
+    })
+
+    stateman.go('contact.list', {param: {name: "1", id: "2"}});
+    expect(stateman.param).to.eql({name: "1", id: "2"});
+  })
+
   
   
 
