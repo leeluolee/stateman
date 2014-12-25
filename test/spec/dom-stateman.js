@@ -440,19 +440,17 @@ describe("stateman:other", function(){
     var state = stateman.state("book.detail", {url: ":id"}).decode("/book/a?name=12")
     expect(state.param).to.eql({id:"a", name: "12"})
   })
+
+  it("stateman.go should also assign the stateman.path", function(){
+
+    var state = stateman.state("book.message", {}).go("book.message")
+    expect(state.path).to.eql("/book/message")
+  })
+
   it("stateman.encode should return the url", function(){
 
     expect(stateman.encode("contact.detail", {id:1, name:2})).to.equal("/contact/detail?id=1&name=2")
 
-  })
-
-  it("staman.go should remain the param", function(){
-    stateman.state("contact.list", {
-      url: ":id"
-    })
-
-    stateman.go('contact.list', {param: {name: "1", id: "2"}});
-    expect(stateman.param).to.eql({name: "1", id: "2"});
   })
 
   

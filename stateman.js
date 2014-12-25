@@ -119,8 +119,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	      if(!option.silent){
 	        var url = state.encode(option.param)
 	        this.nav(url, {silent: true});
+	        this.path = url;
 	      }
 	      this._go(state, option, callback);
+	      return this;
 	    },
 	    nav: function(url, options, callback){
 	      callback && (this._cb = callback)
@@ -137,7 +139,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      return state;
 	    },
 	    notify: function(path, param){
-	      this.state(path).emit("notify", {
+	      return this.state(path).emit("notify", {
 	        from: this,
 	        param: param
 	      });
