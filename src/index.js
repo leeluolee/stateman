@@ -3,14 +3,9 @@ var StateMan = require("./stateman.js");
 
 
 
-function stateman( option ){
-  return new StateMan( option );
-}
 
+StateMan.Histery = require("./histery.js");
+StateMan.util = require("./util.js");
+StateMan.State = require("./state.js");
 
-stateman.Histery = require("./histery.js");
-stateman.util = require("./util.js");
-stateman.State = require("./state.js");
-stateman.StateMan = StateMan;
-
-module.exports = stateman;
+module.exports = StateMan;

@@ -9,9 +9,9 @@
 	else if(typeof define === 'function' && define.amd)
 		define(factory);
 	else if(typeof exports === 'object')
-		exports["stateman"] = factory();
+		exports["StateMan"] = factory();
 	else
-		root["stateman"] = factory();
+		root["StateMan"] = factory();
 })(this, function() {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
@@ -64,17 +64,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 
-	function stateman( option ){
-	  return new StateMan( option );
-	}
 
+	StateMan.Histery = __webpack_require__(2);
+	StateMan.util = __webpack_require__(3);
+	StateMan.State = __webpack_require__(4);
 
-	stateman.Histery = __webpack_require__(2);
-	stateman.util = __webpack_require__(3);
-	stateman.State = __webpack_require__(4);
-	stateman.StateMan = StateMan;
-
-	module.exports = stateman;
+	module.exports = StateMan;
 
 
 /***/ },

@@ -18,7 +18,7 @@ require("./scripts/release.js")(gulp);
 var wpConfig = {
  output: {
     filename: "stateman.js",
-    library: "stateman",
+    library: "StateMan",
     libraryTarget: "umd"
   }
 }
