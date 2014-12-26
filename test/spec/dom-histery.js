@@ -120,6 +120,17 @@ describe("Histery", function(){
 
     histery.off("change", num1);
   })
+  it("with prefix", function(){
+    // @TODO some hardcode '#' need remove
+    var histery = new Histery({
+      location: loc("http://regularjs.github.io/app/histery"),
+      prefix: '!'
+    })
+    histery.location.replace("http://regularjs.github.io/app/histery/code#!/prefix");
+    histery.on("change", num1)
+    histery.checkPath();
+    expect(locals["/prefix"]).to.equal(1);
+  })
 
 })
 

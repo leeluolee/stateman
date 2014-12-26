@@ -57,7 +57,7 @@
 /* 1 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var State = __webpack_require__(6);
+	var State = __webpack_require__(4);
 	var expect = __webpack_require__(9)
 
 
@@ -247,7 +247,7 @@
 	//    http://backbonejs.org
 
 
-	var _ = __webpack_require__(5);
+	var _ = __webpack_require__(6);
 	var browser = __webpack_require__(7);
 	var Histery = __webpack_require__(8);
 	var expect = __webpack_require__(9)
@@ -358,6 +358,17 @@
 
 	    histery.off("change", num1);
 	  })
+	  it("with prefix", function(){
+	    // @TODO some hardcode '#' need remove
+	    var histery = new Histery({
+	      location: loc("http://regularjs.github.io/app/histery"),
+	      prefix: '!'
+	    })
+	    histery.location.replace("http://regularjs.github.io/app/histery/code#!/prefix");
+	    histery.on("change", num1)
+	    histery.checkPath();
+	    expect(locals["/prefix"]).to.equal(1);
+	  })
 
 	})
 
@@ -378,9 +389,9 @@
 	//    For all details and documentation:
 	//    http://backbonejs.org
 
-	var StateMan = __webpack_require__(4);
+	var StateMan = __webpack_require__(5);
 	var expect = __webpack_require__(9)
-	var _ = __webpack_require__(5);
+	var _ = __webpack_require__(6);
 
 
 	// Backbone.js Trick for mock the location service
@@ -433,6 +444,7 @@
 	      leave: function(){obj.l12 = false}
 	    })
 	    .state('l1_has_next.l11_has_next.l12_not_next', {
+	      url:'',
 	      enter: function(){obj.l13 = true},
 	      leave: function(){obj.l13 = false}
 	    })
@@ -481,19 +493,12 @@
 
 	  })
 
-	  it("we can't directly vist the branch state", function(){
-
-	    stateman.nav("/l1_has_next")
-	    expect(obj.notfound).to.equal(true);
-
-	  })
-
-	  it("but we can vist the nested leaf state", function(){
-	    stateman.nav("/l1_has_next/l11_has_next/l12_not_next")
-	    expect(obj.l12).to.equal(true)
-	    expect(obj.notfound).to.equal(false)
+	  it("we can directly vist the branch state, but have low poririty than leaf", function(){
+	    stateman.nav("/l1_has_next/l11_has_next")
+	    expect(obj.l13).to.equal(true);
 
 	  })
+
 	  it("we can define the id in url", function(){
 	    stateman.nav("/book/1");
 	    expect(obj.book).to.equal(true)
@@ -823,418 +828,19 @@
 
 	  })
 
-	  
-	  
-
 	})
 
-
+	describe("stateman: matches and relative go", function(){
+	  
+	})
+	  
 	})
 
 /***/ },
 /* 4 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var State = __webpack_require__(6),
-	  Histery = __webpack_require__(8),
-	  brow = __webpack_require__(7),
-	  _ = __webpack_require__(5);
-
-
-
-	function StateMan(options){
-	  if(this instanceof StateMan === false){ return new StateMan(options)}
-	  options = options || {};
-	  State.call(this);
-	  if(options.history) this.history = options.history;
-	  this.current = this.pending = this;
-	}
-
-
-	StateMan.prototype = _.extend(
-
-	  _.ocreate(State.prototype), {
-
-	    constructor: StateMan,
-
-	    // start StateMan
-	    start: function(options){
-	      if( !this.history ) this.history = new Histery(options); 
-	      this.history.on("change", _.bind(this._afterPathChange, this));
-
-	      // if the history service is not runing, start it
-	      if(!this.history.isStart) this.history.start();
-	      return this;
-	    },
-	    // @TODO direct go the point state
-	    go: function(state, option, callback){
-	      option = option || {};
-	      if(typeof state === "string") state = this.state(state);
-	      if(!option.silent){
-	        var url = state.encode(option.param)
-	        this.nav(url, {silent: true});
-	        this.path = url;
-	      }
-	      this._go(state, option, callback);
-	      return this;
-	    },
-	    nav: function(url, options, callback){
-	      callback && (this._cb = callback)
-	      this.history.nav( url, options);
-	      this._cb = null;
-	      return this;
-	    },
-	    decode: function(path){
-	      var pathAndQuery = path.split("?");
-	      var query = this._findQuery(pathAndQuery[1]);
-	      path = pathAndQuery[0];
-	      var state = this._findState(this, path);
-	      if(state) _.extend(state.param, query);
-	      return state;
-	    },
-	    notify: function(path, param){
-	      return this.state(path).emit("notify", {
-	        from: this,
-	        param: param
-	      });
-	    },
-	    // after pathchange changed
-	    // @TODO: afterPathChange need based on decode
-	    _afterPathChange: function(path){
-
-	      this.emit("history:change", path);
-
-
-	      var found = this.decode(path), callback = this._cb;
-
-	      this.path = path;
-
-	      if(!found){
-	        // loc.nav("$default", {silent: true})
-	        var $notfound = this.state("$notfound");
-	        if($notfound) this._go($notfound, {path: path}, callback);
-
-	        return this.emit("404", {path: path});
-	      }
-
-
-	      this._go( found, { param: found.param}, callback );
-	    },
-
-	    // goto the state with some option
-	    _go: function(state, option, callback){
-
-	      if(typeof state === "string") state = this.state(state);
-
-	      if(!state) return _.log("destination is not defined")
-
-	      // not touch the end in previous transtion
-
-	      if(this.pending !== this.current){
-	        // we need return
-
-	        if(this.pending._pending){
-	          _.log("beacuse "+ this.pending.name+" is pending, the nav to [" +state.name+ "] is be forbit");
-	          this.emit("forbid", state);
-	          return this.nav(this.current.encode(this.param), {silent: true})
-	        }else{
-	          _.log("naving to [" + this.current.name + "] will be stoped, trying to ["+state.name+"] now");
-	          this.current = this.pending;
-	        }
-	        // back to before
-	      }
-	      this.param = option.param;
-
-	      var current = this.current,
-	        baseState = this._findBase(current, state),
-	        self = this;
-
-
-	      if(current !== state){
-	        this.previous = current;
-	        this.current = state;
-	        self.emit("begin")
-	        this._leave(baseState, option, function(){
-	          self._enter(state, option, function(){
-	            self.emit("end")
-	            if(typeof callback === "function") callback.call(self);
-	          })
-	        })
-	      }
-	      this._checkQueryAndParam(baseState, option);
-	    },
-	    _findQuery: function(querystr){
-	      var queries = querystr && querystr.split("&"), query= {};
-	      if(queries){
-	        var len = queries.length;
-	        var query = {};
-	        for(var i =0; i< len; i++){
-	          var tmp = queries[i].split("=");
-	          query[tmp[0]] = tmp[1];
-	        }
-	      }
-	      return query;
-	    },
-	    _findState: function(state, path){
-	      var states = state._states, found, param;
-	      if(!state.hasNext){
-	        param = state.regexp && state.decode(path);
-	      }
-	      if(param){
-	        state.param = param;
-	        return state;
-
-	      }else{
-	        for(var i in states) if(states.hasOwnProperty(i)){
-	          found = this._findState( states[i], path );
-	          if( found ) return found;
-	        }
-	        return false;
-	      }
-	    },
-	    // find the same branch;
-	    _findBase: function(now, before){
-	      if(!now || !before || now == this || before == this) return this;
-	      var np = now, bp = before, tmp;
-	      while(np && bp){
-	        tmp = bp;
-	        while(tmp){
-	          if(np === tmp) return tmp;
-	          tmp = tmp.parent;
-	        }
-	        np = np.parent;
-	      }
-	      return this;
-	    },
-	    _enter: function(end, options, callback){
-
-	      callback = callback || _.noop;
-
-	      var pending = this.pending;
-
-	      if(pending == end) return callback();
-	      var stage = [];
-	      while(end !== pending && end){
-	        stage.push(end);
-	        end = end.parent;
-	      }
-	      this._enterOne(stage, options, callback)
-	    },
-	    _enterOne: function(stage, options, callback){
-
-	      var cur = stage.pop(), self = this;
-	      if(!cur) return callback();
-
-	      this.pending = cur;
-
-	      cur.done = function(){
-	        self._enterOne(stage, options, callback)
-	        cur._pending = false;
-	        cur.done = null;
-	        cur.visited = true;
-	      }
-
-	      if(!cur.enter) cur.done();
-	      else {
-	        cur.enter(options);
-	        if(!cur._pending && cur.done) cur.done();
-	      }
-	    },
-	    _leave: function(end, options, callback){
-	      callback = callback || _.noop;
-	      if(end == this.pending) return callback();
-	      this._leaveOne(end, options,callback)
-	    },
-	    _leaveOne: function(end, options, callback){
-	      if( end === this.pending ) return callback();
-	      var cur = this.pending, self = this;
-	      cur.done = function(){
-	        if(cur.parent) self.pending = cur.parent;
-	        self._leaveOne(end, options, callback)
-	        cur._pending = false;
-	        cur.done = null;
-	      }
-	      if(!cur.leave) cur.done();
-	      else{
-	        cur.leave(options);
-	        if(!cur._pending && cur.done) cur.done();
-	      }
-	    },
-	    // check the query and Param
-	    _checkQueryAndParam: function(baseState, options){
-	      var from = baseState;
-	      while( from !== this ){
-	        from.update && from.update(options);
-	        from = from.parent;
-	      }
-	    }
-
-	}, true)
-
-
-
-	module.exports = StateMan;
-
-/***/ },
-/* 5 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var _ = module.exports = {};
-	var slice = [].slice, o2str = ({}).toString;
-
-
-	// merge o2's properties to Object o1. 
-	_.extend = function(o1, o2, override){
-	  for(var i in o2) if(override || o1[i] === undefined){
-	    o1[i] = o2[i]
-	  }
-	  return o1;
-	}
-
-
-	// Object.create shim
-	_.ocreate = Object.create || function(o) {
-	  var Foo = function(){};
-	  Foo.prototype = o;
-	  return new Foo;
-	}
-
-
-	_.slice = function(arr, index){
-	  return slice.call(arr, index);
-	}
-
-	_.typeOf = function typeOf (o) {
-	  return o == null ? String(o) : o2str.call(o).slice(8, -1).toLowerCase();
-	}
-
-
-	// small emitter 
-	_.emitable = (function(){
-	  var API = {
-	    on: function(event, fn) {
-	      if(typeof event === 'object'){
-	        for (var i in event) {
-	          this.on(i, event[i]);
-	        }
-	      }else{
-	        var handles = this._handles || (this._handles = {}),
-	          calls = handles[event] || (handles[event] = []);
-	        calls.push(fn);
-	      }
-	      return this;
-	    },
-	    off: function(event, fn) {
-	      if(!event || !this._handles) this._handles = {};
-	      if(!this._handles) return;
-
-	      var handles = this._handles , calls;
-
-	      if (calls = handles[event]) {
-	        if (!fn) {
-	          handles[event] = [];
-	          return this;
-	        }
-	        for (var i = 0, len = calls.length; i < len; i++) {
-	          if (fn === calls[i]) {
-	            calls.splice(i, 1);
-	            return this;
-	          }
-	        }
-	      }
-	      return this;
-	    },
-	    emit: function(event){
-	      var args = _.slice(arguments, 1),
-	        handles = this._handles, calls;
-
-	      if (!handles || !(calls = handles[event])) return this;
-	      for (var i = 0, len = calls.length; i < len; i++) {
-	        calls[i].apply(this, args)
-	      }
-	      return this;
-	    }
-	  }
-	  return function(obj){
-	      obj = typeof obj == "function" ? obj.prototype : obj;
-	      return _.extend(obj, API)
-	  }
-	})();
-
-
-	_.noop = function(){}
-
-	_.bind = function(fn, context){
-	  return function(){
-	    return fn.apply(context, arguments);
-	  }
-	}
-
-	var rDbSlash = /\/+/g, // double slash
-	  rEndSlash = /\/$/;    // end slash
-
-	_.cleanPath = function (path){
-	  return ("/" + path).replace( rDbSlash,"/" ).replace( rEndSlash, "" ) || "/";
-	}
-
-	// normalize the path
-	function normalizePath(path) {
-	  // means is from 
-	  // (?:\:([\w-]+))?(?:\(([^\/]+?)\))|(\*{2,})|(\*(?!\*)))/g
-	  var preIndex = 0;
-	  var keys = [];
-	  var index = 0;
-	  var matches = "";
-
-	  path = _.cleanPath(path);
-
-	  var regStr = path
-	    //  :id(capture)? | (capture)   |  ** | * 
-	    .replace(/\:([\w-]+)(?:\(([^\/]+?)\))?|(?:\(([^\/]+)\))|(\*{2,})|(\*(?!\*))/g, 
-	      function(all, key, keyformat, capture, mwild, swild, startAt) {
-	        // move the uncaptured fragment in the path
-	        if(startAt > preIndex) matches += path.slice(preIndex, startAt);
-	        preIndex = startAt + all.length;
-	        if( key ){
-	          matches += "(" + key + ")";
-	          keys.push(key)
-	          return "("+( keyformat || "[\\w-]+")+")";
-	        }
-	        matches += "(" + index + ")";
-
-	        keys.push( index++ );
-
-	        if( capture ){
-	           // sub capture detect
-	          return "(" + capture +  ")";
-	        } 
-	        if(mwild) return "(.*)";
-	        if(swild) return "([^\\/]*)";
-	    })
-
-	  if(preIndex !== path.length) matches += path.slice(preIndex)
-
-	  return {
-	    regexp: new RegExp("^" + regStr +"/?$"),
-	    keys: keys,
-	    matches: matches || path
-	  }
-	}
-
-	_.log = function(msg, type){
-	  typeof console !== "undefined" && console[type || "log"](msg)
-	}
-
-
-	_.normalize = normalizePath;
-
-
-
-/***/ },
-/* 6 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var _ = __webpack_require__(5);
+	var _ = __webpack_require__(6);
 
 	function State(option){
 	  this._states = {};
@@ -1403,6 +1009,410 @@
 	module.exports = State;
 
 /***/ },
+/* 5 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var State = __webpack_require__(4),
+	  Histery = __webpack_require__(8),
+	  brow = __webpack_require__(7),
+	  _ = __webpack_require__(6),
+	  stateFn = State.prototype.state;
+
+
+
+	function StateMan(options){
+	  if(this instanceof StateMan === false){ return new StateMan(options)}
+	  options = options || {};
+	  if(options.history) this.history = options.history;
+	  this._states = {};
+	  this.current = this.pending = this;
+	}
+
+
+	_.extend( _.emitable( StateMan ), {
+	    // start StateMan
+
+	    state: function(stateName, config){
+	      return stateFn.apply(this, arguments);
+	    },
+	    start: function(options){
+	      if( !this.history ) this.history = new Histery(options); 
+	      this.history.on("change", _.bind(this._afterPathChange, this));
+
+	      // if the history service is not runing, start it
+	      if(!this.history.isStart) this.history.start();
+	      return this;
+	    },
+	    // @TODO direct go the point state
+	    go: function(state, option, callback){
+	      option = option || {};
+	      if(typeof state === "string") state = this.state(state);
+	      if(option.encode !== false){
+	        var url = state.encode(option.param)
+	        this.nav(url, {silent: true, replace: option.replace});
+	        this.path = url;
+	      }
+	      this._go(state, option, callback);
+	      return this;
+	    },
+	    nav: function(url, options, callback){
+	      callback && (this._cb = callback)
+	      this.history.nav( url, options);
+	      this._cb = null;
+	      return this;
+	    },
+	    decode: function(path){
+	      var pathAndQuery = path.split("?");
+	      var query = this._findQuery(pathAndQuery[1]);
+	      path = pathAndQuery[0];
+	      var state = this._findState(this, path);
+	      if(state) _.extend(state.param, query);
+	      return state;
+	    },
+	    encode: State.prototype.encode,
+	    notify: function(path, param){
+	      return this.state(path).emit("notify", {
+	        from: this,
+	        param: param
+	      });
+	    },
+	    // after pathchange changed
+	    // @TODO: afterPathChange need based on decode
+	    _afterPathChange: function(path){
+
+	      this.emit("history:change", path);
+
+
+	      var found = this.decode(path), callback = this._cb;
+
+	      this.path = path;
+
+	      if(!found){
+	        // loc.nav("$default", {silent: true})
+	        var $notfound = this.state("$notfound");
+	        if($notfound) this._go($notfound, {path: path}, callback);
+
+	        return this.emit("404", {path: path});
+	      }
+
+
+	      this._go( found, { param: found.param}, callback );
+	    },
+
+	    // goto the state with some option
+	    _go: function(state, option, callback){
+
+	      if(typeof state === "string") state = this.state(state);
+
+	      if(!state) return _.log("destination is not defined")
+
+	      // not touch the end in previous transtion
+
+	      if(this.pending !== this.current){
+	        // we need return
+
+	        if(this.pending._pending){
+	          
+	          _.log("beacuse "+ this.pending.name+" is pending, the nav to [" +state.name+ "] is be forbit");
+
+	          this.emit("forbid", state);
+
+	          return this.nav(this.current.encode(this.param), {silent: true})
+	        }else{
+	          _.log("naving to [" + this.current.name + "] will be stoped, trying to ["+state.name+"] now");
+	          this.current = this.pending;
+	        }
+	        // back to before
+	      }
+	      this.param = option.param;
+
+	      var current = this.current,
+	        baseState = this._findBase(current, state),
+	        self = this;
+
+
+	      if(current !== state){
+	        this.previous = current;
+	        this.current = state;
+	        self.emit("begin")
+	        this._leave(baseState, option, function(){
+	          self._enter(state, option, function(){
+	            self.emit("end")
+	            if(typeof callback === "function") callback.call(self);
+	          })
+	        })
+	      }
+	      this._checkQueryAndParam(baseState, option);
+	    },
+	    _findQuery: function(querystr){
+	      var queries = querystr && querystr.split("&"), query= {};
+	      if(queries){
+	        var len = queries.length;
+	        var query = {};
+	        for(var i =0; i< len; i++){
+	          var tmp = queries[i].split("=");
+	          query[tmp[0]] = tmp[1];
+	        }
+	      }
+	      return query;
+	    },
+	    _findState: function(state, path){
+	      var states = state._states, found, param;
+
+	      // leaf-state has the high priority upon branch-state
+	      if(state.hasNext){
+	        for(var i in states) if(states.hasOwnProperty(i)){
+	          found = this._findState( states[i], path );
+	          if( found ) return found;
+	        }
+	      }
+	      param = state.regexp && state.decode(path);
+	      if(param){
+	        state.param = param;
+	        return state;
+	      }else{
+	        return false;
+	      }
+	    },
+	    // find the same branch;
+	    _findBase: function(now, before){
+	      if(!now || !before || now == this || before == this) return this;
+	      var np = now, bp = before, tmp;
+	      while(np && bp){
+	        tmp = bp;
+	        while(tmp){
+	          if(np === tmp) return tmp;
+	          tmp = tmp.parent;
+	        }
+	        np = np.parent;
+	      }
+	      return this;
+	    },
+	    _enter: function(end, options, callback){
+
+	      callback = callback || _.noop;
+
+	      var pending = this.pending;
+
+	      if(pending == end) return callback();
+	      var stage = [];
+	      while(end !== pending && end){
+	        stage.push(end);
+	        end = end.parent;
+	      }
+	      this._enterOne(stage, options, callback)
+	    },
+	    _enterOne: function(stage, options, callback){
+
+	      var cur = stage.pop(), self = this;
+	      if(!cur) return callback();
+
+	      this.pending = cur;
+
+	      cur.done = function(){
+	        self._enterOne(stage, options, callback)
+	        cur._pending = false;
+	        cur.done = null;
+	        cur.visited = true;
+	      }
+
+	      if(!cur.enter) cur.done();
+	      else {
+	        cur.enter(options);
+	        if(!cur._pending && cur.done) cur.done();
+	      }
+	    },
+	    _leave: function(end, options, callback){
+	      callback = callback || _.noop;
+	      if(end == this.pending) return callback();
+	      this._leaveOne(end, options,callback)
+	    },
+	    _leaveOne: function(end, options, callback){
+	      if( end === this.pending ) return callback();
+	      var cur = this.pending, self = this;
+	      cur.done = function(){
+	        if(cur.parent) self.pending = cur.parent;
+	        self._leaveOne(end, options, callback)
+	        cur._pending = false;
+	        cur.done = null;
+	      }
+	      if(!cur.leave) cur.done();
+	      else{
+	        cur.leave(options);
+	        if(!cur._pending && cur.done) cur.done();
+	      }
+	    },
+	    // check the query and Param
+	    _checkQueryAndParam: function(baseState, options){
+	      var from = baseState;
+	      while( from !== this ){
+	        from.update && from.update(options);
+	        from = from.parent;
+	      }
+	    }
+
+	}, true)
+
+
+
+	module.exports = StateMan;
+
+/***/ },
+/* 6 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var _ = module.exports = {};
+	var slice = [].slice, o2str = ({}).toString;
+
+
+	// merge o2's properties to Object o1. 
+	_.extend = function(o1, o2, override){
+	  for(var i in o2) if(override || o1[i] === undefined){
+	    o1[i] = o2[i]
+	  }
+	  return o1;
+	}
+
+
+	// Object.create shim
+	_.ocreate = Object.create || function(o) {
+	  var Foo = function(){};
+	  Foo.prototype = o;
+	  return new Foo;
+	}
+
+
+	_.slice = function(arr, index){
+	  return slice.call(arr, index);
+	}
+
+	_.typeOf = function typeOf (o) {
+	  return o == null ? String(o) : o2str.call(o).slice(8, -1).toLowerCase();
+	}
+
+
+	// small emitter 
+	_.emitable = (function(){
+	  var API = {
+	    on: function(event, fn) {
+	      if(typeof event === 'object'){
+	        for (var i in event) {
+	          this.on(i, event[i]);
+	        }
+	      }else{
+	        var handles = this._handles || (this._handles = {}),
+	          calls = handles[event] || (handles[event] = []);
+	        calls.push(fn);
+	      }
+	      return this;
+	    },
+	    off: function(event, fn) {
+	      if(!event || !this._handles) this._handles = {};
+	      if(!this._handles) return;
+
+	      var handles = this._handles , calls;
+
+	      if (calls = handles[event]) {
+	        if (!fn) {
+	          handles[event] = [];
+	          return this;
+	        }
+	        for (var i = 0, len = calls.length; i < len; i++) {
+	          if (fn === calls[i]) {
+	            calls.splice(i, 1);
+	            return this;
+	          }
+	        }
+	      }
+	      return this;
+	    },
+	    emit: function(event){
+	      var args = _.slice(arguments, 1),
+	        handles = this._handles, calls;
+
+	      if (!handles || !(calls = handles[event])) return this;
+	      for (var i = 0, len = calls.length; i < len; i++) {
+	        calls[i].apply(this, args)
+	      }
+	      return this;
+	    }
+	  }
+	  return function(obj){
+	      obj = typeof obj == "function" ? obj.prototype : obj;
+	      return _.extend(obj, API)
+	  }
+	})();
+
+
+	_.noop = function(){}
+
+	_.bind = function(fn, context){
+	  return function(){
+	    return fn.apply(context, arguments);
+	  }
+	}
+
+	var rDbSlash = /\/+/g, // double slash
+	  rEndSlash = /\/$/;    // end slash
+
+	_.cleanPath = function (path){
+	  return ("/" + path).replace( rDbSlash,"/" ).replace( rEndSlash, "" ) || "/";
+	}
+
+	// normalize the path
+	function normalizePath(path) {
+	  // means is from 
+	  // (?:\:([\w-]+))?(?:\(([^\/]+?)\))|(\*{2,})|(\*(?!\*)))/g
+	  var preIndex = 0;
+	  var keys = [];
+	  var index = 0;
+	  var matches = "";
+
+	  path = _.cleanPath(path);
+
+	  var regStr = path
+	    //  :id(capture)? | (capture)   |  ** | * 
+	    .replace(/\:([\w-]+)(?:\(([^\/]+?)\))?|(?:\(([^\/]+)\))|(\*{2,})|(\*(?!\*))/g, 
+	      function(all, key, keyformat, capture, mwild, swild, startAt) {
+	        // move the uncaptured fragment in the path
+	        if(startAt > preIndex) matches += path.slice(preIndex, startAt);
+	        preIndex = startAt + all.length;
+	        if( key ){
+	          matches += "(" + key + ")";
+	          keys.push(key)
+	          return "("+( keyformat || "[\\w-]+")+")";
+	        }
+	        matches += "(" + index + ")";
+
+	        keys.push( index++ );
+
+	        if( capture ){
+	           // sub capture detect
+	          return "(" + capture +  ")";
+	        } 
+	        if(mwild) return "(.*)";
+	        if(swild) return "([^\\/]*)";
+	    })
+
+	  if(preIndex !== path.length) matches += path.slice(preIndex)
+
+	  return {
+	    regexp: new RegExp("^" + regStr +"/?$"),
+	    keys: keys,
+	    matches: matches || path
+	  }
+	}
+
+	_.log = function(msg, type){
+	  typeof console !== "undefined" && console[type || "log"](msg)
+	}
+
+
+	_.normalize = normalizePath;
+
+
+
+/***/ },
 /* 7 */
 /***/ function(module, exports, __webpack_require__) {
 
@@ -1438,8 +1448,13 @@
 /* 8 */
 /***/ function(module, exports, __webpack_require__) {
 
+	
+	// MIT
+	// Thx Backbone.js 1.1.2  and https://github.com/cowboy/jquery-hashchange/blob/master/jquery.ba-hashchange.js
+	// for iframe patches in old ie.
+
 	var browser = __webpack_require__(7);
-	var _ = __webpack_require__(5);
+	var _ = __webpack_require__(6);
 
 
 	// the mode const
@@ -1473,9 +1488,7 @@
 
 	  this._fixInitState();
 
-	  if(options.autolink == null) options.autolink = true;
-
-	  this._autolink(options.autolink);
+	  this.autolink = options.autolink!==false;
 
 	  this.curPath = undefined;
 	}
@@ -1502,7 +1515,10 @@
 	      case QUIRK:
 	        this._checkLoop();
 	    }
+	    // event delegate
+	    this.autolink && this._autolink();
 
+	    this.curPath = path;
 
 	    this.emit("change", path);
 	  },
@@ -1518,16 +1534,16 @@
 	  // get the path modify
 	  checkPath: function(ev){
 
-	    var path = this.getPath();
+	    var path = this.getPath(), curPath = this.curPath;
 
 	    //for oldIE hash history issue
-	    if(path === this.curPath && this.iframe){
-	      path = this.getPath(this.iframe.location);
+	    if(path === curPath && this.iframe){
+	      curPath = this.getPath(this.iframe.location);
 	    }
 
-	    if( path !== this.curPath ) {
-	      this.iframe && this.nav(path);
-	      this.emit('change', ( this.curPath = _.cleanPath(path)) );
+	    if( path !== curPath ) {
+	      this.iframe && this.nav(path, {silent: true});
+	      this.emit('change', path);
 	    }
 	  },
 	  // get the current path
@@ -1544,6 +1560,8 @@
 
 	  nav: function(to, options ){
 
+	    var iframe = this.iframe;
+
 	    options = options || {};
 
 	    to = _.cleanPath(to);
@@ -1557,15 +1575,19 @@
 
 	    // 3 or 1 is matched
 	    if( this.mode !== HISTORY ){
-	      this.location.hash = "#" + to;
-	      if(this.iframe) this.iframe.location.hash = "#" + to;
+	      this._setHash(this.location, to, options.replace)
+	      if( iframe && this.getPath(iframe.location) !== to ){
+	        //
+	        if(!options.replace) iframe.document.open().close();
+	        this._setHash(this.iframe.location, to, options.replace)
+	      }
 	    }else{
-	      history.pushState( {}, options.title || "" , _.cleanPath( this.root + to ) )
+	      history[options.replace? 'replaceState': 'pushState']( {}, options.title || "" , _.cleanPath( this.root + to ) )
 	    }
 
 	    if( !options.silent ) this.emit('change', to);
 	  },
-	  _autolink: function(autolink){
+	  _autolink: function(){
 	    // only in html5 mode, the autolink is works
 	    // if(this.mode !== 2) return;
 	    var prefix = this.prefix, self = this;
@@ -1580,14 +1602,22 @@
 	      ev.preventDefault && ev.preventDefault();
 	      self.nav( hash , {force: true})
 	      return (ev.returnValue = false);
-
 	    } )
+	  },
+	  _setHash: function(location, path, replace){
+	    var href = location.href.replace(/(javascript:|#).*$/, '');
+	    if (replace){
+	      location.replace(href + this.prefix+ path);
+	    }
+	    else location.hash = this.prefix+ path;
 	  },
 	  // for browser that not support onhashchange
 	  _checkLoop: function(){
-
-	    this.checkPath();
-	    this.tid = setTimeout( _.bind( this._checkLoop, this ), this.interval );
+	    var self = this; 
+	    this.tid = setTimeout( function(){
+	      self._checkPath();
+	      self._checkLoop();
+	    }, this.interval );
 	  },
 	  // if we use real url in hash env( browser no history popstate support)
 	  // or we use hash in html5supoort mode (when paste url in other url)
@@ -1608,11 +1638,11 @@
 
 	    }
 	  },
-	  // Thanks for backbone.history  https://github.com/cowboy/jquery-hashchange/blob/master/jquery.ba-hashchange.js
-	  // for fixing the oldie hash history issues when with iframe hack
+	  // Thanks for backbone.history and https://github.com/cowboy/jquery-hashchange/blob/master/jquery.ba-hashchange.js
+	  // for helping stateman fixing the oldie hash history issues when with iframe hack
 	  _fixHashProbelm: function(path){
 	    var iframe = document.createElement('iframe'), body = document.body;
-	    iframe.src = 'javascript:0';
+	    iframe.src = 'javascript:;';
 	    iframe.style.display = 'none';
 	    iframe.tabIndex = -1;
 	    iframe.title = "";
@@ -2917,10 +2947,26 @@
 	    this
 	  , true ? module : {exports: {}}
 	);
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(11)(module), __webpack_require__(10).Buffer))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(10)(module), __webpack_require__(11).Buffer))
 
 /***/ },
 /* 10 */
+/***/ function(module, exports, __webpack_require__) {
+
+	module.exports = function(module) {
+		if(!module.webpackPolyfill) {
+			module.deprecate = function() {};
+			module.paths = [];
+			// module.parent = undefined by default
+			module.children = [];
+			module.webpackPolyfill = 1;
+		}
+		return module;
+	}
+
+
+/***/ },
+/* 11 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(Buffer) {/*!
@@ -2931,8 +2977,8 @@
 	 */
 
 	var base64 = __webpack_require__(14)
-	var ieee754 = __webpack_require__(13)
-	var isArray = __webpack_require__(12)
+	var ieee754 = __webpack_require__(12)
+	var isArray = __webpack_require__(13)
 
 	exports.Buffer = Buffer
 	exports.SlowBuffer = Buffer
@@ -3975,65 +4021,10 @@
 	  }
 	}
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(10).Buffer))
-
-/***/ },
-/* 11 */
-/***/ function(module, exports, __webpack_require__) {
-
-	module.exports = function(module) {
-		if(!module.webpackPolyfill) {
-			module.deprecate = function() {};
-			module.paths = [];
-			// module.parent = undefined by default
-			module.children = [];
-			module.webpackPolyfill = 1;
-		}
-		return module;
-	}
-
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(11).Buffer))
 
 /***/ },
 /* 12 */
-/***/ function(module, exports, __webpack_require__) {
-
-	
-	/**
-	 * isArray
-	 */
-
-	var isArray = Array.isArray;
-
-	/**
-	 * toString
-	 */
-
-	var str = Object.prototype.toString;
-
-	/**
-	 * Whether or not the given `val`
-	 * is an array.
-	 *
-	 * example:
-	 *
-	 *        isArray([]);
-	 *        // > true
-	 *        isArray(arguments);
-	 *        // > false
-	 *        isArray('');
-	 *        // > false
-	 *
-	 * @param {mixed} val
-	 * @return {bool}
-	 */
-
-	module.exports = isArray || function (val) {
-	  return !! val && '[object Array]' == str.call(val);
-	};
-
-
-/***/ },
-/* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
 	exports.read = function(buffer, offset, isLE, mLen, nBytes) {
@@ -4119,6 +4110,45 @@
 	  for (; eLen > 0; buffer[offset + i] = e & 0xff, i += d, e /= 256, eLen -= 8);
 
 	  buffer[offset + i - d] |= s * 128;
+	};
+
+
+/***/ },
+/* 13 */
+/***/ function(module, exports, __webpack_require__) {
+
+	
+	/**
+	 * isArray
+	 */
+
+	var isArray = Array.isArray;
+
+	/**
+	 * toString
+	 */
+
+	var str = Object.prototype.toString;
+
+	/**
+	 * Whether or not the given `val`
+	 * is an array.
+	 *
+	 * example:
+	 *
+	 *        isArray([]);
+	 *        // > true
+	 *        isArray(arguments);
+	 *        // > false
+	 *        isArray('');
+	 *        // > false
+	 *
+	 * @param {mixed} val
+	 * @return {bool}
+	 */
+
+	module.exports = isArray || function (val) {
+	  return !! val && '[object Array]' == str.call(val);
 	};
 
 

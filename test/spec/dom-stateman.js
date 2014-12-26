@@ -63,6 +63,7 @@ describe("stateman:basic", function(){
       leave: function(){obj.l12 = false}
     })
     .state('l1_has_next.l11_has_next.l12_not_next', {
+      url:'',
       enter: function(){obj.l13 = true},
       leave: function(){obj.l13 = false}
     })
@@ -111,19 +112,12 @@ describe("stateman:basic", function(){
 
   })
 
-  it("we can't directly vist the branch state", function(){
-
-    stateman.nav("/l1_has_next")
-    expect(obj.notfound).to.equal(true);
-
-  })
-
-  it("but we can vist the nested leaf state", function(){
-    stateman.nav("/l1_has_next/l11_has_next/l12_not_next")
-    expect(obj.l12).to.equal(true)
-    expect(obj.notfound).to.equal(false)
+  it("we can directly vist the branch state, but have low poririty than leaf", function(){
+    stateman.nav("/l1_has_next/l11_has_next")
+    expect(obj.l13).to.equal(true);
 
   })
+
   it("we can define the id in url", function(){
     stateman.nav("/book/1");
     expect(obj.book).to.equal(true)
@@ -453,10 +447,10 @@ describe("stateman:other", function(){
 
   })
 
-  
-  
-
 })
 
-
+describe("stateman: matches and relative go", function(){
+  
+})
+  
 })

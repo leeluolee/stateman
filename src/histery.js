@@ -1,3 +1,8 @@
+
+// MIT
+// Thx Backbone.js 1.1.2  and https://github.com/cowboy/jquery-hashchange/blob/master/jquery.ba-hashchange.js
+// for iframe patches in old ie.
+
 var browser = require("./browser.js");
 var _ = require("./util.js");
 
@@ -33,9 +38,7 @@ function Histery(options){
 
   this._fixInitState();
 
-  if(options.autolink == null) options.autolink = true;
-
-  this._autolink(options.autolink);
+  this.autolink = options.autolink!==false;
 
   this.curPath = undefined;
 }
@@ -62,7 +65,10 @@ _.extend( _.emitable(Histery), {
       case QUIRK:
         this._checkLoop();
     }
+    // event delegate
+    this.autolink && this._autolink();
 
+    this.curPath = path;
 
     this.emit("change", path);
   },
@@ -78,16 +84,16 @@ _.extend( _.emitable(Histery), {
   // get the path modify
   checkPath: function(ev){
 
-    var path = this.getPath();
+    var path = this.getPath(), curPath = this.curPath;
 
     //for oldIE hash history issue
-    if(path === this.curPath && this.iframe){
-      path = this.getPath(this.iframe.location);
+    if(path === curPath && this.iframe){
+      curPath = this.getPath(this.iframe.location);
     }
 
-    if( path !== this.curPath ) {
-      this.iframe && this.nav(path);
-      this.emit('change', ( this.curPath = _.cleanPath(path)) );
+    if( path !== curPath ) {
+      this.iframe && this.nav(path, {silent: true});
+      this.emit('change', path);
     }
   },
   // get the current path
@@ -104,6 +110,8 @@ _.extend( _.emitable(Histery), {
 
   nav: function(to, options ){
 
+    var iframe = this.iframe;
+
     options = options || {};
 
     to = _.cleanPath(to);
@@ -117,15 +125,19 @@ _.extend( _.emitable(Histery), {
 
     // 3 or 1 is matched
     if( this.mode !== HISTORY ){
-      this.location.hash = "#" + to;
-      if(this.iframe) this.iframe.location.hash = "#" + to;
+      this._setHash(this.location, to, options.replace)
+      if( iframe && this.getPath(iframe.location) !== to ){
+        //
+        if(!options.replace) iframe.document.open().close();
+        this._setHash(this.iframe.location, to, options.replace)
+      }
     }else{
-      history.pushState( {}, options.title || "" , _.cleanPath( this.root + to ) )
+      history[options.replace? 'replaceState': 'pushState']( {}, options.title || "" , _.cleanPath( this.root + to ) )
     }
 
     if( !options.silent ) this.emit('change', to);
   },
-  _autolink: function(autolink){
+  _autolink: function(){
     // only in html5 mode, the autolink is works
     // if(this.mode !== 2) return;
     var prefix = this.prefix, self = this;
@@ -140,14 +152,22 @@ _.extend( _.emitable(Histery), {
       ev.preventDefault && ev.preventDefault();
       self.nav( hash , {force: true})
       return (ev.returnValue = false);
-
     } )
+  },
+  _setHash: function(location, path, replace){
+    var href = location.href.replace(/(javascript:|#).*$/, '');
+    if (replace){
+      location.replace(href + this.prefix+ path);
+    }
+    else location.hash = this.prefix+ path;
   },
   // for browser that not support onhashchange
   _checkLoop: function(){
-
-    this.checkPath();
-    this.tid = setTimeout( _.bind( this._checkLoop, this ), this.interval );
+    var self = this; 
+    this.tid = setTimeout( function(){
+      self._checkPath();
+      self._checkLoop();
+    }, this.interval );
   },
   // if we use real url in hash env( browser no history popstate support)
   // or we use hash in html5supoort mode (when paste url in other url)
@@ -168,11 +188,11 @@ _.extend( _.emitable(Histery), {
 
     }
   },
-  // Thanks for backbone.history  https://github.com/cowboy/jquery-hashchange/blob/master/jquery.ba-hashchange.js
-  // for fixing the oldie hash history issues when with iframe hack
+  // Thanks for backbone.history and https://github.com/cowboy/jquery-hashchange/blob/master/jquery.ba-hashchange.js
+  // for helping stateman fixing the oldie hash history issues when with iframe hack
   _fixHashProbelm: function(path){
     var iframe = document.createElement('iframe'), body = document.body;
-    iframe.src = 'javascript:0';
+    iframe.src = 'javascript:;';
     iframe.style.display = 'none';
     iframe.tabIndex = -1;
     iframe.title = "";

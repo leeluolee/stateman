@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <script src="/maze.js"></script>
+  <script src="/stateman.js"></script>
 </head>
 <style>
   .side{
@@ -20,13 +20,14 @@
 
 
 <ul class='side'>
-<li> <a href="#/home">home</a> </li>
-<li> <a href="#/contact?id=1">contact</a> </li>
-<li> <a href="#/contact/101?id=2">contact.detail</a> </li>
-<li> <a href="#/contact/102/config?id=4">contact.detail.config</a> </li>
-<li> <a href="#/contact/list/config">contact.list.config</a> </li>
-<li> <a href="#/contact/100/message?id=3">about1</a> </li>
-<li> <a href="#/contact/101/message?id=4">about2</a> </li>
+<li> <a href="#!/home1">home1:nofound</a> </li>
+<li> <a href="#!/home">home</a> </li>
+<li> <a href="#!/contact?id=1">contact</a> </li>
+<li> <a href="#!/contact/101?id=2">contact.detail</a> </li>
+<li> <a href="#!/contact/102/config?id=4">contact.detail.config</a> </li>
+<li> <a href="#!/contact/list/config">contact.list.config</a> </li>
+<li> <a href="#!/contact/100/message?id=3">about1</a> </li>
+<li> <a href="#!/contact/101/message?id=4">about2</a> </li>
 </ul>
 
 <ul id="container" style="height: 600px;width:1000px"></ul>
@@ -36,76 +37,71 @@
   var container = document.getElementById("container");
 
   function textlog(message){
-    container.innerHTML += "<li>" + message + "</li>"
+    console.log(message)
+    // container.innerHTML += "<li>" + message + "</li>"
   }
 
 
 
 
-  var maze = new Maze()
-    .state("home", {enter: function(){textlog(this.currentName, "---->enter")}})
+  var stateman = new StateMan();
+
+    stateman.state("home", {enter: function(){textlog(this.currentName, "---->enter")}})
     .state("home.list", {url: "",enter: function(){textlog(this.currentName, ".list ---->enter")}})
     .state("contact", {
         enter: function(){textlog("---->enter contact")}, 
         leave: function(){textlog("leave contact <----")},
-        update: function(data){ textlog(data+ 'contact update');}
+        update: function(data){ textlog(data, 'contact update');}
       })
       .state("contact.list", { enter: function(){textlog( "---->enter config.list")}})
       .state("contact.list.config", {enter: function(){textlog( "---->enter contact.list.config")}})
       .state("contact.detail", {
         url:":id",
-        update:function(data){textlog(data+ 'contact.detail update')},    
+        update:function(data){textlog(data, 'contact.detail update');},    
         enter: function(){textlog("------>enter contact.detail")},
         leave: function(){textlog("<-------leave contact.detail")}
       })
       .state("contact.detail.config", {
-        enter: function(step){textlog("-------->enter contact.detail.config " + step.param.id)},
-        leave: function(step){textlog("<--------leave contact.detail.config " + step.param.id)}
+        enter: function(step){textlog("-------->enter contact.detail.config ");},
+        leave: function(step){textlog("<--------leave contact.detail.config ") }
       })
     .state("about",{
       url: "^/contact/:id/message" ,
       update: function(option){textlog("update", option)},
       enter: function(step){
-        step.async();
+        var done = this.async();
         textlog("1s later")
         setTimeout(function(){
           textlog("---->enter about" ,step);
-          step.done();
+          done();
         }, 1000)
       },
       leave: function(step){
-        step.async();
+        var done = this.async();
         textlog("1s later")
         setTimeout(function(){
           textlog("---->leave about" ,step);
-          step.done();
+          done();
         }, 1000)
 
       }
     })
     .state("$notfound", {
       enter: function(){
-        textlog("notfound")
+        stateman.go('contact.detail', {
+          param: {id:1},
+          replace: true
+        })
       }
     })
-    .on("notover", function(ev){
-
+    .on("history:change", function(path){
+      console.log("path changed!!", path)
     })
-    .start({ root:"/a", html5: true, mode: 3 });
+    .start({prefix:'!'});
 
 
 
-maze.history.on('change', function(path){
-  textlog("================" + path + "==================");
-})
 
-
-var s = new Maze.State();
-s.config({url: "base"})
-s.state("contact", {url: '/contact'})
-s.state("contact.list", {url: '(type| /\\w+/home)'})
-s.state("contact.list.detail", {url: '/:name(\\w+)'})
-s.state("contact.list.detail.message", {url: '([0-9]+)/message'})
 
 
 

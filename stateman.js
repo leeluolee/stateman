@@ -79,26 +79,26 @@ return /******/ (function(modules) { // webpackBootstrap
 	var State = __webpack_require__(4),
 	  Histery = __webpack_require__(2),
 	  brow = __webpack_require__(5),
-	  _ = __webpack_require__(3);
+	  _ = __webpack_require__(3),
+	  stateFn = State.prototype.state;
 
 
 
 	function StateMan(options){
 	  if(this instanceof StateMan === false){ return new StateMan(options)}
 	  options = options || {};
-	  State.call(this);
 	  if(options.history) this.history = options.history;
+	  this._states = {};
 	  this.current = this.pending = this;
 	}
 
 
-	StateMan.prototype = _.extend(
-
-	  _.ocreate(State.prototype), {
-
-	    constructor: StateMan,
-
+	_.extend( _.emitable( StateMan ), {
 	    // start StateMan
+
+	    state: function(stateName, config){
+	      return stateFn.apply(this, arguments);
+	    },
 	    start: function(options){
 	      if( !this.history ) this.history = new Histery(options); 
 	      this.history.on("change", _.bind(this._afterPathChange, this));
@@ -111,9 +111,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    go: function(state, option, callback){
 	      option = option || {};
 	      if(typeof state === "string") state = this.state(state);
-	      if(!option.silent){
+	      if(option.encode !== false){
 	        var url = state.encode(option.param)
-	        this.nav(url, {silent: true});
+	        this.nav(url, {silent: true, replace: option.replace});
 	        this.path = url;
 	      }
 	      this._go(state, option, callback);
@@ -133,6 +133,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      if(state) _.extend(state.param, query);
 	      return state;
 	    },
+	    encode: State.prototype.encode,
 	    notify: function(path, param){
 	      return this.state(path).emit("notify", {
 	        from: this,
@@ -175,8 +176,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	        // we need return
 
 	        if(this.pending._pending){
+	          
 	          _.log("beacuse "+ this.pending.name+" is pending, the nav to [" +state.name+ "] is be forbit");
+
 	          this.emit("forbid", state);
+
 	          return this.nav(this.current.encode(this.param), {silent: true})
 	        }else{
 	          _.log("naving to [" + this.current.name + "] will be stoped, trying to ["+state.name+"] now");
@@ -218,18 +222,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 	    _findState: function(state, path){
 	      var states = state._states, found, param;
-	      if(!state.hasNext){
-	        param = state.regexp && state.decode(path);
-	      }
-	      if(param){
-	        state.param = param;
-	        return state;
 
-	      }else{
+	      // leaf-state has the high priority upon branch-state
+	      if(state.hasNext){
 	        for(var i in states) if(states.hasOwnProperty(i)){
 	          found = this._findState( states[i], path );
 	          if( found ) return found;
 	        }
+	      }
+	      param = state.regexp && state.decode(path);
+	      if(param){
+	        state.param = param;
+	        return state;
+	      }else{
 	        return false;
 	      }
 	    },
@@ -320,6 +325,11 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 2 */
 /***/ function(module, exports, __webpack_require__) {
 
+	
+	// MIT
+	// Thx Backbone.js 1.1.2  and https://github.com/cowboy/jquery-hashchange/blob/master/jquery.ba-hashchange.js
+	// for iframe patches in old ie.
+
 	var browser = __webpack_require__(5);
 	var _ = __webpack_require__(3);
 
@@ -355,9 +365,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  this._fixInitState();
 
-	  if(options.autolink == null) options.autolink = true;
-
-	  this._autolink(options.autolink);
+	  this.autolink = options.autolink!==false;
 
 	  this.curPath = undefined;
 	}
@@ -384,7 +392,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	      case QUIRK:
 	        this._checkLoop();
 	    }
+	    // event delegate
+	    this.autolink && this._autolink();
 
+	    this.curPath = path;
 
 	    this.emit("change", path);
 	  },
@@ -400,16 +411,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	  // get the path modify
 	  checkPath: function(ev){
 
-	    var path = this.getPath();
+	    var path = this.getPath(), curPath = this.curPath;
 
 	    //for oldIE hash history issue
-	    if(path === this.curPath && this.iframe){
-	      path = this.getPath(this.iframe.location);
+	    if(path === curPath && this.iframe){
+	      curPath = this.getPath(this.iframe.location);
 	    }
 
-	    if( path !== this.curPath ) {
-	      this.iframe && this.nav(path);
-	      this.emit('change', ( this.curPath = _.cleanPath(path)) );
+	    if( path !== curPath ) {
+	      this.iframe && this.nav(path, {silent: true});
+	      this.emit('change', path);
 	    }
 	  },
 	  // get the current path
@@ -426,6 +437,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  nav: function(to, options ){
 
+	    var iframe = this.iframe;
+
 	    options = options || {};
 
 	    to = _.cleanPath(to);
@@ -439,15 +452,19 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    // 3 or 1 is matched
 	    if( this.mode !== HISTORY ){
-	      this.location.hash = "#" + to;
-	      if(this.iframe) this.iframe.location.hash = "#" + to;
+	      this._setHash(this.location, to, options.replace)
+	      if( iframe && this.getPath(iframe.location) !== to ){
+	        //
+	        if(!options.replace) iframe.document.open().close();
+	        this._setHash(this.iframe.location, to, options.replace)
+	      }
 	    }else{
-	      history.pushState( {}, options.title || "" , _.cleanPath( this.root + to ) )
+	      history[options.replace? 'replaceState': 'pushState']( {}, options.title || "" , _.cleanPath( this.root + to ) )
 	    }
 
 	    if( !options.silent ) this.emit('change', to);
 	  },
-	  _autolink: function(autolink){
+	  _autolink: function(){
 	    // only in html5 mode, the autolink is works
 	    // if(this.mode !== 2) return;
 	    var prefix = this.prefix, self = this;
@@ -462,14 +479,22 @@ return /******/ (function(modules) { // webpackBootstrap
 	      ev.preventDefault && ev.preventDefault();
 	      self.nav( hash , {force: true})
 	      return (ev.returnValue = false);
-
 	    } )
+	  },
+	  _setHash: function(location, path, replace){
+	    var href = location.href.replace(/(javascript:|#).*$/, '');
+	    if (replace){
+	      location.replace(href + this.prefix+ path);
+	    }
+	    else location.hash = this.prefix+ path;
 	  },
 	  // for browser that not support onhashchange
 	  _checkLoop: function(){
-
-	    this.checkPath();
-	    this.tid = setTimeout( _.bind( this._checkLoop, this ), this.interval );
+	    var self = this; 
+	    this.tid = setTimeout( function(){
+	      self._checkPath();
+	      self._checkLoop();
+	    }, this.interval );
 	  },
 	  // if we use real url in hash env( browser no history popstate support)
 	  // or we use hash in html5supoort mode (when paste url in other url)
@@ -490,11 +515,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    }
 	  },
-	  // Thanks for backbone.history  https://github.com/cowboy/jquery-hashchange/blob/master/jquery.ba-hashchange.js
-	  // for fixing the oldie hash history issues when with iframe hack
+	  // Thanks for backbone.history and https://github.com/cowboy/jquery-hashchange/blob/master/jquery.ba-hashchange.js
+	  // for helping stateman fixing the oldie hash history issues when with iframe hack
 	  _fixHashProbelm: function(path){
 	    var iframe = document.createElement('iframe'), body = document.body;
-	    iframe.src = 'javascript:0';
+	    iframe.src = 'javascript:;';
 	    iframe.style.display = 'none';
 	    iframe.tabIndex = -1;
 	    iframe.title = "";

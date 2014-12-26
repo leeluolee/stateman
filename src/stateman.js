@@ -1,26 +1,26 @@
 var State = require("./state.js"),
   Histery = require("./histery.js"),
   brow = require("./browser.js"),
-  _ = require("./util.js");
+  _ = require("./util.js"),
+  stateFn = State.prototype.state;
 
 
 
 function StateMan(options){
   if(this instanceof StateMan === false){ return new StateMan(options)}
   options = options || {};
-  State.call(this);
   if(options.history) this.history = options.history;
+  this._states = {};
   this.current = this.pending = this;
 }
 
 
-StateMan.prototype = _.extend(
-
-  _.ocreate(State.prototype), {
-
-    constructor: StateMan,
-
+_.extend( _.emitable( StateMan ), {
     // start StateMan
+
+    state: function(stateName, config){
+      return stateFn.apply(this, arguments);
+    },
     start: function(options){
       if( !this.history ) this.history = new Histery(options); 
       this.history.on("change", _.bind(this._afterPathChange, this));
@@ -33,9 +33,9 @@ StateMan.prototype = _.extend(
     go: function(state, option, callback){
       option = option || {};
       if(typeof state === "string") state = this.state(state);
-      if(!option.silent){
+      if(option.encode !== false){
         var url = state.encode(option.param)
-        this.nav(url, {silent: true});
+        this.nav(url, {silent: true, replace: option.replace});
         this.path = url;
       }
       this._go(state, option, callback);
@@ -55,6 +55,7 @@ StateMan.prototype = _.extend(
       if(state) _.extend(state.param, query);
       return state;
     },
+    encode: State.prototype.encode,
     notify: function(path, param){
       return this.state(path).emit("notify", {
         from: this,
@@ -97,8 +98,11 @@ StateMan.prototype = _.extend(
         // we need return
 
         if(this.pending._pending){
+          
           _.log("beacuse "+ this.pending.name+" is pending, the nav to [" +state.name+ "] is be forbit");
+
           this.emit("forbid", state);
+
           return this.nav(this.current.encode(this.param), {silent: true})
         }else{
           _.log("naving to [" + this.current.name + "] will be stoped, trying to ["+state.name+"] now");
@@ -140,18 +144,19 @@ StateMan.prototype = _.extend(
     },
     _findState: function(state, path){
       var states = state._states, found, param;
-      if(!state.hasNext){
-        param = state.regexp && state.decode(path);
-      }
-      if(param){
-        state.param = param;
-        return state;
 
-      }else{
+      // leaf-state has the high priority upon branch-state
+      if(state.hasNext){
         for(var i in states) if(states.hasOwnProperty(i)){
           found = this._findState( states[i], path );
           if( found ) return found;
         }
+      }
+      param = state.regexp && state.decode(path);
+      if(param){
+        state.param = param;
+        return state;
+      }else{
         return false;
       }
     },
