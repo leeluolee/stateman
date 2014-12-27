@@ -93,7 +93,7 @@ _.extend( _.emitable(Histery), {
 
     if( path !== curPath ) {
       this.iframe && this.nav(path, {silent: true});
-      this.emit('change', path);
+      this.emit('change', (this.curPath=path));
     }
   },
   // get the current path
