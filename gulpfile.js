@@ -179,6 +179,10 @@ gulp.task("test", ["mocha", "karma"])
 gulp.task("release", ["tag"])
 
 
+gulp.task('travis', ['jshint' ,'build','mocha',  'karma']);
+
+
+
 function wrap(fn){
   return through.obj(fn);
 }

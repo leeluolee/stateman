@@ -93,12 +93,6 @@ _.extend( _.emitable( State ), {
 
       url = (typeof base.url === "string" ? base.url: (base.currentName || "")) + "/" + url;
 
-      if(base === this){
-        // url.replace(/\:([-\w]+)/g, function(all, capture){
-        //   _watchedParam.push()
-        // })
-        this._watchedParam = _watchedParam.concat(this.watched || []);
-      }
       // means absolute;
       if(url.indexOf("^/") === 0) {
         url = url.slice(1);
@@ -110,9 +104,6 @@ _.extend( _.emitable( State ), {
     var pathAndQuery = this.path.split("?");
     this.path = pathAndQuery[0];
     // some Query we need watched
-    if(pathAndQuery[1]){
-      this._watchedQuery = pathAndQuery[1].split("&");
-    }
 
     _.extend(this, _.normalize(this.path), true);
   },

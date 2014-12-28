@@ -60,11 +60,6 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	var StateMan = __webpack_require__(1);
-
-
-
-
-
 	StateMan.Histery = __webpack_require__(2);
 	StateMan.util = __webpack_require__(3);
 	StateMan.State = __webpack_require__(4);
@@ -821,12 +816,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	      url = (typeof base.url === "string" ? base.url: (base.currentName || "")) + "/" + url;
 
-	      if(base === this){
-	        // url.replace(/\:([-\w]+)/g, function(all, capture){
-	        //   _watchedParam.push()
-	        // })
-	        this._watchedParam = _watchedParam.concat(this.watched || []);
-	      }
 	      // means absolute;
 	      if(url.indexOf("^/") === 0) {
 	        url = url.slice(1);
@@ -838,9 +827,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var pathAndQuery = this.path.split("?");
 	    this.path = pathAndQuery[0];
 	    // some Query we need watched
-	    if(pathAndQuery[1]){
-	      this._watchedQuery = pathAndQuery[1].split("&");
-	    }
 
 	    _.extend(this, _.normalize(this.path), true);
 	  },
