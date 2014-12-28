@@ -1,4 +1,47 @@
+
 # StateMan API Reference
+
+## Quirk Links
+
+### API
+- [new StateMan(option) or StateMan(option)](#instance)
+- [__stateman.state__](#state)
+- [stateman.start](#start)
+- [stateman.nav](#nav)
+- [stateman.go](#nav)
+- [stateman.is](#nav)
+- [stateman.encode](#encode)
+
+- [stateman.on](#on)
+- [stateman.off](#off)
+- [stateman.emit](#emit)
+
+- [stateman.stop](#stop)
+- [stateman.decode](#decode)
+
+### [Event](#event)
+
+- __`begin`__: emit when an navigating is begin
+- __`end`__:  emit when an navigating is over
+- `notfound`:  no state is founded when path is changed
+- `start`: emit when calling stateman.start
+- `stop`: emit when calling stateman.stop
+- `history:change`: if path  is changed . emitted by stateman.history.
+
+### Properties
+
+- [stateman.current](#current)
+- [stateman.previous](#previous)
+- [stateman.pending](#pending)
+- [stateman.param](#param)
+
+### Deep Guide
+
+* [nested state](#nested)
+* [__LifeCycle__ In one Navigating](#lifecycle)
+* [__params in routing__](#params)
+* [encode url from state with param](#restore)
+* [redirect during one navigating](#redirect)
 
 
 ## Class: StateMan
@@ -11,56 +54,116 @@ __return__:  the StateMan instance
 ```javascript
 var StateMan = require("stateman");
 
-var stateman = new StateMan();  // or StateMan()
-
+var stateman = new StateMan();  
+var stateman = StateMan();
 ```
 
 
 ## Instance: stateman
 
-### 1. stateman.state(stateName[, config])
+## 1. stateman.state(stateName[, config])
+stateman.state is the most important api in stateman. 
 
-__Arguments__
+ __Arguments__
 
-- stateName [String]: the state's name , like `contact.detail`
-- config [Function|Object]: if config is not specified, the state defined by stateName will be return
-	* config.url:  default url is the lastName: like `detail` in `contact.detail`
-      ```js
+- __stateName__ < String  |Object >: the state's name , like `contact.detail`, if a `Object` is passed in, there will be a multiple operation.
+- __config__ < Function | Object >: the configure of the state which stateName specified.
+	if config is not passed, target [state](#State)   will be return. if a `Function` is passed, it will be considered as the [enter](#enter) property
+
+you can simply replace the `.` with `/` to get the url that state represent. for example , the url of 'app.contact' is '/app/contact'. but you can adjust the url by passing the [url](#url) in config.
+
+ __Return__ : this
+
+__Example__
+
+```js
+
+stateman
+	.state("app", {
+		enter: function(){
+			console.log("enter the state: app")
+		},
+		leave: function(){
+			console.log("leave the state: app")
+		}
+	})
+	.state("app.contact", function(){
+			console.log("enter the app.contact state")
+	})
+
+// pass in a Object for multiple operation
+stateman.state({
+	"demo.detail": function(){
+			console.log("enter the demo.detail state")
+	},
+	"demo.list": {
+		enter: function(){}
+		leave: function(){}
+	}
+})
+
+// get the state definition
+
+```
+
+As you see, we haven't create the `demo` state before creating `demo.detail`, beacuse stateman have created it for you. 
+
+
+
+
+
+
+if config is not passing, `state.state(stateName)` will return the target state.
+
+```js
+
+var state = stateman.state('demo.list'); // return the demo.list state
+
+```
+
+
+
+
+### __The detail of the param `config`__
+
+the config 
+
+
+* config.url:  default url is the lastName: like `detail` in `contact.detail`
+```js
       	 //=> /contact/:id
-		stateman.state('contact.detact', {url: ':id'})  
-	  ```
-            
-	* config.enter(option) [see:lifecyle](#lifecylce): An function that will be called when the state be entered into.
-	* config.leave(option) [see:lifecyle](#lifecylce): An function that will be called when the state be leaved out.
-	* config.update(option) [see:lifecyle](#lifecylce): the state is on the way to the current state, but not be entered into or leave out. 
-
-
-__example__: consume the current state is `app.detail.message.detail`, when naving to `app.detail.list.option`. the transition is
-
+		stateman.state('contact.detact', {url: ':id'}) 
+		
 ```
-1. leave detail.message.detail 
-2. leave detail.message
-3. enter detail.list
-4. enter detail.list.option
 
-1. detail update
+* config.enter(option) [see:lifecyle](#lifecylce): a function that will be called when the state be entered into.
+* config.leave(option) [see:lifecyle](#lifecylce): a function that will be called when the state be leaved out.
+* config.update(option) [see:lifecyle](#lifecylce): states that included by current state, but not be entered into or leave out. 
+
+
+
+__example__: consume the current state is `app.detail.message.detail`, when naving to `app.detail.list.option`. the complete process is
+
+1. leave app.detail.message.detail 
+2. leave app.detail.message
+3. enter app.detail.list
+4. enter app.detail.list.option
+
+during the navigating, there are two state is on the way to current(app.detail.list.option): `app.detail` and `app`. they will update.
+
+1. app.detail update
 2. app update
-```
 
-`enter`, `leave` and `update` accepet same param named `option`. option contains a special property `option.param` represent the param from url [see more: url routing](#routing)
+`enter`, `leave` and `update` they all accepet an param named `option`. option contains a special property `option.param` represent the param from url [see more: url routing](#routing)
 
 a example to explain the lifecycle
 [__Example__@TODO]()
 
-you can directly__create nested state__ without creating parent state first.
-
-```javascript
-stateman.state('lv1.lv2.lv3', {})
-```
 
 
 
 
+<a name='param'></a>
 
 ### __Important: The param captured in routing__
 
@@ -194,7 +297,6 @@ trigger a specified event.
 5. notfound: when a notfound is 
 
 
-Firstly, I promise stateman is considered irreplaceable
 
 stateman is a state-based libraring that focusing on complex  application routing.
 

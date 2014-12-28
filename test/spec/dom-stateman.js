@@ -350,7 +350,6 @@ describe("stateman:transition", function(){
     stateman2.state("user.message", {
       enter: function(){
         this.async()
-
       }
     })
 

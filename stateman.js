@@ -165,7 +165,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var $notfound = this.state("$notfound");
 	        if($notfound) this._go($notfound, {path: path}, callback);
 
-	        return this.emit("404", {path: path});
+	        return this.emit("notfound", {path: path});
 	      }
 
 
@@ -188,7 +188,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.current = this.pending
 	        if(this.pending._pending && this.pending.done){
 	          this.pending.done(false);
-	          this._cb=null;
 	        }else{
 	          _.log("naving to [" + this.current.name + "] will be stoped, trying to ["+state.name+"] now");
 	        }

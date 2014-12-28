@@ -92,7 +92,7 @@ _.extend( _.emitable( StateMan ), {
         var $notfound = this.state("$notfound");
         if($notfound) this._go($notfound, {path: path}, callback);
 
-        return this.emit("404", {path: path});
+        return this.emit("notfound", {path: path});
       }
 
 
@@ -115,7 +115,6 @@ _.extend( _.emitable( StateMan ), {
         this.current = this.pending
         if(this.pending._pending && this.pending.done){
           this.pending.done(false);
-          this._cb=null;
         }else{
           _.log("naving to [" + this.current.name + "] will be stoped, trying to ["+state.name+"] now");
         }
