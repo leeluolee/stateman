@@ -292,7 +292,6 @@ describe("stateman:transition", function(){
     expect(obj.book).to.equal(undefined)
     expect(obj.book_detail).to.equal(undefined)
 
-
   })
 
   it("will forbit nav duration transition", function(done){
@@ -443,14 +442,55 @@ describe("stateman:other", function(){
 
   it("stateman.encode should return the url", function(){
 
-    expect(stateman.encode("contact.detail", {id:1, name:2})).to.equal("/contact/detail?id=1&name=2")
+    var state = stateman.state("encode.detail", {url: ':id'}).go("book.message")
+    expect(stateman.encode("encode.detail", {id:1, name:2})).to.equal("/encode/1?name=2")
 
   })
 
 })
 
+
 describe("stateman: matches and relative go", function(){
-  
+  var location = loc("http://leeluolee.github.io/homepage");
+  var obj = {}; 
+  var stateman = new StateMan();
+    stateman.state("contact.detail.message", {})
+    .state("contact.list", {
+      enter: function(){
+        stateman.go("^.detail.message");
+        expect(stateman.current.name).to.equal('contact.detail.message');
+      }
+    })
+    .state("contact.list.option", {})
+    .state("contact.user.param", {url: ":id"})
+    .start({location: location});
+
+  it("relative to parent(^) should work as expect", function(){
+    stateman.go("contact.detail.message");
+    expect(stateman.current.name).to.equal("contact.detail.message");
+    stateman.go("^");
+    expect(stateman.current.name).to.equal("contact.detail");
+    stateman.go("^.list.option");
+  })  
+  it("relative to parent(~) should work as expect", function(){
+    stateman.go("contact.detail");
+    expect(stateman.current.name).to.equal("contact.detail");
+    stateman.go("~.message");
+    expect(stateman.current.name).to.equal("contact.detail.message");
+  })
+
+  it("stateman.is should work as expect", function(){
+    stateman.go("contact.detail.message");
+    expect( stateman.is("contact.detail", {})).to.equal(true);
+    expect( stateman.is("contact.detail", {}, true)).to.equal(false);
+    expect( stateman.is("detail.message", {})).to.equal(false);
+    expect( stateman.is("contact.detail.message", {})).to.equal(true);
+    stateman.nav("/contact/user/1");
+
+    expect( stateman.is("contact.user.param")).to.equal(true);
+    expect( stateman.is("contact.user.param", {})).to.equal(false);
+    expect( stateman.is("contact.user", {id: "1"})).to.equal(true);
+  })
 })
   
 })

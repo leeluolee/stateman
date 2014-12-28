@@ -19,6 +19,14 @@ _.extend( _.emitable( StateMan ), {
     // start StateMan
 
     state: function(stateName, config){
+      var pending = this.pending;
+      if(typeof stateName === "string" && pending.name){
+         stateName = stateName.replace("~", pending.name)
+         if(pending.parent) stateName = stateName.replace("^", pending.parent.name || "");
+      }
+      // ^ represent current.parent
+      // ~ represent  current
+      // only 
       return stateFn.apply(this, arguments);
     },
     start: function(options){
@@ -56,11 +64,17 @@ _.extend( _.emitable( StateMan ), {
       return state;
     },
     encode: State.prototype.encode,
+    // notify specify state
     notify: function(path, param){
-      return this.state(path).emit("notify", {
-        from: this,
-        param: param
-      });
+      return this.state(path).emit("notify", param);
+    },
+    // check the pending statename whether to match the passed condition (stateName and param)
+    is: function(stateName, param, isStrict){
+      if(!stateName) return false;
+      var stateName = (stateName.name || stateName).trim();
+      var pending = this.pending, pendingName = pending.name;
+      var matchPath = isStrict? pendingName === stateName : pendingName.indexOf(stateName)===0;
+      return matchPath && (!param || _.eql(param, this.param)); 
     },
     // after pathchange changed
     // @TODO: afterPathChange need based on decode
@@ -110,7 +124,7 @@ _.extend( _.emitable( StateMan ), {
         }
         // back to before
       }
-      this.param = option.param;
+      this.param = option.param || {};
 
       var current = this.current,
         baseState = this._findBase(current, state),

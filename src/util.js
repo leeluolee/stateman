@@ -27,6 +27,23 @@ _.typeOf = function typeOf (o) {
   return o == null ? String(o) : o2str.call(o).slice(8, -1).toLowerCase();
 }
 
+//strict eql
+_.eql = function(o1, o2){
+  var t1 = _.typeOf(o1), t2 = _.typeOf(o2);
+  if( t1 !== t2) return false;
+  if(t1 === 'object'){
+    var equal = true;
+    for(var i in o1){
+      if( !_.eql(o1[i], o2[i]) ) equal = false;
+    }
+    for(var j in o2){
+      if( !_.eql(o1[j], o2[j]) ) equal = false;
+    }
+    return equal;
+  }
+  return o1 === o2;
+}
+
 
 // small emitter 
 _.emitable = (function(){

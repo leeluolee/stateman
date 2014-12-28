@@ -97,6 +97,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	    // start StateMan
 
 	    state: function(stateName, config){
+	      var pending = this.pending;
+	      if(typeof stateName === "string" && pending.name){
+	         stateName = stateName.replace("~", pending.name)
+	         if(pending.parent) stateName = stateName.replace("^", pending.parent.name || "");
+	      }
+	      // ^ represent current.parent
+	      // ~ represent  current
+	      // only 
 	      return stateFn.apply(this, arguments);
 	    },
 	    start: function(options){
@@ -134,11 +142,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	      return state;
 	    },
 	    encode: State.prototype.encode,
+	    // notify specify state
 	    notify: function(path, param){
-	      return this.state(path).emit("notify", {
-	        from: this,
-	        param: param
-	      });
+	      return this.state(path).emit("notify", param);
+	    },
+	    // check the pending statename whether to match the passed condition (stateName and param)
+	    is: function(stateName, param, isStrict){
+	      if(!stateName) return false;
+	      var stateName = (stateName.name || stateName).trim();
+	      var pending = this.pending, pendingName = pending.name;
+	      var matchPath = isStrict? pendingName === stateName : pendingName.indexOf(stateName)===0;
+	      return matchPath && (!param || _.eql(param, this.param)); 
 	    },
 	    // after pathchange changed
 	    // @TODO: afterPathChange need based on decode
@@ -188,7 +202,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        // back to before
 	      }
-	      this.param = option.param;
+	      this.param = option.param || {};
 
 	      var current = this.current,
 	        baseState = this._findBase(current, state),
@@ -420,7 +434,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    if( path !== curPath ) {
 	      this.iframe && this.nav(path, {silent: true});
-	      this.emit('change', path);
+	      this.emit('change', (this.curPath=path));
 	    }
 	  },
 	  // get the current path
@@ -569,6 +583,23 @@ return /******/ (function(modules) { // webpackBootstrap
 	  return o == null ? String(o) : o2str.call(o).slice(8, -1).toLowerCase();
 	}
 
+	//strict eql
+	_.eql = function(o1, o2){
+	  var t1 = _.typeOf(o1), t2 = _.typeOf(o2);
+	  if( t1 !== t2) return false;
+	  if(t1 === 'object'){
+	    var equal = true;
+	    for(var i in o1){
+	      if( !_.eql(o1[i], o2[i]) ) equal = false;
+	    }
+	    for(var j in o2){
+	      if( !_.eql(o1[j], o2[j]) ) equal = false;
+	    }
+	    return equal;
+	  }
+	  return o1 === o2;
+	}
+
 
 	// small emitter 
 	_.emitable = (function(){
@@ -709,7 +740,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	State.rCache = {};
 
 	_.extend( _.emitable( State ), {
-
+	  
 	  state: function(stateName, config){
 	    if(_.typeOf(stateName) === "object"){
 	      for(var i in stateName){

@@ -12,7 +12,7 @@ function State(option){
 State.rCache = {};
 
 _.extend( _.emitable( State ), {
-
+  
   state: function(stateName, config){
     if(_.typeOf(stateName) === "object"){
       for(var i in stateName){
