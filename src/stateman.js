@@ -73,7 +73,7 @@ _.extend( _.emitable( StateMan ), {
       if(!stateName) return false;
       var stateName = (stateName.name || stateName).trim();
       var pending = this.pending, pendingName = pending.name;
-      var matchPath = isStrict? pendingName === stateName : pendingName.indexOf(stateName)===0;
+      var matchPath = isStrict? pendingName === stateName : (pendingName + ".").indexOf(stateName + ".")===0;
       return matchPath && (!param || _.eql(param, this.param)); 
     },
     // after pathchange changed

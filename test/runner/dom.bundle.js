@@ -57,7 +57,7 @@
 /* 1 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var State = __webpack_require__(7);
+	var State = __webpack_require__(4);
 	var expect = __webpack_require__(9)
 
 
@@ -247,9 +247,9 @@
 	//    http://backbonejs.org
 
 
-	var _ = __webpack_require__(4);
-	var browser = __webpack_require__(5);
-	var Histery = __webpack_require__(6);
+	var _ = __webpack_require__(5);
+	var browser = __webpack_require__(6);
+	var Histery = __webpack_require__(7);
 	var expect = __webpack_require__(9)
 
 
@@ -391,7 +391,7 @@
 
 	var StateMan = __webpack_require__(8);
 	var expect = __webpack_require__(9)
-	var _ = __webpack_require__(4);
+	var _ = __webpack_require__(5);
 
 
 	// Backbone.js Trick for mock the location service
@@ -871,6 +871,11 @@
 	    expect( stateman.is("contact.user.param")).to.equal(true);
 	    expect( stateman.is("contact.user.param", {})).to.equal(false);
 	    expect( stateman.is("contact.user", {id: "1"})).to.equal(true);
+
+	    stateman.state("contactmanage.detail",{})
+
+	    stateman.go("contactmanage.detail");
+	    expect(stateman.is("contact")).to.equal(false)
 	  })
 	})
 	  
@@ -878,6 +883,178 @@
 
 /***/ },
 /* 4 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var _ = __webpack_require__(5);
+
+	function State(option){
+	  this._states = {};
+	  this._pending = false;
+	  this.visited = false;
+	  if(option) this.config(option);
+	}
+
+
+	//regexp cache
+	State.rCache = {};
+
+	_.extend( _.emitable( State ), {
+	  
+	  state: function(stateName, config){
+	    if(_.typeOf(stateName) === "object"){
+	      for(var i in stateName){
+	        this.state(i, stateName[i])
+	      }
+	      return this;
+	    }
+	    var current, next, nextName, states = this._states, i=0;
+
+	    if( typeof stateName === "string" ) stateName = stateName.split(".");
+
+	    var slen = stateName.length, current = this;
+	    var stack = [];
+
+
+	    do{
+	      nextName = stateName[i];
+	      next = states[nextName];
+	      stack.push(nextName);
+	      if(!next){
+	        if(!config) return;
+	        next = states[nextName] = new State();
+	        _.extend(next, {
+	          parent: current,
+	          manager: current.manager || current,
+	          name: stack.join("."),
+	          currentName: nextName
+	        })
+	        current.hasNext = true;
+	        next.configUrl();
+	      }
+	      current = next;
+	      states = next._states;
+	    }while((++i) < slen )
+
+	    if(config){
+	       next.config(config);
+	       return this;
+	    } else {
+	      return current;
+	    }
+	  },
+
+	  config: function(configure){
+	    if(!configure ) return;
+	    configure = this._getConfig(configure);
+
+	    for(var i in configure){
+	      var prop = configure[i];
+	      switch(i){
+	        case "url": 
+	          if(typeof prop === "string"){
+	            this.url = prop;
+	            this.configUrl();
+	          }
+	          break;
+	        case "events": 
+	          this.on(prop)
+	          break;
+	        default:
+	          this[i] = prop;
+	      }
+	    }
+	  },
+
+	  // children override
+	  _getConfig: function(configure){
+	    return typeof configure === "function"? {enter: configure} : configure;
+	  },
+
+	  //from url 
+
+	  configUrl: function(){
+	    var url = "" , base = this, currentUrl;
+	    var _watchedParam = [];
+
+	    while( base ){
+
+	      url = (typeof base.url === "string" ? base.url: (base.currentName || "")) + "/" + url;
+
+	      if(base === this){
+	        // url.replace(/\:([-\w]+)/g, function(all, capture){
+	        //   _watchedParam.push()
+	        // })
+	        this._watchedParam = _watchedParam.concat(this.watched || []);
+	      }
+	      // means absolute;
+	      if(url.indexOf("^/") === 0) {
+	        url = url.slice(1);
+	        break;
+	      }
+	      base = base.parent;
+	    }
+	    this.path = _.cleanPath("/" + url);
+	    var pathAndQuery = this.path.split("?");
+	    this.path = pathAndQuery[0];
+	    // some Query we need watched
+	    if(pathAndQuery[1]){
+	      this._watchedQuery = pathAndQuery[1].split("&");
+	    }
+
+	    _.extend(this, _.normalize(this.path), true);
+	  },
+	  encode: function(stateName, param){
+	    var state;
+	    if(typeof param === "undefined"){
+	      state = this;
+	      param = stateName;
+	    }else{
+	      state = this.state(stateName);
+	    }
+	    var param = param || {};
+
+	    var matched = "%";
+
+	    var url = state.matches.replace(/\(([\w-]+)\)/g, function(all, capture){
+	      var sec = param[capture] || "";
+	      matched+= capture + "%";
+	      return sec;
+	    }) + "?";
+
+	    // remained is the query, we need concat them after url as query
+	    for(var i in param) {
+	      if( matched.indexOf("%"+i+"%") === -1) url += i + "=" + param[i] + "&";
+	    }
+	    return _.cleanPath( url.replace(/(?:\?|&)$/,"") )
+	  },
+	  decode: function( path ){
+	    var matched = this.regexp.exec(path),
+	      keys = this.keys;
+
+	    if(matched){
+
+	      var param = {};
+	      for(var i =0,len=keys.length;i<len;i++){
+	        param[keys[i]] = matched[i+1] 
+	      }
+	      return param;
+	    }else{
+	      return false;
+	    }
+	  },
+	  async: function(){
+	    var self = this;
+	    this._pending = true;
+	    return this.done;
+	  }
+
+	})
+
+
+	module.exports = State;
+
+/***/ },
+/* 5 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var _ = module.exports = {};
@@ -1049,7 +1226,7 @@
 
 
 /***/ },
-/* 5 */
+/* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -1081,7 +1258,7 @@
 
 
 /***/ },
-/* 6 */
+/* 7 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -1089,8 +1266,8 @@
 	// Thx Backbone.js 1.1.2  and https://github.com/cowboy/jquery-hashchange/blob/master/jquery.ba-hashchange.js
 	// for iframe patches in old ie.
 
-	var browser = __webpack_require__(5);
-	var _ = __webpack_require__(4);
+	var browser = __webpack_require__(6);
+	var _ = __webpack_require__(5);
 
 
 	// the mode const
@@ -1296,185 +1473,13 @@
 	module.exports = Histery;
 
 /***/ },
-/* 7 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var _ = __webpack_require__(4);
-
-	function State(option){
-	  this._states = {};
-	  this._pending = false;
-	  this.visited = false;
-	  if(option) this.config(option);
-	}
-
-
-	//regexp cache
-	State.rCache = {};
-
-	_.extend( _.emitable( State ), {
-	  
-	  state: function(stateName, config){
-	    if(_.typeOf(stateName) === "object"){
-	      for(var i in stateName){
-	        this.state(i, stateName[i])
-	      }
-	      return this;
-	    }
-	    var current, next, nextName, states = this._states, i=0;
-
-	    if( typeof stateName === "string" ) stateName = stateName.split(".");
-
-	    var slen = stateName.length, current = this;
-	    var stack = [];
-
-
-	    do{
-	      nextName = stateName[i];
-	      next = states[nextName];
-	      stack.push(nextName);
-	      if(!next){
-	        if(!config) return;
-	        next = states[nextName] = new State();
-	        _.extend(next, {
-	          parent: current,
-	          manager: current.manager || current,
-	          name: stack.join("."),
-	          currentName: nextName
-	        })
-	        current.hasNext = true;
-	        next.configUrl();
-	      }
-	      current = next;
-	      states = next._states;
-	    }while((++i) < slen )
-
-	    if(config){
-	       next.config(config);
-	       return this;
-	    } else {
-	      return current;
-	    }
-	  },
-
-	  config: function(configure){
-	    if(!configure ) return;
-	    configure = this._getConfig(configure);
-
-	    for(var i in configure){
-	      var prop = configure[i];
-	      switch(i){
-	        case "url": 
-	          if(typeof prop === "string"){
-	            this.url = prop;
-	            this.configUrl();
-	          }
-	          break;
-	        case "events": 
-	          this.on(prop)
-	          break;
-	        default:
-	          this[i] = prop;
-	      }
-	    }
-	  },
-
-	  // children override
-	  _getConfig: function(configure){
-	    return typeof configure === "function"? {enter: configure} : configure;
-	  },
-
-	  //from url 
-
-	  configUrl: function(){
-	    var url = "" , base = this, currentUrl;
-	    var _watchedParam = [];
-
-	    while( base ){
-
-	      url = (typeof base.url === "string" ? base.url: (base.currentName || "")) + "/" + url;
-
-	      if(base === this){
-	        // url.replace(/\:([-\w]+)/g, function(all, capture){
-	        //   _watchedParam.push()
-	        // })
-	        this._watchedParam = _watchedParam.concat(this.watched || []);
-	      }
-	      // means absolute;
-	      if(url.indexOf("^/") === 0) {
-	        url = url.slice(1);
-	        break;
-	      }
-	      base = base.parent;
-	    }
-	    this.path = _.cleanPath("/" + url);
-	    var pathAndQuery = this.path.split("?");
-	    this.path = pathAndQuery[0];
-	    // some Query we need watched
-	    if(pathAndQuery[1]){
-	      this._watchedQuery = pathAndQuery[1].split("&");
-	    }
-
-	    _.extend(this, _.normalize(this.path), true);
-	  },
-	  encode: function(stateName, param){
-	    var state;
-	    if(typeof param === "undefined"){
-	      state = this;
-	      param = stateName;
-	    }else{
-	      state = this.state(stateName);
-	    }
-	    var param = param || {};
-
-	    var matched = "%";
-
-	    var url = state.matches.replace(/\(([\w-]+)\)/g, function(all, capture){
-	      var sec = param[capture] || "";
-	      matched+= capture + "%";
-	      return sec;
-	    }) + "?";
-
-	    // remained is the query, we need concat them after url as query
-	    for(var i in param) {
-	      if( matched.indexOf("%"+i+"%") === -1) url += i + "=" + param[i] + "&";
-	    }
-	    return _.cleanPath( url.replace(/(?:\?|&)$/,"") )
-	  },
-	  decode: function( path ){
-	    var matched = this.regexp.exec(path),
-	      keys = this.keys;
-
-	    if(matched){
-
-	      var param = {};
-	      for(var i =0,len=keys.length;i<len;i++){
-	        param[keys[i]] = matched[i+1] 
-	      }
-	      return param;
-	    }else{
-	      return false;
-	    }
-	  },
-	  async: function(){
-	    var self = this;
-	    this._pending = true;
-	    return this.done;
-	  }
-
-	})
-
-
-	module.exports = State;
-
-/***/ },
 /* 8 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var State = __webpack_require__(7),
-	  Histery = __webpack_require__(6),
-	  brow = __webpack_require__(5),
-	  _ = __webpack_require__(4),
+	var State = __webpack_require__(4),
+	  Histery = __webpack_require__(7),
+	  brow = __webpack_require__(6),
+	  _ = __webpack_require__(5),
 	  stateFn = State.prototype.state;
 
 
@@ -1546,7 +1551,7 @@
 	      if(!stateName) return false;
 	      var stateName = (stateName.name || stateName).trim();
 	      var pending = this.pending, pendingName = pending.name;
-	      var matchPath = isStrict? pendingName === stateName : pendingName.indexOf(stateName)===0;
+	      var matchPath = isStrict? pendingName === stateName : (pendingName + ".").indexOf(stateName + ".")===0;
 	      return matchPath && (!param || _.eql(param, this.param)); 
 	    },
 	    // after pathchange changed
