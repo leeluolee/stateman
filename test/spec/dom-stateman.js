@@ -273,14 +273,15 @@ describe("stateman:transition", function(){
       expect(obj.book).to.equal(true)
       expect(obj.book_detail).to.equal("1")
 
-      stateman.off("end").on("end", function b(){
+      stateman.off("end").nav("/contact/2", {}, function(){
+
         expect(obj.book).to.equal(false)
         expect(obj.contact_detail).to.equal("2")
         stateman.off("end");
 
         done();
+      });
 
-      }).nav("/contact/2");
 
       expect(obj.book).to.equal(true)
       expect(obj.contact_detail).to.equal(undefined)
@@ -294,19 +295,77 @@ describe("stateman:transition", function(){
 
   })
 
-  it("will forbit nav duration transition", function(done){
-    stateman.on("end", function(){
-      stateman.off();
-      stateman.nav("/book/1");
-      stateman.on("forbid", function(){
-        stateman.off();
-        done();
-      }).nav("/contact/2");
-
-      expect(location.hash).to.equal("#/book/1")
-    }).nav("/home");
+  it("will forbit previous async nav if next is comming", function(done){
+    stateman.nav("/book/1").nav("/home", {}, function(){
+      expect(stateman.current.name).to.equal("home")
+      done();
+    });
   })
 
+  // done (false)
+  var loc2 = loc("http://leeluolee.github.io/homepage");
+  var obj2 = {}; 
+  var stateman2 = new StateMan();
+
+  stateman2.start({location: loc2})
+
+  it("enter return false can stop a navigation", function(){
+    stateman2.state("contact", {
+      enter: function(option){
+        if(option.stop){
+          return false;
+        }
+      }
+    });
+    stateman2.state("contact.detail", {
+      leave: function(option){
+        if(option.stop) return false;
+      }
+    })
+
+    stateman2.go("contact.detail", { stop:true })
+    expect(stateman2.current.name).to.equal("contact")
+    stateman2.go("contact.detail", { stop: false })
+    stateman2.go("contact", {stop:true});
+    expect(stateman2.current.name).to.equal("contact.detail")
+  })
+  it("pass false to done, can stop a async ", function(done){
+
+    stateman2.state("user", {
+      enter: function(option){
+        var done = this.async();
+        setTimeout(function(){
+          done(option.success)
+        },50)
+      }
+    });
+    stateman2.state("user.detail", {
+      leave: function(option){
+        var done = this.async();
+        setTimeout(function(){
+          done(option.success)
+        },50)
+      }
+    })
+    stateman2.state("user.message", {
+      enter: function(){
+        this.async()
+
+      }
+    })
+
+    stateman2.go("user.detail", { success:false }, function(){
+      expect(stateman2.current.name).to.equal("user")
+      stateman2.go("user.detail", { success: true }, function(){
+        expect(stateman2.current.name).to.equal("user.detail")
+        stateman2.go("user", {success: false}, function(){
+          expect(stateman2.current.name).to.equal("user.detail")
+          done()
+        });
+      })
+    })
+    
+  })
 
 })
 

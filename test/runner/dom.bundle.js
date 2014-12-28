@@ -654,14 +654,15 @@
 	      expect(obj.book).to.equal(true)
 	      expect(obj.book_detail).to.equal("1")
 
-	      stateman.off("end").on("end", function b(){
+	      stateman.off("end").nav("/contact/2", {}, function(){
+
 	        expect(obj.book).to.equal(false)
 	        expect(obj.contact_detail).to.equal("2")
 	        stateman.off("end");
 
 	        done();
+	      });
 
-	      }).nav("/contact/2");
 
 	      expect(obj.book).to.equal(true)
 	      expect(obj.contact_detail).to.equal(undefined)
@@ -675,19 +676,77 @@
 
 	  })
 
-	  it("will forbit nav duration transition", function(done){
-	    stateman.on("end", function(){
-	      stateman.off();
-	      stateman.nav("/book/1");
-	      stateman.on("forbid", function(){
-	        stateman.off();
-	        done();
-	      }).nav("/contact/2");
-
-	      expect(location.hash).to.equal("#/book/1")
-	    }).nav("/home");
+	  it("will forbit previous async nav if next is comming", function(done){
+	    stateman.nav("/book/1").nav("/home", {}, function(){
+	      expect(stateman.current.name).to.equal("home")
+	      done();
+	    });
 	  })
 
+	  // done (false)
+	  var loc2 = loc("http://leeluolee.github.io/homepage");
+	  var obj2 = {}; 
+	  var stateman2 = new StateMan();
+
+	  stateman2.start({location: loc2})
+
+	  it("enter return false can stop a navigation", function(){
+	    stateman2.state("contact", {
+	      enter: function(option){
+	        if(option.stop){
+	          return false;
+	        }
+	      }
+	    });
+	    stateman2.state("contact.detail", {
+	      leave: function(option){
+	        if(option.stop) return false;
+	      }
+	    })
+
+	    stateman2.go("contact.detail", { stop:true })
+	    expect(stateman2.current.name).to.equal("contact")
+	    stateman2.go("contact.detail", { stop: false })
+	    stateman2.go("contact", {stop:true});
+	    expect(stateman2.current.name).to.equal("contact.detail")
+	  })
+	  it("pass false to done, can stop a async ", function(done){
+
+	    stateman2.state("user", {
+	      enter: function(option){
+	        var done = this.async();
+	        setTimeout(function(){
+	          done(option.success)
+	        },50)
+	      }
+	    });
+	    stateman2.state("user.detail", {
+	      leave: function(option){
+	        var done = this.async();
+	        setTimeout(function(){
+	          done(option.success)
+	        },50)
+	      }
+	    })
+	    stateman2.state("user.message", {
+	      enter: function(){
+	        this.async()
+
+	      }
+	    })
+
+	    stateman2.go("user.detail", { success:false }, function(){
+	      expect(stateman2.current.name).to.equal("user")
+	      stateman2.go("user.detail", { success: true }, function(){
+	        expect(stateman2.current.name).to.equal("user.detail")
+	        stateman2.go("user", {success: false}, function(){
+	          expect(stateman2.current.name).to.equal("user.detail")
+	          done()
+	        });
+	      })
+	    })
+	    
+	  })
 
 	})
 
@@ -980,12 +1039,6 @@
 
 	      url = (typeof base.url === "string" ? base.url: (base.currentName || "")) + "/" + url;
 
-	      if(base === this){
-	        // url.replace(/\:([-\w]+)/g, function(all, capture){
-	        //   _watchedParam.push()
-	        // })
-	        this._watchedParam = _watchedParam.concat(this.watched || []);
-	      }
 	      // means absolute;
 	      if(url.indexOf("^/") === 0) {
 	        url = url.slice(1);
@@ -997,9 +1050,6 @@
 	    var pathAndQuery = this.path.split("?");
 	    this.path = pathAndQuery[0];
 	    // some Query we need watched
-	    if(pathAndQuery[1]){
-	      this._watchedQuery = pathAndQuery[1].split("&");
-	    }
 
 	    _.extend(this, _.normalize(this.path), true);
 	  },
@@ -1582,6 +1632,7 @@
 
 	      if(typeof state === "string") state = this.state(state);
 
+
 	      if(!state) return _.log("destination is not defined")
 
 	      // not touch the end in previous transtion
@@ -1589,16 +1640,12 @@
 	      if(this.pending !== this.current){
 	        // we need return
 
-	        if(this.pending._pending){
-	          
-	          _.log("beacuse "+ this.pending.name+" is pending, the nav to [" +state.name+ "] is be forbit");
-
-	          this.emit("forbid", state);
-
-	          return this.nav(this.current.encode(this.param), {silent: true})
+	        this.current = this.pending
+	        if(this.pending._pending && this.pending.done){
+	          this.pending.done(false);
+	          this._cb=null;
 	        }else{
 	          _.log("naving to [" + this.current.name + "] will be stoped, trying to ["+state.name+"] now");
-	          this.current = this.pending;
 	        }
 	        // back to before
 	      }
@@ -1608,16 +1655,19 @@
 	        baseState = this._findBase(current, state),
 	        self = this;
 
+	      var done = function(){
+	        self.current = self.pending;
+	        self.emit("end")
+	        if(typeof callback === "function") callback.call(self);
+	      }
 
 	      if(current !== state){
 	        this.previous = current;
 	        this.current = state;
 	        self.emit("begin")
-	        this._leave(baseState, option, function(){
-	          self._enter(state, option, function(){
-	            self.emit("end")
-	            if(typeof callback === "function") callback.call(self);
-	          })
+	        this._leave(baseState, option, function(stop){
+	          if(stop) return done()
+	          self._enter(state, option, done)
 	        })
 	      }
 	      this._checkQueryAndParam(baseState, option);
@@ -1687,17 +1737,22 @@
 
 	      this.pending = cur;
 
-	      cur.done = function(){
-	        self._enterOne(stage, options, callback)
+	      cur.done = function(success){
 	        cur._pending = false;
 	        cur.done = null;
 	        cur.visited = true;
+	        if(success !== false){
+	          self._enterOne(stage, options, callback)
+	          
+	        }else{
+	          return callback(false);
+	        }
 	      }
 
 	      if(!cur.enter) cur.done();
 	      else {
-	        cur.enter(options);
-	        if(!cur._pending && cur.done) cur.done();
+	        var success = cur.enter(options);
+	        if(!cur._pending && cur.done) cur.done(success);
 	      }
 	    },
 	    _leave: function(end, options, callback){
@@ -1708,16 +1763,20 @@
 	    _leaveOne: function(end, options, callback){
 	      if( end === this.pending ) return callback();
 	      var cur = this.pending, self = this;
-	      cur.done = function(){
-	        if(cur.parent) self.pending = cur.parent;
-	        self._leaveOne(end, options, callback)
+	      cur.done = function( success ){
 	        cur._pending = false;
 	        cur.done = null;
+	        if(success !== false){
+	          if(cur.parent) self.pending = cur.parent;
+	          self._leaveOne(end, options, callback)
+	        }else{
+	          return callback(true);
+	        }
 	      }
 	      if(!cur.leave) cur.done();
 	      else{
-	        cur.leave(options);
-	        if(!cur._pending && cur.done) cur.done();
+	        var success = cur.leave(options);
+	        if( !cur._pending && cur.done) cur.done(success);
 	      }
 	    },
 	    // check the query and Param

@@ -192,3 +192,15 @@ trigger a specified event.
 3. end: when a navigating is over
 4. history:change: when a change envet is emitted by history
 5. notfound: when a notfound is 
+
+
+Firstly, I promise stateman is considered irreplaceable
+
+stateman is a state-based libraring that focusing on complex  application routing.
+
+SPA(Single Page Application) is become an common technology choice in morden web development , we need a routing library to help us organizing our logic, and make every page locatable(through the url).
+
+But, the SPA is also become more and more complex, the routing-style that similar with server-side routing (express.Router.. etc) don't meet the requirements anymore. we need a well-designed foundation to simplify our logic.
+
+[ui-router] go the right way, they abstarct a concept named __state__ to replace the real url to represent the application state. the state is 
+

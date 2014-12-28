@@ -104,6 +104,7 @@ _.extend( _.emitable( StateMan ), {
 
       if(typeof state === "string") state = this.state(state);
 
+
       if(!state) return _.log("destination is not defined")
 
       // not touch the end in previous transtion
@@ -111,16 +112,12 @@ _.extend( _.emitable( StateMan ), {
       if(this.pending !== this.current){
         // we need return
 
-        if(this.pending._pending){
-          
-          _.log("beacuse "+ this.pending.name+" is pending, the nav to [" +state.name+ "] is be forbit");
-
-          this.emit("forbid", state);
-
-          return this.nav(this.current.encode(this.param), {silent: true})
+        this.current = this.pending
+        if(this.pending._pending && this.pending.done){
+          this.pending.done(false);
+          this._cb=null;
         }else{
           _.log("naving to [" + this.current.name + "] will be stoped, trying to ["+state.name+"] now");
-          this.current = this.pending;
         }
         // back to before
       }
@@ -130,16 +127,19 @@ _.extend( _.emitable( StateMan ), {
         baseState = this._findBase(current, state),
         self = this;
 
+      var done = function(){
+        self.current = self.pending;
+        self.emit("end")
+        if(typeof callback === "function") callback.call(self);
+      }
 
       if(current !== state){
         this.previous = current;
         this.current = state;
         self.emit("begin")
-        this._leave(baseState, option, function(){
-          self._enter(state, option, function(){
-            self.emit("end")
-            if(typeof callback === "function") callback.call(self);
-          })
+        this._leave(baseState, option, function(stop){
+          if(stop) return done()
+          self._enter(state, option, done)
         })
       }
       this._checkQueryAndParam(baseState, option);
@@ -209,17 +209,22 @@ _.extend( _.emitable( StateMan ), {
 
       this.pending = cur;
 
-      cur.done = function(){
-        self._enterOne(stage, options, callback)
+      cur.done = function(success){
         cur._pending = false;
         cur.done = null;
         cur.visited = true;
+        if(success !== false){
+          self._enterOne(stage, options, callback)
+          
+        }else{
+          return callback(false);
+        }
       }
 
       if(!cur.enter) cur.done();
       else {
-        cur.enter(options);
-        if(!cur._pending && cur.done) cur.done();
+        var success = cur.enter(options);
+        if(!cur._pending && cur.done) cur.done(success);
       }
     },
     _leave: function(end, options, callback){
@@ -230,16 +235,20 @@ _.extend( _.emitable( StateMan ), {
     _leaveOne: function(end, options, callback){
       if( end === this.pending ) return callback();
       var cur = this.pending, self = this;
-      cur.done = function(){
-        if(cur.parent) self.pending = cur.parent;
-        self._leaveOne(end, options, callback)
+      cur.done = function( success ){
         cur._pending = false;
         cur.done = null;
+        if(success !== false){
+          if(cur.parent) self.pending = cur.parent;
+          self._leaveOne(end, options, callback)
+        }else{
+          return callback(true);
+        }
       }
       if(!cur.leave) cur.done();
       else{
-        cur.leave(options);
-        if(!cur._pending && cur.done) cur.done();
+        var success = cur.leave(options);
+        if( !cur._pending && cur.done) cur.done(success);
       }
     },
     // check the query and Param

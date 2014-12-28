@@ -5,32 +5,63 @@ StateMan
 [![Build Status](http://img.shields.io/travis/regularjs/regular/master.svg?style=flat-square)](http://travis-ci.org/regularjs/regular)
 
 
-state manager: A concise, flexible foundation for complex application routing.
+stateman: A flexiable foundation that providing nested state-based routing for complex web application. 
 
 
-## Why Another wheel. 
+stateman is highly inspired by [ui-router](https://github.com/angular-ui/ui-router) for angular, you can find many features similiar with it. 
 
-Firstly, I promise stateman is considered irreplaceable
+But stateman is a __standalone__ library with extremely tiny codebase(10kb minified). feel free to integrated it with whatever framework you like! 
 
-stateman is a state-based libraring that focusing on complex  application routing.
 
-SPA(Single Page Application) is become an common technology choice in morden web development , we need a routing library to help us organizing our logic, and make every page locatable(through the url).
+## Feature
 
-But, the SPA is also become more and more complex, the routing-style that similar with server-side routing (express.Router.. etc) don't meet the requirements anymore. we need a well-designed foundation to simplify our logic.
+0. nested routing support.
+1. standalone with tiny codebase.
+2. async routing support if you need asynchronous logic in naviagation. 
+3. html5 history supported, fallback to hash-based in old browser.
+4. builtin event emitter.
+5. concise API, deadly simple to getting start with it.
+6. support IE6+ and other modern browsers.
 
-[ui-router] go the right way, they abstarct a concept named __state__ to replace the real url to represent the application state. the state is 
 
+
+## Quirk Start
+
+just pasting the code to your own `index.html`, and you can find the demo runs.
+
+```javascript
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>StateMan Test</title>
+  <script src="https://rawgit.com/leeluolee/stateman/master/stateman.js"></script>
+  // use jquery to operate dom
+  <script src="https://"></script>
+</head>
+<body>
+  
+<script>
+  var stateman = new StateMan();
+
+  stateman.state("")
+
+</script>
+</body>
+</html>
+
+```
+
+## Browser Support 
+
+1. Modern Broswer contains mobile devices
+2. IE6 - IE8 
 
 ##Feature
 
 stateman is borned in requirements, it reuse the concept __state__ in [ui-router], it is
 
-0. nested routing support based on state.
-1. standalone with 9kb (minify && no gzip) source code
-2. async routing when you need asynchronous logic in state.
-3. support IE6+ and all other modern browser.
-4. history supported, fallback to hash-based in old browser.
-5. concise API, deadly simple to getting start with it.
 
 
 
