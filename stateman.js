@@ -144,7 +144,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    // check the pending statename whether to match the passed condition (stateName and param)
 	    is: function(stateName, param, isStrict){
 	      if(!stateName) return false;
-	      var stateName = (stateName.name || stateName).trim();
+	      var stateName = (stateName.name || stateName);
 	      var pending = this.pending, pendingName = pending.name;
 	      var matchPath = isStrict? pendingName === stateName : (pendingName + ".").indexOf(stateName + ".")===0;
 	      return matchPath && (!param || _.eql(param, this.param)); 
@@ -193,7 +193,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        // back to before
 	      }
-	      this.param = option.param || {};
+	      option.param = option.param || {};
+	      this.param = option.param;
 
 	      var current = this.current,
 	        baseState = this._findBase(current, state),
@@ -204,17 +205,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	        self.emit("end")
 	        if(typeof callback === "function") callback.call(self);
 	      }
-
+	      
 	      if(current !== state){
 	        this.previous = current;
 	        this.current = state;
 	        self.emit("begin")
 	        this._leave(baseState, option, function(stop){
+	          self._checkQueryAndParam(baseState, option);
 	          if(stop) return done()
 	          self._enter(state, option, done)
 	        })
+	      }else{
+	        self._checkQueryAndParam(baseState, option);
 	      }
-	      this._checkQueryAndParam(baseState, option);
+	      
 	    },
 	    _findQuery: function(querystr){
 	      var queries = querystr && querystr.split("&"), query= {};

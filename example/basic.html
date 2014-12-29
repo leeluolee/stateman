@@ -2,9 +2,49 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Document</title>
+  <title>StateMan Test</title>
+  <script src="../stateman.js"></script>
 </head>
 <body>
+
+<ul>
+  <li><a href="#/home">/home"</a></li>
+  <li><a href="#/contact">/contact"</a></li>
+  <li><a href="#/contact/list">/contact/list</a></li>
+  <li><a href="#/contact/2">/contact/2</a></li>
+  <li><a href="#/contact/2/option">/contact/2/option</a></li>
+  <li><a href="#/contact/2/message">/contact/2/message</a></li>
+</ul>
   
+<script>
+
+  var config = {
+    enter: function(){
+      console.log("enter: " + this.name)
+    },
+    leave: function(){
+      console.log("leave: " + this.name)
+    }
+  }
+
+  function create(o){
+    o = o || {};
+    o.enter= config.enter;
+    o.leave = config.leave;
+    return o;
+  }
+
+  var stateman = new StateMan();
+
+  stateman
+    .state("home", config)
+    .state("contact", config)
+    .state("contact.list", config )
+    .state("contact.detail", create({url: ":id(\\d+)"}))
+    .state("contact.detail.option", config)
+    .state("contact.detail.message", config)
+    .start({});
+
+</script>
 </body>
 </html>

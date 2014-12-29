@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script src="../stateman.js"></script>
+  <style>
+    .side{
+      float:left;
+      width: 30%;
+    }
+    #container{
+      overflow: hidden;
+    }
+  </style>
+
+</head>
+
+  <body>
+
+  <ul class='side'>
+  <li> <a href="#!/home1">nofound: /home1</a> </li>
+  <li> <a href="#!/home">home:  /home</a> </li>
+  <li> <a href="#!/contact">contact:  /contact</a> </li>
+  <li> <a href="#!/contact/101">contact.detai:  /contact/101</a> </li>
+  <li> <a href="#!/contact/102">contact.detai:  /contact/102</a> </li>
+  <li> <a href="#!/contact/100/message">contact.detail.message: /contact/100/message</a></li>
+  <li> <a href="#!/contact/200/message">contact.detail.message: /contact/200/message</a></li>
+  </ul>
+
+  <ul id="container" style="height: 600px;width:1000px"></ul>
+
+
+  <script>
+  var container = document.getElementById("container");
+
+  function textlog(message){
+    container.innerHTML += "<li>" + message + "</li>"
+  }
+
+
+  var stateman = new StateMan();
+
+    stateman.state("home", {enter: function(){textlog( "enter " + this.name )}})
+    .state("contact", {
+        enter: function(){
+          var done = this.async()
+          textlog("====1s later=========")
+          setTimeout(function(){
+            textlog("enter: contact")
+            done();
+          }, 100)
+        }, 
+        leave: function(){textlog("leave: contact")},
+        update: function(){ textlog('update: contact');}
+      })
+      .state("contact.detail", {
+        url:":id",
+        update:function(data){textlog('update: ontact.detail');},    
+        enter: function(){textlog("enter: contact.detail")},
+        leave: function(){textlog("leave: contact.detail")}
+      })
+      .state("contact.detail.config", {
+        update:function(){textlog('update: ontact.detail.config');},    
+        enter: function(step){textlog("enter: contact.detail.config ");},
+        leave: function(step){textlog("leave: contact.detail.config ") }
+      })
+    .state("contact.detail.message",{
+      url: "^/contact/:id/message" , //absolute url
+      update: function(option){textlog("update: " + this.name)},
+      enter: function(step){
+        var done = this.async();
+        textlog("=======1s later to enter=======")
+        setTimeout(function(){
+          textlog("enter: contact.detail.message");
+          done();
+        }, 1000)
+      },
+      leave: function(step){
+        var done = this.async();
+        textlog("===1s later to leave=====")
+        setTimeout(function(){
+          textlog("leave: contact.detail.message");
+          done();
+        }, 1000)
+
+      }
+    })
+    .state("$notfound", {
+      enter: function(){
+        textlog("notfound: redirect to contact.detail")
+        stateman.go('contact.detail', {
+          param: {id:1},
+          replace: true
+        })
+      }
+    })
+    .on("history:change", function(path){
+      textlog("path changed!! -------------------------------------> " + path)
+    })
+    .start({prefix:'!'});
+
+  </script>
+  </body>
+</html>

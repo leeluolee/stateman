@@ -473,10 +473,6 @@ describe("stateman:other", function(){
     })
 
 
-  it("notify specifed state works", function(){
-    stateman.notify("contact.detail")
-    expect(obj.contact_detail).to.equal(true)
-  })
 
   it("visited flag will add if the state is entered", function(){
     expect(stateman.state("contact.detail").visited).to.equal(false)

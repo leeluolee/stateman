@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/2.3.2/css/bootstrap.css">
+  <style>
+  body{
+    padding: 60px 40px;
+  }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.8.3/jquery.js"></script>
+  <script src="../stateman.js"></script>
+</head>
+
+<body>
+
+<div class="navbar navbar-inverse navbar-fixed-top">
+  <div class="navbar-inner">
+    <div class="container-fluid">
+      <a class="brand" href="#">please forget my dirty way to use jquery</a>
+    </div>
+  </div>
+</div>
+<div class="container-fluid">
+
+  <div class="row-fluid">
+    <div class="span3">
+      <div class="well sidebar-nav">
+        <ul class="nav nav-list j-menus">
+          <li class='home'><a href="#/home">home</a></li>
+          <li class='user'><a href="#/user">user</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="span9">
+      <div class="row j-app"></div>
+    </div>
+  </div>
+</div>
+
+
+<script class="nav" id="user-tpl" type='text/template'>
+<div class="navbar">
+  <div class="navbar-inner">
+    <div class="container">
+      <ul class="nav j-menu">
+        <li class='user-list'><a href="#/user">list</a></li>
+        <li class="user-detail"><a href="javascript:;">detail</a></li>
+        <li class="user-config"><a href="#/user/config">config</a></li>
+      </ul>
+    </div>
+  </div>
+</div>
+</div>
+<div class="row-fluid j-user"></div>
+</script>
+
+  
+
+<script>
+
+  function activeOne(className){
+    var $menu = $(".j-menu");
+    $menu.find('li').removeClass("active");
+    $menu.find(className).addClass("active");
+  }
+  var states = {
+    "home": {
+      enter: function(){
+        $(".j-menus .home").addClass("active");
+        $(".j-app").html("<h2>HOME<h2>");
+      },
+      leave: function(){
+        $(".j-menus .home").removeClass("active");
+      }
+    },
+    "user": {
+      enter: function(){
+        console.log($("#user-tpl").html())
+        console.log($('.j-app'))
+        $(".j-app")[0].innerHTML = $("#user-tpl").html();
+        $(".j-menus .user").addClass("active");
+      },
+      leave: function(){
+        $(".j-menus .user").removeClass("active");
+      }
+    },
+    "user.list":{
+      url: "",
+      enter: function(){
+        // in real enviroment, you need a template engine to complete the work.
+        activeOne(".user-list");
+        var list = "<ul>";
+        for(var i = 0; i < 4; i++){
+          list += "<li><a href='#/user/" + i + "'>user " + i + "</a></li>"
+        }
+        list += "</ul>"
+        $(".j-user").html(list);
+
+      }
+    },
+    "user.detail":{
+      url: ":id(\\d+)",
+      enter: function(option){
+        activeOne(".user-detail");
+        this.update(option);
+      },
+      // because the param.id may change. 
+      update: function(option){
+        // update or enter, we need update the user infomation
+        $(".j-user").html("<h4><a href='#/user'><< return list</a></h4>User " + option.param.id + "'s detail");
+      }
+    }
+  }
+
+  var stateman = new StateMan();
+
+  stateman
+    .state(states)
+    .state("user.config", function(){
+        activeOne(".user-config");
+        $(".j-user").html("<p class='well'>user config page<p>");
+    })
+    .on("notfound", function(path){
+      stateman.go("home");
+    })
+    .on("end", function(){
+
+    })
+    .start({html5: true, "root": "/example/layout.html"})
+
+
+
+</script>
+</body>
+</html>
