@@ -11,9 +11,9 @@
   "scripts": [
     "src/index.js",
     "src/browser.js",
-    "src/maze.js",
+    "src/histery.js",
     "src/state.js",
-    "src/step.js",
+    "src/stateman.js",
     "src/util.js"
   ]
 }
