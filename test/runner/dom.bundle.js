@@ -1558,11 +1558,14 @@
 	    },
 	    start: function(options){
 	      if( !this.history ) this.history = new Histery(options); 
-	      this.history.on("change", _.bind(this._afterPathChange, this));
-
-	      // if the history service is not runing, start it
-	      if(!this.history.isStart) this.history.start();
+	      if( !this.history.isStart ){
+	        this.history.on("change", _.bind(this._afterPathChange, this));
+	        this.history.start();
+	      } 
 	      return this;
+	    },
+	    stop: function(){
+	      this.history.stop();
 	    },
 	    // @TODO direct go the point state
 	    go: function(state, option, callback){
@@ -1592,9 +1595,6 @@
 	    },
 	    encode: State.prototype.encode,
 	    // notify specify state
-	    notify: function(path, param){
-	      return this.state(path).emit("notify", param);
-	    },
 	    // check the pending statename whether to match the passed condition (stateName and param)
 	    is: function(stateName, param, isStrict){
 	      if(!stateName) return false;

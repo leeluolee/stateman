@@ -1,4 +1,5 @@
 var through = require('through2');
+var shell = require("gulp-shell");
 var gulp = require('gulp');
 var webpack = require('gulp-webpack');
 var jshint = require('gulp-jshint');
@@ -180,6 +181,13 @@ gulp.task("release", ["tag"])
 
 
 gulp.task('travis', ['jshint' ,'build','mocha',  'karma']);
+
+
+
+gulp.task('server', ['build'], shell.task([
+  "./node_modules/puer/bin/puer"
+]))
+
 
 
 

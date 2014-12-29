@@ -60,7 +60,7 @@ var stateman = StateMan();
 ## Instance: stateman
 
 ## 1. stateman.state(stateName[, config])
-stateman.state is the most important api in stateman. 
+stateman.state is the most important api in stateman, all routing config is through it.
 
  __Arguments__
 

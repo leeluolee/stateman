@@ -22,6 +22,7 @@
   },
   "homepage": "https://github.com/leeluolee/maze",
   "devDependencies": {
+    "puer": "^1.0.8",
     "gulp-jshint": "~1.5.3",
     "gulp-shell": "^0.2.4",
     "gulp-webpack": "^0.3.0",
