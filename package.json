@@ -1,6 +1,6 @@
 {
   "name": "stateman",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "A state-based router library, designed for complex SPA development",
   "keywords": [
     "router",
