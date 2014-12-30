@@ -35,6 +35,7 @@
 
 ### Deep Guide
 
+* [Class: State](#State)
 * [nested state](#nested)
 * [__params in routing__](#param)
 
@@ -50,9 +51,9 @@ var config = {
 }
 
 function cfg(o){
-  o.enter = config.enter  
-  o.leave = config.leave  
-  o.update = config.update  
+  o.enter = o.enter || config.enter  
+  o.leave = o.leave || config.leave  
+  o.update = o.update || config.update  
   return o;
 }
 
@@ -65,7 +66,18 @@ stateman.state({
   "app.contact.detail": cfg({url: ":id(\\d+)"}),
   "app.contact.detail.setting": config, 
   "app.contact.message": config,
-  "app.user": config,
+  "app.user": cfg({
+    enter: function(){
+      var done = this.async();
+      console.log(this.name + "is pending, 1s later to enter next state")
+      setTimeout(done, 1000)
+    },
+    leave: function(){
+      var done = this.async();
+      console.log(this.name + "is pending, 1s later to leave out")
+      setTimeout(done, 1000)
+    }
+  }),
   "app.user.list": cfg({url: ""})
 
 }).on("notfound", function(){
@@ -267,10 +279,11 @@ it will matched the url `/contact/1?name=heloo&age=1`, and get the param `{id:'1
 start the state manager.
 
 __option__
-	- **option.html5**: whether to open the html5 history support.
-	- **option.root**: the root of the url , __only need when html5 is actived__. defualt is `/`
-	- **option.prefix**: for the hash prefix , default is '' (you can pass `!` to make the hash like `#!/contact/100`), works in hash mode.
-	- **option.autolink**: whether to delegate all link(a[href])'s navigating, only need when __html5 is actived__, default is `true`.
+
+- **option.html5**: whether to open the html5 history support.
+- **option.root**: the root of the url , __only need when html5 is actived__. defualt is `/`
+- **option.prefix**: for the hash prefix , default is '' (you can pass `!` to make the hash like `#!/contact/100`), works in hash mode.
+- **option.autolink**: whether to delegate all link(a[href])'s navigating, only need when __html5 is actived__, default is `true`.
 	
 <a name="nav"></a>
 ## 3. stateman.__nav__(url[, option][, callback]);
@@ -296,6 +309,7 @@ the final option passed to `enter`, `leave` and `update` is `{param: {id: "1", n
 
 
 
+<a name="go"></a>
 ## 4. stateman.__go__(stateName [, option][, callback]);
 
 nav to specified state, very similar with [stateman.nav](#nav). but stateman use stateName to navigating. 
@@ -318,6 +332,7 @@ stateman.go('app.contact.detail', {param: {id:1, name: 'leeluolee'}});
 location.hash will change to `#/app/contact/1?name=leeluolee` , you can find that uncaputed param (name) will be append to url as the querystring.
 
 
+<a name="is"></a>
 ### 5. stateman.is( stateName[, param] [, isStrict] )
 
 determine if the active state is equal to or is the child of the state. If any params are passed then they will be tested for a match as well. not all the parameters need to be passed, just the ones you'd like to test for equality.
@@ -354,6 +369,7 @@ stateman.encode("app.contact.detail", {id: "1", name: "leeluolee"}) === "/app/co
 
 ```
 
+<a name="decode"></a>
 ### 7. stateman.decode( url )
 
 find the state that match the url, [__nav__](#nav)is based on this method
@@ -369,24 +385,34 @@ state.param // =>{id: "1", name: "leeluolee"}
 ```
 
 
+<a name="stop"></a>
 ### 8. stateman.stop()
 
 stop the stateman.
 
 ### 9. Other Useful property in stateman
 
+<a name="current"></a>
 1. __stateman.current__: 
 	the current state, if a navigating is still in process, the current represent the destination state. 
 
+<a name="current"></a>
 2. __stateman.previous__: 
 	the previous state.
 	
+<a name="current"></a>
 3. __stateman.active__: 
 	the active state, point to the state that still in active.
 
-imagine that you navigating form state named 'app.contact.detail' to the state named 'app.user', the current is point to contact.detail and the previous will point to 'user.detail'. and the active state is changed from `app.contact.detail` to `app.user`
+imagine that you are navigating from state 'app.contact.detail' to state 'app.user', current is pointed to `app.user` and previous is pointed to 'app.contact.detail'. but the active state is dynamic, it is changed from `app.contact.detail` to `app.user`
 
-`current`, `active`, `previous` is __all living__.
+__Example__: 
+
+<a name="param1"></a>
+4. __stateman.param__:
+	the current param.
+
+
 
 
 ## Emitter
@@ -421,6 +447,54 @@ trigger a specified event with specified param
 3. end: when a navigating is over
 4. history:change: when a change envet is emitted by history
 5. notfound: when no state is founded during a navigating.
+
+
+
+## State
+
+you can use `stateman.state(stateName)` to got the target state. each state is instanceof `StateMan.State`. the context of the methods you defined in config(`enter`, `leave`, `update`) is pointed to state.
+
+```js
+
+var state = stataeman.state("app.contact.detail");
+state.name = "app.contact.detail"
+
+```
+
+
+<a name="async"></a>
+
+### 1. state.async()
+
+you can pending a state until you want to continue. see the `app.user` config that we defined above.
+
+```js
+
+"app.user": {
+  enter: function(){
+    var done = this.async();
+    console.log(this.name + "is pending, 1s later to enter next state")
+    setTimeout(done, 1000)
+  },
+  leave: function(){
+    var done = this.async();
+    console.log(this.name + "is pending, 1s later to leave out")
+    setTimeout(done, 1000)
+  }
+}
+
+
+```
+
+if enter into or leave out from the state `app.user`, pending it for 1s. then go to the next step. type `stateman.go('app.user.list')`, and see log at console.
+
+
+
+
+
+
+
+
 
 
 
