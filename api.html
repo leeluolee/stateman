@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>StateMan Test</title>
+  <title>StateMan API test</title>
   <script src="https://rawgit.com/leeluolee/stateman/v0.1.4/stateman.js"></script>
 </head>
 <body>
@@ -10,14 +10,14 @@
 <h2>OPEN console to find the log</h2>
 
 <ul>
-  <li><a href="#/app">/home"</a></li>
-  <li><a href="#/app/contact">/contact"</a></li>
-  <li><a href="#/app/contact/option">/contact/list</a></li>
-  <li><a href="#/app/contact/2">/contact/2</a></li>
-  <li><a href="#/app/contact/2/option">/contact/2/option</a></li>
-  <li><a href="#/app/contact/2/message">/contact/2/message</a></li>
+  <li><strong>(app)</strong>  <a href="#/app">/app </a></li>
+  <li><strong>(app.contact)</strong>  <a href="#/app/contact">/app/contact </a></li>
+  <li><strong>(app.contact.message)</strong>  <a href="#/app/contact/message">/app/contact/message </a></li>
+  <li><strong>(app.contact.detail)</strong>  <a href="#/app/contact/2?name=leeluolee">/app/contact/2?name=leeluolee </a></li>
+  <li><strong>(app.contact.detail.setting)</strong>  <a href="#/app/contact/2/setting">/app/contact/2/setting </a></li>
+  <li><strong>(app.contact.detail.setting)</strong>  <a href="#/app/contact/3/setting">/app/contact/3/setting </a></li>
+  <li><strong>(app.user.list)</strong>  <a href="#/app/user">/app/user </a></li>
 </ul>
-
 
 <script>
 var config = {
@@ -27,23 +27,37 @@ var config = {
 }
 
 function cfg(o){
-  o.enter = config.enter  
-  o.leave = config.leave  
-  o.update = config.update  
+  o.enter = o.enter || config.enter  
+  o.leave = o.leave || config.leave  
+  o.update = o.update || config.update  
   return o;
 }
 
 var stateman = new StateMan();
 
 stateman.state({
+
   "app": config,
   "app.contact":  config,
-  "app.contact.detail": cfg({url: ":id"}),
+  "app.contact.detail": cfg({url: ":id(\\d+)"}),
   "app.contact.detail.setting": config, 
   "app.contact.message": config,
-  "app.user": config,
-  "app.user.list": cfg({url: ""}),
-  "app2": cfg({url: ""})
+  "app.user": cfg({
+    enter: function(){
+      var done = this.async();
+      console.log(this.name + "is pending, 1s later to enter next state")
+      setTimeout(done, 1000)
+    },
+    leave: function(){
+      var done = this.async();
+      console.log(this.name + "is pending, 1s later to leave out")
+      setTimeout(done, 1000)
+    }
+  }),
+  "app.user.list": cfg({url: ""})
+
+}).on("notfound", function(){
+  this.go('app') // if not found
 }).start();
 
 </script>
