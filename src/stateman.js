@@ -11,7 +11,7 @@ function StateMan(options){
   options = options || {};
   if(options.history) this.history = options.history;
   this._states = {};
-  this.current = this.pending = this;
+  this.current = this.active = this;
 }
 
 
@@ -19,10 +19,10 @@ _.extend( _.emitable( StateMan ), {
     // start StateMan
 
     state: function(stateName, config){
-      var pending = this.pending;
-      if(typeof stateName === "string" && pending.name){
-         stateName = stateName.replace("~", pending.name)
-         if(pending.parent) stateName = stateName.replace("^", pending.parent.name || "");
+      var active = this.active;
+      if(typeof stateName === "string" && active.name){
+         stateName = stateName.replace("~", active.name)
+         if(active.parent) stateName = stateName.replace("^", active.parent.name || "");
       }
       // ^ represent current.parent
       // ~ represent  current
@@ -68,11 +68,11 @@ _.extend( _.emitable( StateMan ), {
     },
     encode: State.prototype.encode,
     // notify specify state
-    // check the pending statename whether to match the passed condition (stateName and param)
+    // check the active statename whether to match the passed condition (stateName and param)
     is: function(stateName, param, isStrict){
       if(!stateName) return false;
       var stateName = (stateName.name || stateName);
-      var pending = this.pending, pendingName = pending.name;
+      var active = this.active, pendingName = active.name;
       var matchPath = isStrict? pendingName === stateName : (pendingName + ".").indexOf(stateName + ".")===0;
       return matchPath && (!param || _.eql(param, this.param)); 
     },
@@ -109,12 +109,12 @@ _.extend( _.emitable( StateMan ), {
 
       // not touch the end in previous transtion
 
-      if(this.pending !== this.current){
+      if(this.active !== this.current){
         // we need return
 
-        this.current = this.pending
-        if(this.pending._pending && this.pending.done){
-          this.pending.done(false);
+        this.current = this.active
+        if(this.active._pending && this.active.done){
+          this.active.done(false);
         }else{
           _.log("naving to [" + this.current.name + "] will be stoped, trying to ["+state.name+"] now");
         }
@@ -128,7 +128,7 @@ _.extend( _.emitable( StateMan ), {
         self = this;
 
       var done = function(){
-        self.current = self.pending;
+        self.current = self.active;
         self.emit("end")
         if(typeof callback === "function") callback.call(self);
       }
@@ -195,11 +195,11 @@ _.extend( _.emitable( StateMan ), {
 
       callback = callback || _.noop;
 
-      var pending = this.pending;
+      var active = this.active;
 
-      if(pending == end) return callback();
+      if(active == end) return callback();
       var stage = [];
-      while(end !== pending && end){
+      while(end !== active && end){
         stage.push(end);
         end = end.parent;
       }
@@ -210,7 +210,7 @@ _.extend( _.emitable( StateMan ), {
       var cur = stage.pop(), self = this;
       if(!cur) return callback();
 
-      this.pending = cur;
+      this.active = cur;
 
       cur.done = function(success){
         cur._pending = false;
@@ -232,17 +232,17 @@ _.extend( _.emitable( StateMan ), {
     },
     _leave: function(end, options, callback){
       callback = callback || _.noop;
-      if(end == this.pending) return callback();
+      if(end == this.active) return callback();
       this._leaveOne(end, options,callback)
     },
     _leaveOne: function(end, options, callback){
-      if( end === this.pending ) return callback();
-      var cur = this.pending, self = this;
+      if( end === this.active ) return callback();
+      var cur = this.active, self = this;
       cur.done = function( success ){
         cur._pending = false;
         cur.done = null;
         if(success !== false){
-          if(cur.parent) self.pending = cur.parent;
+          if(cur.parent) self.active = cur.parent;
           self._leaveOne(end, options, callback)
         }else{
           return callback(true);

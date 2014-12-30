@@ -100,12 +100,12 @@ _.extend( _.emitable( State ), {
       }
       base = base.parent;
     }
-    this.path = _.cleanPath("/" + url);
-    var pathAndQuery = this.path.split("?");
-    this.path = pathAndQuery[0];
+    this.pattern = _.cleanPath("/" + url);
+    var pathAndQuery = this.pattern.split("?");
+    this.pattern = pathAndQuery[0];
     // some Query we need watched
 
-    _.extend(this, _.normalize(this.path), true);
+    _.extend(this, _.normalize(this.pattern), true);
   },
   encode: function(stateName, param){
     var state;

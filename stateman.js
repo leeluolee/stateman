@@ -1,6 +1,6 @@
 /**
-@author	undefined
-@version	0.1.2
+@author	leeluolee
+@version	0.1.4
 @homepage	https://github.com/leeluolee/maze
 */
 (function webpackUniversalModuleDefinition(root, factory) {
@@ -84,7 +84,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  options = options || {};
 	  if(options.history) this.history = options.history;
 	  this._states = {};
-	  this.current = this.pending = this;
+	  this.current = this.active = this;
 	}
 
 
@@ -92,10 +92,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    // start StateMan
 
 	    state: function(stateName, config){
-	      var pending = this.pending;
-	      if(typeof stateName === "string" && pending.name){
-	         stateName = stateName.replace("~", pending.name)
-	         if(pending.parent) stateName = stateName.replace("^", pending.parent.name || "");
+	      var active = this.active;
+	      if(typeof stateName === "string" && active.name){
+	         stateName = stateName.replace("~", active.name)
+	         if(active.parent) stateName = stateName.replace("^", active.parent.name || "");
 	      }
 	      // ^ represent current.parent
 	      // ~ represent  current
@@ -141,11 +141,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 	    encode: State.prototype.encode,
 	    // notify specify state
-	    // check the pending statename whether to match the passed condition (stateName and param)
+	    // check the active statename whether to match the passed condition (stateName and param)
 	    is: function(stateName, param, isStrict){
 	      if(!stateName) return false;
 	      var stateName = (stateName.name || stateName);
-	      var pending = this.pending, pendingName = pending.name;
+	      var active = this.active, pendingName = active.name;
 	      var matchPath = isStrict? pendingName === stateName : (pendingName + ".").indexOf(stateName + ".")===0;
 	      return matchPath && (!param || _.eql(param, this.param)); 
 	    },
@@ -182,12 +182,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	      // not touch the end in previous transtion
 
-	      if(this.pending !== this.current){
+	      if(this.active !== this.current){
 	        // we need return
 
-	        this.current = this.pending
-	        if(this.pending._pending && this.pending.done){
-	          this.pending.done(false);
+	        this.current = this.active
+	        if(this.active._pending && this.active.done){
+	          this.active.done(false);
 	        }else{
 	          _.log("naving to [" + this.current.name + "] will be stoped, trying to ["+state.name+"] now");
 	        }
@@ -201,7 +201,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        self = this;
 
 	      var done = function(){
-	        self.current = self.pending;
+	        self.current = self.active;
 	        self.emit("end")
 	        if(typeof callback === "function") callback.call(self);
 	      }
@@ -268,11 +268,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	      callback = callback || _.noop;
 
-	      var pending = this.pending;
+	      var active = this.active;
 
-	      if(pending == end) return callback();
+	      if(active == end) return callback();
 	      var stage = [];
-	      while(end !== pending && end){
+	      while(end !== active && end){
 	        stage.push(end);
 	        end = end.parent;
 	      }
@@ -283,7 +283,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      var cur = stage.pop(), self = this;
 	      if(!cur) return callback();
 
-	      this.pending = cur;
+	      this.active = cur;
 
 	      cur.done = function(success){
 	        cur._pending = false;
@@ -305,17 +305,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 	    _leave: function(end, options, callback){
 	      callback = callback || _.noop;
-	      if(end == this.pending) return callback();
+	      if(end == this.active) return callback();
 	      this._leaveOne(end, options,callback)
 	    },
 	    _leaveOne: function(end, options, callback){
-	      if( end === this.pending ) return callback();
-	      var cur = this.pending, self = this;
+	      if( end === this.active ) return callback();
+	      var cur = this.active, self = this;
 	      cur.done = function( success ){
 	        cur._pending = false;
 	        cur.done = null;
 	        if(success !== false){
-	          if(cur.parent) self.pending = cur.parent;
+	          if(cur.parent) self.active = cur.parent;
 	          self._leaveOne(end, options, callback)
 	        }else{
 	          return callback(true);
@@ -596,11 +596,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	  if( t1 !== t2) return false;
 	  if(t1 === 'object'){
 	    var equal = true;
+	    // only check the first's propertie
 	    for(var i in o1){
-	      if( !_.eql(o1[i], o2[i]) ) equal = false;
-	    }
-	    for(var j in o2){
-	      if( !_.eql(o1[j], o2[j]) ) equal = false;
+	      if( o1[i] !== o2[i] ) equal = false;
 	    }
 	    return equal;
 	  }
@@ -835,12 +833,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	      }
 	      base = base.parent;
 	    }
-	    this.path = _.cleanPath("/" + url);
-	    var pathAndQuery = this.path.split("?");
-	    this.path = pathAndQuery[0];
+	    this.pattern = _.cleanPath("/" + url);
+	    var pathAndQuery = this.pattern.split("?");
+	    this.pattern = pathAndQuery[0];
 	    // some Query we need watched
 
-	    _.extend(this, _.normalize(this.path), true);
+	    _.extend(this, _.normalize(this.pattern), true);
 	  },
 	  encode: function(stateName, param){
 	    var state;

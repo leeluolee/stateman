@@ -33,11 +33,9 @@ _.eql = function(o1, o2){
   if( t1 !== t2) return false;
   if(t1 === 'object'){
     var equal = true;
+    // only check the first's propertie
     for(var i in o1){
-      if( !_.eql(o1[i], o2[i]) ) equal = false;
-    }
-    for(var j in o2){
-      if( !_.eql(o1[j], o2[j]) ) equal = false;
+      if( o1[i] !== o2[i] ) equal = false;
     }
     return equal;
   }

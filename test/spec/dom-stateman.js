@@ -542,8 +542,9 @@ describe("stateman: matches and relative go", function(){
     stateman.nav("/contact/user/1");
 
     expect( stateman.is("contact.user.param")).to.equal(true);
-    expect( stateman.is("contact.user.param", {})).to.equal(false);
+    expect( stateman.is("contact.user.param", {})).to.equal(true);
     expect( stateman.is("contact.user", {id: "1"})).to.equal(true);
+    expect( stateman.is("contact.user", {id: "2"})).to.equal(false);
 
     stateman.state("contactmanage.detail",{})
 

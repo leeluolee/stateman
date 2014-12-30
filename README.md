@@ -8,7 +8,7 @@ StateMan
 stateman: A tiny foundation that providing nested state-based routing for complex web application. 
 
 
-stateman is highly inspired by [ui-router](https://github.com/angular-ui/ui-router) for angular, you can find many features similiar with it. 
+stateman is highly inspired by [ui-router](https://github.com/angular-ui/ui-router) , you can find many features similiar with it. 
 
 But stateman is a __standalone library__ with extremely tiny codebase(10kb minified). feel free to integrated it with whatever framework you like! 
 
@@ -23,15 +23,20 @@ But stateman is a __standalone library__ with extremely tiny codebase(10kb minif
 6. support IE6+ and other modern browsers.
 
 
+## Reference
+
+- [English](https://github.com/leeluolee/stateman/tree/master/docs/API.md)
+- [中文](https://github.com/leeluolee/stateman/tree/master/docs/API-zh.md)
+
 
 
 ## Quirk Start
 
 you may need a static server to run the demo. [puer](https://github.com/leeluolee/puer) is simple to get start.
 
-just pasting the code to your own `index.html`, and you can find the demo runs. 
+just pasting the code to your own `index.html`, then you can find the demo works. 
 
-```javascript
+```html
 
 <!DOCTYPE html>
 <html lang="en">
@@ -84,12 +89,12 @@ just pasting the code to your own `index.html`, and you can find the demo runs.
 
 ```
 
-open the console, then you can see the navigating log.
+open the console,  see the  log of the navigating.
 
 ## Browser Support 
 
 1. Modern Broswer contains mobile devices
-2. IE6 - IE8 
+2. IE6+
 
 
 
@@ -101,7 +106,7 @@ open the console, then you can see the navigating log.
 bower install stateman
 ```
 
-`stateman.js` have been built to a standard UMD, you can use it in AMD、Commonjs and Global.
+`stateman.js` have been packaged as a standard UMD, you can use it in AMD、commonjs and global.
 
 ### npm (browserify or other based on commonjs)
 
@@ -137,11 +142,6 @@ var StateMan = require('leeluolee/stateman');
 
 
 
-## API Reference
-
-- [English](https://github.com/leeluolee/stateman/tree/master/docs/API.md)
-- [中文](https://github.com/leeluolee/stateman/tree/master/docs/API-zh.md)
-
 
 
 ## Example
@@ -156,3 +156,7 @@ __run demo local__
 4.  check the example folder
 
 
+
+## LICENSE
+
+MIT.

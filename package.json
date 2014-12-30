@@ -15,7 +15,10 @@
   "scripts": {
     "test": "gulp travis --phantomjs"
   },
-  "author": "leeluolee",
+  "author": {
+    "name": "leeluolee",
+    "email": "oe.zheng@gmail.com"
+  },
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/leeluolee/maze/issues"
