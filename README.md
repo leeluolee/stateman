@@ -23,11 +23,6 @@ But stateman is a __standalone library__ with extremely tiny codebase(10kb minif
 6. support IE6+ and other modern browsers.
 
 
-## Reference
-
-- [English](https://github.com/leeluolee/stateman/tree/master/docs/API.md)
-- [中文](https://github.com/leeluolee/stateman/tree/master/docs/API-zh.md)
-
 
 
 ## Quirk Start
@@ -89,13 +84,22 @@ just pasting the code to your own `index.html`, then you can find the demo works
 
 ```
 
-open the console,  see the  log of the navigating.
+open the console,  see the log when navigating.
+
+
+you can also check a simple layout demo that open the html5 support [here](http://leeluolee.github.io/stateman/layout.html)
+
+## Reference
+
+- [English](https://github.com/leeluolee/stateman/tree/master/docs/API.md)
+- [中文](https://github.com/leeluolee/stateman/tree/master/docs/API-zh.md)
+
+
 
 ## Browser Support 
 
 1. Modern Broswer contains mobile devices
 2. IE6+
-
 
 
 ## installation
