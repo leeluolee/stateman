@@ -109,7 +109,7 @@ var stateman = StateMan();
 
 ## Instance: stateman
 
-<a name='state'></a>
+<a id='state'></a>
 
 ## 1. stateman.state(stateName[, config])
 
@@ -518,7 +518,7 @@ trigger a specified event with specified param
 
 
 <a name="state1"></a>
-## State
+## Class: State
 
 you can use `stateman.state(stateName)` to get the target state. each state is instanceof `StateMan.State`. the context of the methods you defined in config(`enter`, `leave`, `update`) is pointed to state.
 
