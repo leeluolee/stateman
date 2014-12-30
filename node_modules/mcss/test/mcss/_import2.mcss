@@ -1,0 +1,5 @@
+body{
+    name: '_import2.mcss';
+}
+
+@import url('_import1.mcss');

@@ -1,0 +1,14 @@
+simple-format{
+	s-format:"haha hello heihei";
+	x-format:"haha #fefefe heihei";
+	X-format:"haha #FEFEFE heihei";
+	d-format:"haha 20 heihei";
+	f-format:"haha 12.36 heihei";
+}
+format-with-interplation{
+	s-format:"haha 20 hello heihei";
+	x-format:"haha 20 #fefefe heihei";
+	X-format:"haha 20 #FEFEFE heihei";
+	d-format:"haha 20 20 heihei";
+	f-format:"haha 20 12.36 heihei";
+}

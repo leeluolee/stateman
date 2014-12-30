@@ -1,0 +1,16 @@
+.f-2 .col-1,.f-2 .col-2,.f-2 .col-3{
+	float:left;
+	position:relative;
+	min-height:1px;
+	margin-left:5px;
+	margin-right:5px;
+}
+.f-2 .col-1{
+	width:30%;
+}
+.f-2 .col-2{
+	width:40%;
+}
+.f-2 .col-3{
+	width:20%;
+}

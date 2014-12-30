@@ -1,0 +1,9 @@
+[data-section=''],[data-section='auto'],.section-container.auto,[data-section='vertical-tabs'],.section-container.vertical-tabs,[data-section='vertical-nav'],.section-container.vertical-nav,[data-section='horizontal-nav'],.section-container.horizontal-nav,[data-section='accordion'],.section-container.accordion{
+	width:100%;
+	position:relative;
+	display:block;
+	margin-bottom:1.25em;
+}
+.m-home hello1{
+	left:10px;
+}

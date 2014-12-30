@@ -1,0 +1,37 @@
+@media screen,print{
+	body1{
+		content:body1 in media;
+	}
+}
+@media screen and (max-width: hello){
+	body{
+		right:20px;
+	}
+}
+body2{
+	left:20px;
+}
+@media screen and (hello: 10px){
+	body2{
+		left:10px;
+	}
+	body2 body{
+		right:20px;
+	}
+}
+body2{
+	left:20px;
+}
+@media screen and (max-width: 10px),print{
+	body2{
+		left:10px;
+	}
+	body2 body{
+		right:20px;
+	}
+}
+@media screen and (max-width: 10px) and (min-width: 100px),print and (min-width: 100px){
+	body2 body div{
+		right:20px;
+	}
+}

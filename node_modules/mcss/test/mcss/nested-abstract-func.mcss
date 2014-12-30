@@ -1,0 +1,23 @@
+$fluid-col = ($gap = 0px){
+    float: left;
+    position: relative;
+    min-height: 1px;
+    margin-left: $gap / 2;
+    margin-right: $gap / 2;
+}
+$fluid-layout = ($widths, $gap = 0px, $class='col'){
+    @abstract column{
+        $fluid-col: 10px;
+    }
+    @for $width, $i of $widths {
+        .#{$class}-#{$i + 1} {
+            @extend column;
+            width: $width;
+        }
+    }
+}
+
+.f-2{
+  $fluid-layout: 30% 40% 20%;
+}
+

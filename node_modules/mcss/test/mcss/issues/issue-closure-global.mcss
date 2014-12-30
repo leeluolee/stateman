@@ -1,0 +1,24 @@
+$global = (){
+
+}
+
+$ret-global = (){
+  @return $global;
+}
+
+$ret-local = (){
+  $local = (){
+    @debug $hello;
+  }
+  @return $local;
+}
+
+$ret-direct = (){
+  @return (){
+    @debug direct;
+  }
+}
+
+$ret-global();
+$ret-local();
+$ret-direct();

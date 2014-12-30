@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>tokenizer.js</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div id="container">
+    <div id="background"></div>
+    
+      <ul id="jump_to">
+        <li>
+          <a class="large" href="javascript:void(0);">Jump To &hellip;</a>
+          <a class="small" href="javascript:void(0);">+</a>
+          <div id="jump_wrapper">
+          <div id="jump_page">
+            
+              
+              <a class="source" href="browser.html">
+                browser.js
+              </a>
+            
+              
+              <a class="source" href="functions.html">
+                functions.js
+              </a>
+            
+              
+              <a class="source" href="index.html">
+                index.js
+              </a>
+            
+              
+              <a class="source" href="parser.html">
+                parser.js
+              </a>
+            
+              
+              <a class="source" href="symtab.html">
+                symtab.js
+              </a>
+            
+              
+              <a class="source" href="tokenizer.html">
+                tokenizer.js
+              </a>
+            
+              
+              <a class="source" href="walker.html">
+                walker.js
+              </a>
+            
+          </div>
+        </li>
+      </ul>
+    
+    <ul class="sections">
+        
+          <li id="title">
+              <div class="annotation">
+                  <h1>tokenizer.js</h1>
+              </div>
+          </li>
+        
+        
+        
+        <li id="section-1">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h3">
+                <a class="pilcrow" href="#section-1">&#182;</a>
+              </div>
+              <h3>TODO:</h3>
+<ol>
+<li>String Ident Word 允许插值 即{}</li>
+<li>String Ident Word 允许
+TODO: :  与pesudoclass</li>
+</ol>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="keyword">var</span> util = require(<span class="string">'./helper/util'</span>);</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-2">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-2">&#182;</a>
+              </div>
+              <p>local var or util function</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="keyword">var</span> slice = [].slice,
+    _uid = <span class="number">0</span>,
+    debug = <span class="literal">true</span>,
+    tokenCache = {};
+    uid = <span class="keyword">function</span>(type, cached){
+        _uid++;
+        <span class="keyword">if</span>(cached){
+            tokenCache[type] = {type: _uid};
+        }
+        <span class="keyword">return</span> _uid;
+    },</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-3">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-3">&#182;</a>
+              </div>
+              <p>detect keyword in word_list (@deprecated)</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    toAssert = <span class="keyword">function</span>(str){
+        <span class="keyword">var</span> arr = <span class="keyword">typeof</span> str == <span class="string">"string"</span> ? str.split(<span class="regexp">/\s+/</span>) : str,
+            regexp = <span class="keyword">new</span> RegExp(<span class="string">"^(?:"</span> + arr.join(<span class="string">"|"</span>) + <span class="string">")$"</span>);
+
+        <span class="keyword">return</span> <span class="keyword">function</span>(word){
+          <span class="keyword">return</span> regexp.test(word);
+        }
+    },</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-4">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-4">&#182;</a>
+              </div>
+              <p>the more fast version</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    toAssert2 = util.makePredicate;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-5">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-5">&#182;</a>
+              </div>
+              <p>tokenizer function</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="keyword">var</span> tokenizer = module.exports = <span class="keyword">function</span>(input, options){
+    <span class="keyword">return</span> <span class="keyword">new</span> Tokenizer(input, options);
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-6">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-6">&#182;</a>
+              </div>
+              <p>create Token</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="function"><span class="keyword">function</span> <span class="title">createToken</span><span class="params">(type, val, lineno)</span>{</span>
+    <span class="keyword">if</span>(val === <span class="literal">undefined</span>){
+        tokenCache[type] = {type: type}
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-7">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-7">&#182;</a>
+              </div>
+              <p>TODO remove</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="keyword">var</span> token = tokenCache[type] || {type: type, val: val}
+    token.lineno = lineno;
+    <span class="keyword">return</span> token;
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-8">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h1">
+                <a class="pilcrow" href="#section-8">&#182;</a>
+              </div>
+              <h1>Token Types</h1>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-9">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-9">&#182;</a>
+              </div>
+              <p>// inspectToken, get tokenName with TokenType(uid)
+tokenizer.inspect = function(tokenType){
+    var typeType = tokenType.type || tokenType;
+    for(var i in tokenizer){
+        if(typeof tokenizer[i] === &#39;number&#39; &amp;&amp; tokenizer[i] === tokenType) return i;
+    }
+}</p>
+<p>// BASE
+var EOF = tokenizer.EOF
+var WS = tokenizer.WS
+var NEWLINE = tokenizer.NEWLINE
+var COMMENT = tokenizer.COMMENT</p>
+<p>var IMPORTANT = tokenizer.IMPORTANT
+var IDENT = tokenizer.IDENT
+var AT_KEYWORD = tokenizer.AT_KEYWORD
+var SELECTOR = tokenizer.SELECTOR
+// var RGBA = tokenizer.RGBA
+// var RGB = tokenizer.RGB
+var COLOR = tokenizer.COLOR
+var DIMENSION = tokenizer.DIMENSION</p>
+<p>// Punctuator
+var PARENL = tokenizer.PARENL
+var PARENR = tokenizer.PARENR
+var COMMA = tokenizer.COMMA
+var BRACEL = tokenizer.BRACEL
+var BRACER = tokenizer.BRACER
+var SEMICOLON = tokenizer.SEMICOLON
+var BIT_AND = tokenizer.BIT_AND
+// beacuseof the pesudoSelector
+var COLON = tokenizer.COLON
+// AT KEYWORD</p>
+<p>// var IMPORT = tokenizer.IMPORT
+// var PAGE = tokenizer.PAGE
+// var MEDIA = tokenizer.MEDIA
+// var FONT_FACE = tokenizer.MEDIA
+var AT_KEYWORD = tokenizer.AT_KEYWORD
+var DIRECTIVE = tokenizer.DIRECTIVE
+var KEYFRAME = tokenizer.KEYFRAME</p>
+<p>var MIXIN = tokenizer.MIXIN
+var EXTEND = tokenizer.EXTEND</p>
+<p>var VARIABLE = tokenizer.VARIABLE</p>
+<p>// NESS KEYWORD
+var IF = tokenizer.IF
+var THEN = tokenizer.THEN
+var VAR = tokenizer.THEN
+var ELSE = tokenizer.ELSE</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="keyword">var</span> isUnit = toAssert2(<span class="string">"% em ex ch rem vw vh vmin vmax cm mm in pt pc px deg grad rad turn s ms Hz kHz dpi dpcm dppx"</span>);</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-10">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-10">&#182;</a>
+              </div>
+              <p>color keywords</p>
+<p>alt keyword detect  @page   @import  @keyframe @media</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="function"><span class="keyword">function</span> <span class="title">atKeyword</span><span class="params">(val)</span>{</span>
+    <span class="keyword">if</span>(val === <span class="string">'keyframe'</span>) <span class="keyword">return</span> createToken(KEYFRAME)
+    <span class="keyword">return</span> tokenCache[val];
+}
+
+
+<span class="keyword">var</span> $rules = [];
+<span class="keyword">var</span> $links = {};
+
+<span class="keyword">var</span> addRules = tokenizer.addRules = <span class="keyword">function</span>(rules){
+    $rules = $rules.concat(rules)
+    <span class="keyword">var</span> rule, reg, state, link, retain;
+
+    <span class="keyword">for</span>(<span class="keyword">var</span> i = <span class="number">0</span>; i&lt; $rules.length; i++){
+        rule = $rules[i];
+        reg = <span class="keyword">typeof</span> rule.regexp !== <span class="string">'string'</span>? String(rule.regexp).slice(<span class="number">1</span>, -<span class="number">1</span>): rule.regexp;
+        reg.replace(<span class="regexp">/\{(\w+)}/</span>, <span class="keyword">function</span>(all, micro){
+            <span class="keyword">return</span> String(macros[micro]);
+        })
+        <span class="keyword">if</span>(!~reg.indexOf(<span class="string">"^(?"</span>)){
+            rule.regexp = <span class="keyword">new</span> RegExp(<span class="string">"^(?:"</span> + reg + <span class="string">")"</span>);
+        }
+        state = rule.state || <span class="string">'init'</span>;
+        link = $links[state] || ($links[state] = []);
+        link.push(i);
+    }
+    <span class="keyword">return</span> <span class="keyword">this</span>;
+}
+
+
+
+<span class="keyword">var</span> macros = {
+    nmchar:  <span class="regexp">/[-\w$]/</span>
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-11">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-11">&#182;</a>
+              </div>
+              <p>addRULEs;</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>addRules([
+    {</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-12">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-12">&#182;</a>
+              </div>
+              <p>EOF</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        regexp: <span class="regexp">/$/</span>,
+        action: <span class="keyword">function</span>(){
+            <span class="keyword">return</span> <span class="string">'EOF'</span>;
+        }
+    },
+    {   <span class="comment">//NEWLINE</span>
+        regexp: <span class="regexp">/(?:\r\n|[\n\r\f])[ \t]*/</span>,
+        action: <span class="keyword">function</span>(){
+            <span class="keyword">return</span> <span class="string">'NEWLINE'</span>;
+        }
+    },
+  
+    {   <span class="comment">//Multiline Comment</span>
+        regexp: <span class="regexp">/\/\*([^\x00]+?)\*\//</span>,
+        action: <span class="keyword">function</span>(yytext, comment){
+            <span class="keyword">if</span>(<span class="keyword">this</span>.options.ignoreComment) <span class="keyword">return</span>;
+            <span class="keyword">this</span>.yyval = comment;
+            <span class="keyword">return</span> <span class="string">'COMMENT'</span>;
+        }
+    },
+    {   <span class="comment">//Sinle Line Comment</span>
+        regexp: <span class="regexp">/\/\/([^\n\r$]*)/</span>,
+        action: <span class="keyword">function</span>(yytext, comment){
+            <span class="keyword">if</span>(<span class="keyword">this</span>.options.ignoreComment) <span class="keyword">return</span>;
+            <span class="keyword">this</span>.yyval = comment;
+            <span class="keyword">return</span> <span class="string">'S_COMMENT'</span>; <span class="comment">//single Comment</span>
+        }
+    },
+    {</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-13">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-13">&#182;</a>
+              </div>
+              <p>@  alt word or variable</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        regexp: <span class="regexp">/@(-?[_A-Za-z][-_\w]*)/</span>,
+        action: <span class="keyword">function</span>(yytext, val){
+            <span class="keyword">this</span>.yyval = val;
+            <span class="keyword">return</span> <span class="string">'AT_KEYWORD'</span>
+        }
+    },
+    {   <span class="comment">//Url http://dev.w3.org/csswg/css-syntax/#function-diagram</span>
+        regexp: <span class="regexp">/url[ \t]*\((['"]?)([^\r\n\f]*?)\1\)/</span>,
+        action: <span class="keyword">function</span>(yytext, quote, url){
+            <span class="keyword">this</span>.yyval = url;
+            <span class="keyword">return</span> <span class="string">'URI'</span>;
+        }
+    },
+    {   <span class="comment">//Function http://dev.w3.org/csswg/css-syntax/#function-diagram</span>
+        regexp: <span class="regexp">/(?:-?[_A-Za-z][-_\w]*)(?=[ \t]*\()/</span>,
+        action: <span class="keyword">function</span>(yytext){
+            <span class="keyword">this</span>.yyval = yytext;
+            <span class="keyword">return</span> <span class="string">'FUNCTION'</span>;
+        }
+    },
+    {   <span class="comment">//IDENT http://dev.w3.org/csswg/css-syntax/#ident-diagram</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-14">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-14">&#182;</a>
+              </div>
+              <p>即 -o-webkit-xx 是允许的</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        regexp: <span class="regexp">/(?:-?[_A-Za-z\$][-_\w]*)/</span>,
+        action: <span class="keyword">function</span>(yytext){
+            <span class="keyword">this</span>.yyval = yytext;
+            <span class="keyword">return</span> <span class="string">'IDENT'</span>;
+        }
+    },
+    {   <span class="comment">//IDENT http://dev.w3.org/csswg/css-syntax/#ident-diagram</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-15">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-15">&#182;</a>
+              </div>
+              <p>即 -o-webkit-xx 是允许的</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        regexp: <span class="regexp">/(?:-?[_A-Za-z][-_\w]*)/</span>,
+        action: <span class="keyword">function</span>(yytext){
+            <span class="keyword">this</span>.yyval = yytext;
+            <span class="keyword">return</span> <span class="string">'NAME'</span>;
+        }
+    },
+    {</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-16">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-16">&#182;</a>
+              </div>
+              <p>Dollar Ident
+@MCSS 自有Token</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        regexp: <span class="regexp">/\$[a-zA-Z][-\w]/</span>,
+        action: <span class="keyword">function</span>(yytext){
+            <span class="keyword">this</span>.yyval = yytext;
+            <span class="keyword">return</span> <span class="string">'DOLLAR_IDENT'</span>;
+        }
+    },
+    {   <span class="comment">//!important</span>
+        regexp: <span class="regexp">/![ \t]*important/</span>,
+        action: <span class="keyword">function</span>(yytext){
+            <span class="keyword">return</span> <span class="string">'IMPORTANT'</span>;
+        }
+    },
+    {   <span class="comment">// DIMENSION NUMBER + UNIT</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-17">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-17">&#182;</a>
+              </div>
+              
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        regexp: <span class="regexp">/(-?(?:\d*\.\d+|\d+))(\w*|%)?/</span>,
+        action: <span class="keyword">function</span>(yytext, val, unit){
+            <span class="keyword">if</span>(unit &amp;&amp; !isUnit(unit)){
+                <span class="keyword">this</span>.error(<span class="string">'Unexcept unit: "'</span> + unit + <span class="string">'"'</span>);
+            }
+            <span class="keyword">this</span>.yyval = {number: parseFloat(val), unit: unit};
+            <span class="keyword">return</span> <span class="string">'DIMENSION'</span>
+        }
+    },
+    {   <span class="comment">// pesudo-class</span>
+        regexp: <span class="string">":([-_a-zA-Z][\\w\\u00A1-\\uFFFF-]*)"</span> + <span class="comment">//伪类名</span>
+            <span class="string">"(?:\\("</span> + <span class="comment">//括号开始</span>
+            <span class="string">"([^\\(\\)]*"</span> + <span class="comment">//第一种无括号</span>
+            <span class="string">"|(?:"</span> + <span class="comment">//有括号(即伪类中仍有伪类并且是带括号的)</span>
+            <span class="string">"\\([^\\)]+\\)"</span> + <span class="comment">//括号部分</span>
+            <span class="string">"|[^\\(\\)]*"</span> + <span class="string">")+)"</span> + <span class="comment">//关闭有括号</span>
+            <span class="string">"\\))?"</span>,
+        action: <span class="keyword">function</span>(yytext){
+            <span class="keyword">this</span>.yyval = yytext;
+            <span class="keyword">return</span> <span class="string">'PSEUDO_CLASS'</span>;
+        }
+    },
+    {   <span class="comment">// pesudo-element</span>
+        regexp: <span class="string">"::([-\\w\\u00A1-\\uFFFF]+)"</span>,
+        action: <span class="keyword">function</span>(yytext){
+            <span class="keyword">this</span>.yyval = yytext;
+            <span class="keyword">return</span> <span class="string">'PSEUDO_ELEMENT'</span>;
+        }
+    },
+    {   <span class="comment">// attribute   [title=haha]</span>
+        regexp: <span class="string">"\\[\\s*(?:[\\w\\u00A1-\\uFFFF-]+)(?:([*^$|~!]?=)[\'\"]?(?:[^\'\"\\[]+)[\'\"]?)?\\s*\\]"</span>,
+        action: <span class="keyword">function</span>(yytext){
+            <span class="keyword">this</span>.yyval = yytext;
+            <span class="keyword">return</span> <span class="string">'ATTRIBUTE'</span>;
+        }
+    },
+
+    {   <span class="comment">// RGBA, RGB, 这里注意与selector的区分</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-18">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-18">&#182;</a>
+              </div>
+              <p>regexp: /#([0-9a-f]{3} [0-9a-f]{6})(?![#*.[:a-zA-Z])/,
+action: function(yytext, val){
+    this.yyval = val;
+    return val.length === 3? &#39;RGB&#39; : &#39;RGBA&#39;;
+}</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        regexp: <span class="regexp">/#([-\w\u0080-\uffff]+)/</span>,
+        action: <span class="keyword">function</span>(yytext, val){
+            <span class="keyword">this</span>.yyval = yytext;
+            <span class="keyword">return</span> <span class="string">'HASH'</span>;
+        }
+    },</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-19">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-19">&#182;</a>
+              </div>
+              <p>{
+    regexp: /.([-\w\u0080-\uffff]+)/,
+    action: function(yytext){
+        this.yyval = yytext
+        return &#39;CLASS&#39;;
+    }
+},</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    {</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-20">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-20">&#182;</a>
+              </div>
+              <p>attribute</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        regexp: <span class="regexp">/\.([-\w\u0080-\uffff]+)/</span>,
+        action: <span class="keyword">function</span>(yytext){
+            <span class="keyword">this</span>.yyval = yytext
+            <span class="keyword">return</span> <span class="string">'CLASS'</span>;
+        }
+    },
+    {   <span class="comment">// String</span>
+        regexp: <span class="regexp">/(['"])([^\r\n\f]*?)\1/</span>,
+        action: <span class="keyword">function</span>(yytext, quote, val){
+            <span class="keyword">this</span>.yyval = val || <span class="string">''</span>;
+            <span class="keyword">return</span> <span class="string">'STRING'</span>;
+        }
+    },
+    {   <span class="comment">// unSkip WS </span>
+        regexp: <span class="regexp">/[-*!+\/]/</span>,
+        action: <span class="keyword">function</span>(yytext){
+            <span class="keyword">return</span> yytext
+        }
+    },
+    {   <span class="comment">// PUNCTUATORS</span>
+        regexp: <span class="regexp">/[\t ]*([{}();,:]|(?:[&gt;=&lt;!]?=)|[&amp;&gt;&lt;~\/])[\t ]*/</span>,
+        action: <span class="keyword">function</span>(yytext, punctuator){
+            <span class="keyword">return</span> punctuator;
+        }
+    },</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-21">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-21">&#182;</a>
+              </div>
+              <p>{<br>    // operator or connect || ~&gt;+<br>    regexp: /[ \t]<em>((?:[&gt;=&lt;!]?=)|[-&amp;&gt;&lt;~!+</em>\/])[ \t]*/,
+    action: function(yytext, op){
+        return op;
+    }
+},  </p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    {   <span class="comment">//Space</span>
+        regexp: <span class="regexp">/[ \t]+/</span>,
+        action: <span class="keyword">function</span>(){
+            <span class="keyword">return</span> <span class="string">'WS'</span>;
+        }
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-22">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-22">&#182;</a>
+              </div>
+              <p>{   // SELECTOR 模糊匹配，后期再利用<a href="https://github.com/leeluolee/nes">nes选择器的parser进行解析</a>进行parse
+    // 只有*，.home ,:first-child, [attr], #id  &gt; ~ + &amp;这几种可能的开头
+    regexp: /[^{\n\r\f,]+/,
+    action: function(yytext){
+        this.yyval = yytext;
+        return &#39;SELECTOR_SEP&#39;;
+    }
+}</p>
+<h2>sub state </h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-23">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-23">&#182;</a>
+              </div>
+              
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>]);
+
+
+
+<span class="comment">/**
+ * Tokenizer Class
+ * @param {[type]} input   [description]
+ * @param {[type]} options [description]
+ */</span>
+<span class="function"><span class="keyword">function</span> <span class="title">Tokenizer</span><span class="params">(input, options)</span>{</span>
+    <span class="keyword">if</span>(input) <span class="keyword">this</span>.setInput(input, options)
+}
+
+
+
+Tokenizer.prototype = {
+    constructor: Tokenizer,
+    setInput: <span class="keyword">function</span>(input, options){</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-24">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-24">&#182;</a>
+              </div>
+              <p>@TODO: options</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="keyword">this</span>.options = options || {};</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-25">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-25">&#182;</a>
+              </div>
+              <p>simplify newline token detect</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="keyword">this</span>.input = input</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-26">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-26">&#182;</a>
+              </div>
+              <p>remained input</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="keyword">this</span>.remained = <span class="keyword">this</span>.input;
+        <span class="keyword">this</span>.length = <span class="keyword">this</span>.input.length;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-27">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-27">&#182;</a>
+              </div>
+              <p>line number @TODO:</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="keyword">this</span>.lineno = <span class="number">1</span>;
+
+        <span class="keyword">this</span>.states = [<span class="string">'init'</span>];
+        <span class="keyword">this</span>.state = <span class="string">'init'</span>;
+        <span class="keyword">return</span> <span class="keyword">this</span>;
+    },</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-28">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-28">&#182;</a>
+              </div>
+              <p>依赖next</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    lex: <span class="keyword">function</span>(){
+        <span class="keyword">var</span> token = <span class="keyword">this</span>.next();
+        <span class="keyword">if</span> (<span class="keyword">typeof</span> token !== <span class="string">'undefined'</span>) {</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-29">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-29">&#182;</a>
+              </div>
+              <p>console.log(token)</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>            <span class="keyword">return</span> token;
+        } <span class="keyword">else</span> {
+            <span class="keyword">return</span> <span class="keyword">this</span>.lex();
+        }
+    },</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-30">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-30">&#182;</a>
+              </div>
+              <p>一次性输出所有tokens</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    pump: <span class="keyword">function</span>(){
+        <span class="keyword">var</span> tokens = [];
+        <span class="keyword">while</span>(t = <span class="keyword">this</span>.lex()){
+            tokens.push(t);
+            <span class="keyword">if</span>(t.type == <span class="string">'EOF'</span>) <span class="keyword">break</span>;
+        }
+        <span class="keyword">return</span> tokens;
+    },</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-31">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-31">&#182;</a>
+              </div>
+              <p>get the latest state</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    next: <span class="keyword">function</span>(){
+        <span class="keyword">var</span> tmp, action, rule,
+            tokenType, lines,
+            state = <span class="keyword">this</span>.state,
+            rules = $rules,
+            link = $links[state];
+        <span class="keyword">if</span>(!link) <span class="keyword">throw</span> Error(<span class="string">'no state: '</span> + state + <span class="string">' defined'</span>);
+        <span class="keyword">this</span>.yyval = <span class="literal">null</span>;
+        <span class="keyword">var</span> len = link.length;
+        <span class="keyword">for</span>(<span class="keyword">var</span> i = <span class="number">0</span>; i &lt; len; i++){
+            <span class="keyword">var</span> rule = $rules[link[i]];
+            tmp = <span class="keyword">this</span>.remained.match(rule.regexp);
+            <span class="keyword">if</span>(tmp) <span class="keyword">break</span>;
+        }
+        <span class="keyword">if</span>(tmp){
+            lines = tmp[<span class="number">0</span>].match(<span class="regexp">/(?:\r\n|[\n\r\f]).*/g</span>);
+            <span class="keyword">if</span>(lines) <span class="keyword">this</span>.lineno += lines.length;
+            action = rule.action;
+            tokenType = action.apply(<span class="keyword">this</span>, tmp);
+
+            <span class="keyword">this</span>.remained = <span class="keyword">this</span>.remained.slice(tmp[<span class="number">0</span>].length);
+
+            <span class="keyword">if</span>(tokenType) <span class="keyword">return</span> createToken(tokenType, <span class="keyword">this</span>.yyval, <span class="keyword">this</span>.lineno);
+        }<span class="keyword">else</span>{
+            <span class="keyword">this</span>.error()
+        }
+    },</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-32">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-32">&#182;</a>
+              </div>
+              <p>TODO:</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    pushState:<span class="keyword">function</span>(condition){
+        <span class="keyword">this</span>.states.push(condition);
+        <span class="keyword">this</span>.state = condition;
+    },</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-33">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-33">&#182;</a>
+              </div>
+              <p>TODO:</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    popState:<span class="keyword">function</span>(){
+        <span class="keyword">this</span>.states.pop();
+        <span class="keyword">this</span>.state = <span class="keyword">this</span>.states[<span class="keyword">this</span>.states.length-<span class="number">1</span>];
+    },
+    <span class="comment">/**
+     * [error description]
+     * @return {[type]} [description]
+     */</span>
+    error: <span class="keyword">function</span>(message, options){
+        <span class="keyword">var</span> message = <span class="keyword">this</span>._traceError(message);
+        <span class="keyword">var</span> error = <span class="keyword">new</span> Error(message || <span class="string">"Lexical error"</span>);
+        <span class="keyword">throw</span> error
+    },
+    _traceError: <span class="keyword">function</span>(message){
+        <span class="keyword">var</span> matchLength = <span class="keyword">this</span>.length - <span class="keyword">this</span>.remained.length;
+        <span class="keyword">var</span> offset = matchLength - <span class="number">10</span>;
+        <span class="keyword">if</span>(offset &lt; <span class="number">0</span>) offset = <span class="number">0</span>;
+        <span class="keyword">var</span> pointer = matchLength - offset;
+        <span class="keyword">var</span> posMessage = <span class="keyword">this</span>.input.slice(offset, offset + <span class="number">20</span>)</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-34">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-34">&#182;</a>
+              </div>
+              <p>TODO: 加上trace info</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="keyword">return</span> <span class="string">'Error on line '</span> + (<span class="keyword">this</span>.lineno + <span class="number">1</span>) + <span class="string">" "</span> +
+            (message || <span class="string">'. Unrecognized input.'</span>) + <span class="string">"\n"</span> + (offset === <span class="number">0</span>? <span class="string">''</span>:<span class="string">'...'</span>) +
+            posMessage + <span class="string">"...\n"</span> + <span class="keyword">new</span> Array(pointer + (offset === <span class="number">0</span>? <span class="number">0</span> : <span class="number">3</span>) ).join(<span class="string">' '</span>) + <span class="keyword">new</span> Array(<span class="number">10</span>).join(<span class="string">"^"</span>);
+    }
+}</pre></div></div>
+            
+        </li>
+        
+    </ul>
+  </div>
+</body>
+</html>

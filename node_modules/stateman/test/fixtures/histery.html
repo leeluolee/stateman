@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script src="/maze.js"></script>
+</head>
+<body>
+
+<ul class='side'>
+<li> <a href="#/home">home</a> </li>
+<li> <a href="#/contact?id=1">contact</a> </li>
+<li> <a href="#/contact/101?id=2">contact.detail</a> </li>
+<li> <a href="#/contact/102/config?id=4">contact.detail.config</a> </li>
+<li> <a href="#/contact/list/config">contact.list.config</a> </li>
+<li> <a href="#/contact/100/message?id=3">about1</a> </li>
+<li> <a href="#/contact/101/message?id=4">about2</a> </li>
+</ul>
+<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+
+<ul id="container" style="height: 600px;width:1000px"></ul>
+
+<script>
+
+var histery = new Maze.Histery({
+  html5: true,
+  root: "/test",
+  interval: 50,
+  "prefix": "!"
+
+});
+
+histery.start();
+
+
+
+
+
+
+
+  </script>
+</body>
+
+</html>

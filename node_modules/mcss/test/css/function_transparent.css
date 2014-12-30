@@ -1,0 +1,8 @@
+body{
+	-webkit-border-radius:10px 20px;
+	-moz-border-radius:10px 20px;
+	border-radius:10px 20px;
+	-webkit-border-radius:10px 20px 100% / 20px;
+	-moz-border-radius:10px 20px 100% / 20px;
+	border-radius:10px 20px 100% / 20px;
+}

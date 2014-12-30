@@ -1,0 +1,65 @@
+@import 'http://nec.netease.com/download/framework/mass/mass/index.mcss';
+
+
+
+#app{
+  padding: 100px;
+}
+
+*{
+  $box-sizing: border-box;
+}
+
+.state{
+  $clearfix();
+  $border-radius: 5px;
+
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 10px;
+
+  background-color: rgba(#666, 0.2);
+  border: 3px solid #ff0;
+
+  $transition: border-color .4s ease-in-out;
+
+  &.z-last{
+    background-color: #666;
+    cursor: pointer;
+    &:hover, &:active{
+      background-color: #ff0;
+    }
+  }
+
+  &.z-current{
+    border-color: #f00;
+  }
+
+
+  > .hd{
+
+    max-width: 140px;
+    width: 40%; 
+    margin-right: 8%;
+    float: left;
+
+  }
+  > .cnt{
+
+    overflow: hidden;
+
+  }
+
+
+}
+
+// effect
+
+$bounceOut();
+$bounceIn();
+$swing();
+
+
+.animated{
+  $animation-duration: 0.5s;
+}

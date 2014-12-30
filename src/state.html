@@ -1,0 +1,16 @@
+<div class="state" r-class={ {'z-last': !state.hasNext, 'z-current': actived } } r-animation="
+  on:enter; class: animated bounceIn; 
+  on:leave; class: animated bouceOut;
+  "
+  {#if !state.hasNext}  on-click={state.manager.go(state)} {/if}
+  >
+  <header class='hd'>{state.name || "Root"} </header>
+
+  <div class="cnt">
+    {#if state.hasNext}
+      {#list Object.keys(state._states) as st}
+        <state state = {state.state(st)} />
+      {/list}
+    {/if}
+  </div>
+</div> 

@@ -1,0 +1,10 @@
+$a = ($b = 20px, $c, $d){
+  b: $b;
+  c: $c;
+  d: $d;
+  arg: $arguments;
+}
+
+body{
+  $a: 5, $d = test,  6;
+}

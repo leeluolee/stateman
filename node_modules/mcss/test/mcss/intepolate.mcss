@@ -1,0 +1,7 @@
+@abstract './function_closure';
+
+.btn-#{small, common, large} {
+    font-size: 14px + $i*2px;
+    $border-radius: $i+4px;
+}
+

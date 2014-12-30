@@ -1,0 +1,27 @@
+{
+  "name": "stateman-pages",
+  "version": "0.0.1",
+  "description": "",
+  "main": "build.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/leeluolee/stateman/issues"
+  },
+  "homepage": "https://github.com/leeluolee/stateman",
+  "devDependencies": {
+    "browserify": "^7.0.3",
+    "gulp": "^3.8.10",
+    "regularify": "^0.1.0",
+    "stateman": "leeluolee/stateman",
+    "regularjs": "git://github.com/regularjs/regular",
+    "vinyl-source-stream": "^1.0.0",
+    "gulp-util": "^3.0.1",
+    "mcss": "^0.5.0",
+    "through2": "^0.6.3"
+  },
+  "dependencies": {}
+}
