@@ -33,7 +33,7 @@
 
 ### Deep Guide
 
-* [Class: State](#State)
+* [Class: State](#State1)
 * [asynchronous navigation](#async)
 * [__params in routing__](#param)
 
@@ -119,7 +119,7 @@ stateman.state is the most important method in stateman
 
 - __stateName__ < String  |Object >: the state's name , like `contact.detail`, if a `Object` is passed in, there will be a multiple operation.
 - __config__ < Function | Object >: the configuration of the state.
-	if config is not passed, target [state](#State)   will be return. if a `Function` is passed, it will be considered as the [enter](#enter) property. 
+	if config is not passed, target [state](#State1)   will be return. if a `Function` is passed, it will be considered as the [enter](#enter) property. 
   if the state is already exsits, the previous config will be override.
 
 
@@ -493,12 +493,16 @@ StateMan have simple EventEmitter implementation for event driven development, T
 all Class that list above have same API below
 
 
+<a name="on"></a>
+
 ### 1. emitter.on(event, handle)
 bind handle to specified event.
 
+<a name="off"></a>
 ### 2. emitter.off(event, handle)
 unbind handle 
 
+<a name="emit"></a>
 ### 3. emitter.emit(event, param)
 
 trigger a specified event with specified param
@@ -513,6 +517,7 @@ trigger a specified event with specified param
 
 
 
+<a name="state1"></a>
 ## State
 
 you can use `stateman.state(stateName)` to get the target state. each state is instanceof `StateMan.State`. the context of the methods you defined in config(`enter`, `leave`, `update`) is pointed to state.
