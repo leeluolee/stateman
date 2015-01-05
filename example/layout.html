@@ -123,7 +123,7 @@
         $(".j-user").html("<p class='well'>user config page<p>");
     })
     .on("notfound", function(path){
-      stateman.go("home");
+      stateman.go("home", {replace: true});
     })
     .on("end", function(){
 

@@ -1,7 +1,7 @@
 {
   "name": "stateman",
   "version": "0.1.5",
-  "description": "A state-based router library, designed for complex SPA development",
+  "description": "A tiny foundation that providing nested state-based routing for complex web application.",
   "keywords": [
     "router",
     "state",
@@ -10,7 +10,7 @@
   "main": "src/index.js",
   "repository": {
     "type": "git",
-    "url": "git@github.com:leeluolee/maze"
+    "url": "git@github.com:leeluolee/stateman"
   },
   "scripts": {
     "test": "gulp travis --phantomjs"
@@ -21,9 +21,9 @@
   },
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/leeluolee/maze/issues"
+    "url": "https://github.com/leeluolee/stateman/issues"
   },
-  "homepage": "https://github.com/leeluolee/maze",
+  "homepage": "https://github.com/leeluolee/stateman",
   "devDependencies": {
     "puer": "^1.0.8",
     "gulp-jshint": "~1.5.3",

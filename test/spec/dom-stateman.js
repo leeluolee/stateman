@@ -496,6 +496,7 @@ describe("stateman:other", function(){
 
   it("stateman.encode should return the url", function(){
 
+    expect(stateman.encode("contact.detail")).to.equal("/contact/detail")
     var state = stateman.state("encode.detail", {url: ':id'}).go("book.message")
     expect(stateman.encode("encode.detail", {id:1, name:2})).to.equal("/encode/1?name=2")
 

@@ -1,4 +1,7 @@
 
+> Some people tell me there are __a lot of terrible lanuage errors__ in this page. I'm sorry for my poor english, I'll ask my colleague for help.
+ and if somebody want to help me, please contact me(oe.zheng@gmail.com);
+
 # StateMan API Reference
 
 ## Quirk Links
@@ -298,7 +301,7 @@ __Argument__
 -	url < String >: url to navigate
 - option < Object > : [Optional] navigate option, option will merge the [param from url](#param) as its `param` property. and will be passed in `enter`, 'leave' and `update`, there are some special properties can control the navigating:
 	* option.silent: if silent is true, only the location is change in browser, but will not trigger the stateman's navigating process
-	* option.replace: if replace is true. the previous path in history will be replace by current( you can't use back or go in browser to restore it)
+	* option.replace: if replace is true. the previous path in history will be replace by url( means you can't backto  or goto the previous path)
 - callback < Function >: [Optional] once navigating is done, callback will be called.
 
 All other property in option will passed to `enter`, `leave` , `update`.
@@ -324,6 +327,7 @@ __Arguments__
 - option.encode: default is true. if encode is false, url will not change at  location, only state is change (means will trigger the stateman's navigating process). stateman use the [__encode__](#encode) method to compute the real url.
 - option.param: the big different between __nav__ and __go__ is __go__ method  may need a param to compute the real url, and place it in location.
 you can use stateman.encode to test how stateman compute url from a state with specifed param
+- option.replace: the same as [stateman.nav](#nav)
 
 - calback: if passed, it will be called if navigating is over.
 

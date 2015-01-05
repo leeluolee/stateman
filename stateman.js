@@ -1,7 +1,7 @@
 /**
 @author	leeluolee
-@version	0.1.4
-@homepage	https://github.com/leeluolee/maze
+@version	0.1.5
+@homepage	https://github.com/leeluolee/stateman
 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
@@ -842,7 +842,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	  },
 	  encode: function(stateName, param){
 	    var state;
-	    if(typeof param === "undefined"){
+	    stateName = stateName || {};
+	    if( _.typeOf(stateName) === "object" ){
 	      state = this;
 	      param = stateName;
 	    }else{

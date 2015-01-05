@@ -109,7 +109,8 @@ _.extend( _.emitable( State ), {
   },
   encode: function(stateName, param){
     var state;
-    if(typeof param === "undefined"){
+    stateName = stateName || {};
+    if( _.typeOf(stateName) === "object" ){
       state = this;
       param = stateName;
     }else{

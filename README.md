@@ -21,6 +21,7 @@ But stateman is a __standalone library__ with extremely tiny codebase(10kb minif
 3. html5 history supported, fallback to hash-based in old browser. 
 5. [concise API](https://github.com/leeluolee/stateman/tree/master/docs/API.md), deadly simple to getting start with it.
 6. support IE6+ and other modern browsers.
+7. __well tested, born in large product.__
 
 
 
@@ -164,3 +165,10 @@ __run demo local__
 ## LICENSE
 
 MIT.
+
+
+## TODO
+
+1. notify the state on the way to current 
+2. need a config can't directly visit the state at the branch
+3. 
