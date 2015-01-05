@@ -1,7 +1,7 @@
 /**
-@author	leeluolee
-@version	0.1.5
-@homepage	https://github.com/leeluolee/stateman
+@author	undefined
+@version	0.1.2
+@homepage	https://github.com/leeluolee/maze
 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
@@ -9,9 +9,9 @@
 	else if(typeof define === 'function' && define.amd)
 		define(factory);
 	else if(typeof exports === 'object')
-		exports["StateMan"] = factory();
+		exports["stateman"] = factory();
 	else
-		root["StateMan"] = factory();
+		root["stateman"] = factory();
 })(this, function() {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
