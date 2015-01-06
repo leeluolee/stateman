@@ -11,6 +11,7 @@ function StateMan(options){
   options = options || {};
   if(options.history) this.history = options.history;
   this._states = {};
+  this._stashCallback = [];
   this.current = this.active = this;
 }
 
@@ -44,6 +45,12 @@ _.extend( _.emitable( StateMan ), {
     go: function(state, option, callback){
       option = option || {};
       if(typeof state === "string") state = this.state(state);
+
+      if(typeof option === "function"){
+        callback = option;
+        option = {};
+      }
+
       if(option.encode !== false){
         var url = state.encode(option.param)
         this.nav(url, {silent: true, replace: option.replace});
@@ -53,7 +60,12 @@ _.extend( _.emitable( StateMan ), {
       return this;
     },
     nav: function(url, options, callback){
+      if(typeof option === "function"){
+        callback = option;
+        option = {};
+      }
       callback && (this._cb = callback)
+
       this.history.nav( url, options);
       this._cb = null;
       return this;
@@ -101,6 +113,7 @@ _.extend( _.emitable( StateMan ), {
 
     // goto the state with some option
     _go: function(state, option, callback){
+      var over;
 
       if(typeof state === "string") state = this.state(state);
 
@@ -112,12 +125,11 @@ _.extend( _.emitable( StateMan ), {
       if(this.active !== this.current){
         // we need return
 
-        this.current = this.active
-        if(this.active._pending && this.active.done){
+        _.log("naving to [" + this.current.name + "] will be stoped, trying to ["+state.name+"] now");
+        if(this.active.done){
           this.active.done(false);
-        }else{
-          _.log("naving to [" + this.current.name + "] will be stoped, trying to ["+state.name+"] now");
         }
+        this.current = this.active;
         // back to before
       }
       option.param = option.param || {};
@@ -127,26 +139,42 @@ _.extend( _.emitable( StateMan ), {
         baseState = this._findBase(current, state),
         self = this;
 
-      var done = function(){
+      if( typeof callback === "function" ) this._stashCallback.push(callback);
+      // if we done the navigating when start
+      var done = function(success){
+        over = true;
         self.current = self.active;
-        self.emit("end")
-        if(typeof callback === "function") callback.call(self);
+        if( success !== false ) self.emit("end")
+        self._popStash();
       }
       
       if(current !== state){
         this.previous = current;
         this.current = state;
-        self.emit("begin")
-        this._leave(baseState, option, function(stop){
+        self.emit("begin", done);
+        if(over === true) return;
+        this._leave(baseState, option, function(success){
           self._checkQueryAndParam(baseState, option);
-          if(stop) return done()
+          if(success === false) return done(success)
           self._enter(state, option, done)
         })
       }else{
         self._checkQueryAndParam(baseState, option);
+        done();
       }
       
     },
+    _popStash: function(){
+      var stash = this._stashCallback, len = stash.length;
+      this._stashCallback = [];
+      if(!len) return;
+
+      for(var i = 0; i < len; i++){
+        stash[i].call(this)
+      }
+
+    },
+
     _findQuery: function(querystr){
       var queries = querystr && querystr.split("&"), query= {};
       if(queries){
@@ -220,7 +248,7 @@ _.extend( _.emitable( StateMan ), {
           self._enterOne(stage, options, callback)
           
         }else{
-          return callback(false);
+          return callback(success);
         }
       }
 
@@ -245,7 +273,7 @@ _.extend( _.emitable( StateMan ), {
           if(cur.parent) self.active = cur.parent;
           self._leaveOne(end, options, callback)
         }else{
-          return callback(true);
+          return callback(success);
         }
       }
       if(!cur.leave) cur.done();

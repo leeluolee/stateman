@@ -268,27 +268,23 @@ describe("stateman:transition", function(){
 
   it("we can use transition in enter and leave", function(done){
 
-    stateman.on("end", function a(){
+    stateman.nav("/book/1" , {},function(){
 
       expect(obj.book).to.equal(true)
       expect(obj.book_detail).to.equal("1")
 
-      stateman.off("end").nav("/contact/2", {}, function(){
+      stateman.nav("/contact/2", {}, function(){
 
         expect(obj.book).to.equal(false)
         expect(obj.contact_detail).to.equal("2")
-        stateman.off("end");
-
         done();
       });
-
 
       expect(obj.book).to.equal(true)
       expect(obj.contact_detail).to.equal(undefined)
       // sync enter will directly done
       expect(obj.book_detail).to.equal(undefined)
-      
-    }).nav("/book/1")
+    })
 
     expect(obj.book).to.equal(undefined)
     expect(obj.book_detail).to.equal(undefined)
@@ -508,6 +504,7 @@ describe("stateman:other", function(){
 describe("stateman: matches and relative go", function(){
   var location = loc("http://leeluolee.github.io/homepage");
   var obj = {}; 
+
   var stateman = new StateMan();
     stateman.state("contact.detail.message", {})
     .state("contact.list", {
@@ -519,6 +516,10 @@ describe("stateman: matches and relative go", function(){
     .state("contact.list.option", {})
     .state("contact.user.param", {url: ":id"})
     .start({location: location});
+
+  after(function(){
+    stateman.stop();
+  })
 
   it("relative to parent(^) should work as expect", function(){
     stateman.go("contact.detail.message");
@@ -552,6 +553,78 @@ describe("stateman: matches and relative go", function(){
     stateman.go("contactmanage.detail");
     expect(stateman.is("contact")).to.equal(false)
   })
+})
+
+
+describe("Navigating", function(){
+  var location = loc("http://leeluolee.github.io/");
+  var obj = {}; 
+  var stateman = new StateMan();
+
+  stateman
+    .state("app", {
+      enter: function(){
+      }
+    })
+    .start({location: location})
+
+
+  it("redirect at root, should stop navigating and redirect to new current", function(){
+    var index =0, blog=0;
+    stateman.state("app.index", {
+      enter:function(){
+        index++
+      }
+    })
+    .state("app.blog", {enter: function(){
+      blog++;
+    }})
+    .on("begin", function( done ){
+      if(stateman.current.name !== "app.index"){
+        done(false); // @TODO tongyi 
+        stateman.go("app.index")
+      }
+    })
+
+
+    var end = 0;
+    stateman.on("end", function(){
+      end++;
+    })
+    stateman.nav("/app/blog", {} );
+    expect( blog ).to.equal( 0 );
+    expect( index ).to.equal( 1 );
+    expect( end ).to.equal( 1 );
+
+    stateman.nav("/app/blog", {} );
+    expect( end ).to.equal( 2 );
+    expect( blog ).to.equal( 0 );
+    stateman.off();
+    stateman._states = {}
+  })
+
+
+  it("redirect at root, during redirect the callback should stashed, when end all callbacks should emit ", function(done){
+    stateman
+      .state( "app1.index", {
+        enter:function(){
+          stateman.go("app1.blog", function(){
+            // console.log("app1.blog done")
+            expect(stateman.active.name === "app1.blog").to.equal(true);
+            expect(stateman._stashCallback.length).to.equal(0);
+            done();
+          })
+        }
+      })
+      .state( "app1.blog", {enter: function(){}})
+
+    stateman.go("app1.index", function(){
+      // console.log("app1.index the redirect done")
+      expect(stateman.active.name === "app1.blog").to.equal(true);
+    })
+
+  })
+
 })
   
 })

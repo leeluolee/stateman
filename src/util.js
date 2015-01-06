@@ -46,6 +46,13 @@ _.eql = function(o1, o2){
 // small emitter 
 _.emitable = (function(){
   var API = {
+    once: function(event, fn){
+      var callback = function(){
+        fn.apply(this, arguments)
+        this.off(event, callback)
+      }
+      return this.on(event, callback)
+    },
     on: function(event, fn) {
       if(typeof event === 'object'){
         for (var i in event) {

@@ -148,6 +148,16 @@ describe("state.event", function(){
     state.emit("change");
     expect(locals.on).to.equal(2);
   })
+  it("event once", function(){
+    var locals = {once:0};
+    function callback(num){locals.once+=num||1}
+
+    state.once("once", callback);
+    state.emit("once")
+    expect(locals.once).to.equal(1);
+    state.emit("once")
+    expect(locals.once).to.equal(1);
+  })
   it("batch operate", function(){
     var locals = {on:0};
     function callback(name1,name2){locals.on+=name2||1}

@@ -207,6 +207,16 @@
 	    state.emit("change");
 	    expect(locals.on).to.equal(2);
 	  })
+	  it("event once", function(){
+	    var locals = {once:0};
+	    function callback(num){locals.once+=num||1}
+
+	    state.once("once", callback);
+	    state.emit("once")
+	    expect(locals.once).to.equal(1);
+	    state.emit("once")
+	    expect(locals.once).to.equal(1);
+	  })
 	  it("batch operate", function(){
 	    var locals = {on:0};
 	    function callback(name1,name2){locals.on+=name2||1}
@@ -649,27 +659,23 @@
 
 	  it("we can use transition in enter and leave", function(done){
 
-	    stateman.on("end", function a(){
+	    stateman.nav("/book/1" , {},function(){
 
 	      expect(obj.book).to.equal(true)
 	      expect(obj.book_detail).to.equal("1")
 
-	      stateman.off("end").nav("/contact/2", {}, function(){
+	      stateman.nav("/contact/2", {}, function(){
 
 	        expect(obj.book).to.equal(false)
 	        expect(obj.contact_detail).to.equal("2")
-	        stateman.off("end");
-
 	        done();
 	      });
-
 
 	      expect(obj.book).to.equal(true)
 	      expect(obj.contact_detail).to.equal(undefined)
 	      // sync enter will directly done
 	      expect(obj.book_detail).to.equal(undefined)
-	      
-	    }).nav("/book/1")
+	    })
 
 	    expect(obj.book).to.equal(undefined)
 	    expect(obj.book_detail).to.equal(undefined)
@@ -889,6 +895,7 @@
 	describe("stateman: matches and relative go", function(){
 	  var location = loc("http://leeluolee.github.io/homepage");
 	  var obj = {}; 
+
 	  var stateman = new StateMan();
 	    stateman.state("contact.detail.message", {})
 	    .state("contact.list", {
@@ -900,6 +907,10 @@
 	    .state("contact.list.option", {})
 	    .state("contact.user.param", {url: ":id"})
 	    .start({location: location});
+
+	  after(function(){
+	    stateman.stop();
+	  })
 
 	  it("relative to parent(^) should work as expect", function(){
 	    stateman.go("contact.detail.message");
@@ -933,6 +944,78 @@
 	    stateman.go("contactmanage.detail");
 	    expect(stateman.is("contact")).to.equal(false)
 	  })
+	})
+
+
+	describe("Navigating", function(){
+	  var location = loc("http://leeluolee.github.io/");
+	  var obj = {}; 
+	  var stateman = new StateMan();
+
+	  stateman
+	    .state("app", {
+	      enter: function(){
+	      }
+	    })
+	    .start({location: location})
+
+
+	  it("redirect at root, should stop navigating and redirect to new current", function(){
+	    var index =0, blog=0;
+	    stateman.state("app.index", {
+	      enter:function(){
+	        index++
+	      }
+	    })
+	    .state("app.blog", {enter: function(){
+	      blog++;
+	    }})
+	    .on("begin", function( done ){
+	      if(stateman.current.name !== "app.index"){
+	        done(false); // @TODO tongyi 
+	        stateman.go("app.index")
+	      }
+	    })
+
+
+	    var end = 0;
+	    stateman.on("end", function(){
+	      end++;
+	    })
+	    stateman.nav("/app/blog", {} );
+	    expect( blog ).to.equal( 0 );
+	    expect( index ).to.equal( 1 );
+	    expect( end ).to.equal( 1 );
+
+	    stateman.nav("/app/blog", {} );
+	    expect( end ).to.equal( 2 );
+	    expect( blog ).to.equal( 0 );
+	    stateman.off();
+	    stateman._states = {}
+	  })
+
+
+	  it("redirect at root, during redirect the callback should stashed, when end all callbacks should emit ", function(done){
+	    stateman
+	      .state( "app1.index", {
+	        enter:function(){
+	          stateman.go("app1.blog", function(){
+	            // console.log("app1.blog done")
+	            expect(stateman.active.name === "app1.blog").to.equal(true);
+	            expect(stateman._stashCallback.length).to.equal(0);
+	            done();
+	          })
+	        }
+	      })
+	      .state( "app1.blog", {enter: function(){}})
+
+	    stateman.go("app1.index", function(){
+	      // console.log("app1.index the redirect done")
+	      expect(stateman.active.name === "app1.blog").to.equal(true);
+	    })
+
+	  })
+
 	})
 	  
 	})
@@ -1153,6 +1236,13 @@
 	// small emitter 
 	_.emitable = (function(){
 	  var API = {
+	    once: function(event, fn){
+	      var callback = function(){
+	        fn.apply(this, arguments)
+	        this.off(event, callback)
+	      }
+	      return this.on(event, callback)
+	    },
 	    on: function(event, fn) {
 	      if(typeof event === 'object'){
 	        for (var i in event) {
@@ -1535,6 +1625,7 @@
 	  options = options || {};
 	  if(options.history) this.history = options.history;
 	  this._states = {};
+	  this._stashCallback = [];
 	  this.current = this.active = this;
 	}
 
@@ -1568,6 +1659,12 @@
 	    go: function(state, option, callback){
 	      option = option || {};
 	      if(typeof state === "string") state = this.state(state);
+
+	      if(typeof option === "function"){
+	        callback = option;
+	        option = {};
+	      }
+
 	      if(option.encode !== false){
 	        var url = state.encode(option.param)
 	        this.nav(url, {silent: true, replace: option.replace});
@@ -1577,7 +1674,12 @@
 	      return this;
 	    },
 	    nav: function(url, options, callback){
+	      if(typeof option === "function"){
+	        callback = option;
+	        option = {};
+	      }
 	      callback && (this._cb = callback)
+
 	      this.history.nav( url, options);
 	      this._cb = null;
 	      return this;
@@ -1625,6 +1727,7 @@
 
 	    // goto the state with some option
 	    _go: function(state, option, callback){
+	      var over;
 
 	      if(typeof state === "string") state = this.state(state);
 
@@ -1636,12 +1739,11 @@
 	      if(this.active !== this.current){
 	        // we need return
 
-	        this.current = this.active
-	        if(this.active._pending && this.active.done){
+	        _.log("naving to [" + this.current.name + "] will be stoped, trying to ["+state.name+"] now");
+	        if(this.active.done){
 	          this.active.done(false);
-	        }else{
-	          _.log("naving to [" + this.current.name + "] will be stoped, trying to ["+state.name+"] now");
 	        }
+	        this.current = this.active;
 	        // back to before
 	      }
 	      option.param = option.param || {};
@@ -1651,26 +1753,42 @@
 	        baseState = this._findBase(current, state),
 	        self = this;
 
-	      var done = function(){
+	      if( typeof callback === "function" ) this._stashCallback.push(callback);
+	      // if we done the navigating when start
+	      var done = function(success){
+	        over = true;
 	        self.current = self.active;
-	        self.emit("end")
-	        if(typeof callback === "function") callback.call(self);
+	        if( success !== false ) self.emit("end")
+	        self._popStash();
 	      }
 	      
 	      if(current !== state){
 	        this.previous = current;
 	        this.current = state;
-	        self.emit("begin")
-	        this._leave(baseState, option, function(stop){
+	        self.emit("begin", done);
+	        if(over === true) return;
+	        this._leave(baseState, option, function(success){
 	          self._checkQueryAndParam(baseState, option);
-	          if(stop) return done()
+	          if(success === false) return done(success)
 	          self._enter(state, option, done)
 	        })
 	      }else{
 	        self._checkQueryAndParam(baseState, option);
+	        done();
 	      }
 	      
 	    },
+	    _popStash: function(){
+	      var stash = this._stashCallback, len = stash.length;
+	      this._stashCallback = [];
+	      if(!len) return;
+
+	      for(var i = 0; i < len; i++){
+	        stash[i].call(this)
+	      }
+
+	    },
+
 	    _findQuery: function(querystr){
 	      var queries = querystr && querystr.split("&"), query= {};
 	      if(queries){
@@ -1744,7 +1862,7 @@
 	          self._enterOne(stage, options, callback)
 	          
 	        }else{
-	          return callback(false);
+	          return callback(success);
 	        }
 	      }
 
@@ -1769,7 +1887,7 @@
 	          if(cur.parent) self.active = cur.parent;
 	          self._leaveOne(end, options, callback)
 	        }else{
-	          return callback(true);
+	          return callback(success);
 	        }
 	      }
 	      if(!cur.leave) cur.done();
