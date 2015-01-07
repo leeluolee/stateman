@@ -58,7 +58,8 @@
 
   
 
-<script>
+<script type="text/javascript">
+
 
   function activeOne(className){
     var $menu = $(".j-menu");
@@ -77,8 +78,6 @@
     },
     "user": {
       enter: function(){
-        console.log($("#user-tpl").html())
-        console.log($('.j-app'))
         $(".j-app")[0].innerHTML = $("#user-tpl").html();
         $(".j-menus .user").addClass("active");
       },
@@ -129,6 +128,7 @@
 
     })
     .start({html5: true, "root": "/example/layout.html"})
+
 
 
 

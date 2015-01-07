@@ -84,8 +84,8 @@ _.extend( _.emitable( StateMan ), {
     is: function(stateName, param, isStrict){
       if(!stateName) return false;
       var stateName = (stateName.name || stateName);
-      var active = this.active, pendingName = active.name;
-      var matchPath = isStrict? pendingName === stateName : (pendingName + ".").indexOf(stateName + ".")===0;
+      var current = this.current, currentName = current.name;
+      var matchPath = isStrict? currentName === stateName : (currentName + ".").indexOf(stateName + ".")===0;
       return matchPath && (!param || _.eql(param, this.param)); 
     },
     // after pathchange changed
@@ -149,10 +149,16 @@ _.extend( _.emitable( StateMan ), {
       }
       
       if(current !== state){
+        self.emit("begin", {
+          previous: current,
+          current: state,
+          stop: function(){
+            done(false);
+          }
+        });
+        if(over === true) return;
         this.previous = current;
         this.current = state;
-        self.emit("begin", done);
-        if(over === true) return;
         this._leave(baseState, option, function(success){
           self._checkQueryAndParam(baseState, option);
           if(success === false) return done(success)

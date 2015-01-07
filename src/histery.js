@@ -23,14 +23,15 @@ function Histery(options){
   this.location = options.location || browser.location;
 
   // mode config, you can pass absolute mode (just for test);
-  this.mode = options.mode || (options.html5 && browser.history ? HISTORY: HASH); 
   this.html5 = options.html5;
-  if( !browser.hash ) this.mode = this.mode | HISTORY;
+  this.mode = options.html5 && browser.history ? HISTORY: HASH; 
+  if( !browser.hash ) this.mode = QUIRK;
+  if(options.mode) this.mode = options.mode;
 
   // hash prefix , used for hash or quirk mode
   this.prefix = "#" + (options.prefix || "") ;
   this.rPrefix = new RegExp(this.prefix + '(.*)$');
-  this.interval = options.interval || 1000;
+  this.interval = options.interval || 66;
 
   // the root regexp for remove the root for the path. used in History mode
   this.root = options.root ||  "/" ;
@@ -58,7 +59,8 @@ _.extend( _.emitable(Histery), {
 
     switch ( this.mode ){
       case HASH: 
-        browser.on(window, "hashchange", this._checkPath); break;
+        browser.on(window, "hashchange", this._checkPath); 
+        break;
       case HISTORY:
         browser.on(window, "popstate", this._checkPath);
         break;
@@ -88,12 +90,12 @@ _.extend( _.emitable(Histery), {
 
     //for oldIE hash history issue
     if(path === curPath && this.iframe){
-      curPath = this.getPath(this.iframe.location);
+      path = this.getPath(this.iframe.location);
     }
 
     if( path !== curPath ) {
       this.iframe && this.nav(path, {silent: true});
-      this.emit('change', (this.curPath=path));
+      this.emit('change', path);
     }
   },
   // get the current path
@@ -127,7 +129,6 @@ _.extend( _.emitable(Histery), {
     if( this.mode !== HISTORY ){
       this._setHash(this.location, to, options.replace)
       if( iframe && this.getPath(iframe.location) !== to ){
-        //
         if(!options.replace) iframe.document.open().close();
         this._setHash(this.iframe.location, to, options.replace)
       }
@@ -138,6 +139,7 @@ _.extend( _.emitable(Histery), {
     if( !options.silent ) this.emit('change', to);
   },
   _autolink: function(){
+    if(this.mode!==HISTORY) return;
     // only in html5 mode, the autolink is works
     // if(this.mode !== 2) return;
     var prefix = this.prefix, self = this;
@@ -150,7 +152,7 @@ _.extend( _.emitable(Histery), {
       if(!hash) return;
       
       ev.preventDefault && ev.preventDefault();
-      self.nav( hash , {force: true})
+      self.nav( hash )
       return (ev.returnValue = false);
     } )
   },

@@ -95,6 +95,7 @@ describe("stateman:basic", function(){
     })
     .state('$notfound', {
       enter: function(){
+        debugger
         obj.notfound = true
       },
       leave: function(){
@@ -143,6 +144,7 @@ describe("stateman:basic", function(){
     expect(obj.book_detail_message_update).to.equal("3")
   })
   it("the ancestor before basestate between current and previouse should update", function(){
+    stateman.nav("/book/6/message");
     stateman.nav("/book/4/message");
     expect(obj.book_detail_update).to.equal("4")
     expect(obj.book_detail_message_update).to.equal("4")
@@ -579,9 +581,9 @@ describe("Navigating", function(){
     .state("app.blog", {enter: function(){
       blog++;
     }})
-    .on("begin", function( done ){
-      if(stateman.current.name !== "app.index"){
-        done(false); // @TODO tongyi 
+    .on("begin", function( option ){
+      if(option.current.name !== "app.index"){
+        option.stop(); // @TODO tongyi 
         stateman.go("app.index")
       }
     })
