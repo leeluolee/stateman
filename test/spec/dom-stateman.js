@@ -95,7 +95,6 @@ describe("stateman:basic", function(){
     })
     .state('$notfound', {
       enter: function(){
-        debugger
         obj.notfound = true
       },
       leave: function(){

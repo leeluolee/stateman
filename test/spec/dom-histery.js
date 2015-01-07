@@ -113,6 +113,18 @@ describe("Histery", function(){
     histery.checkPath();
     expect(locals["/prefix"]).to.equal(1);
   })
+  it("every nav, the curPath should be update", function(){
+    var histery = new Histery({
+      location: loc("http://regularjs.github.io/app/histery")
+    })
+    histery.location.replace("http://regularjs.github.io/app/histery/code#/prefix");
+    histery.checkPath();
+
+    expect(histery.curPath).to.equal("/prefix")
+    histery.location.replace("http://regularjs.github.io/app/histery/code");
+    histery.checkPath();
+    expect(histery.curPath).to.equal("")
+  })
 
 })
 

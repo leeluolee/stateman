@@ -95,6 +95,7 @@ _.extend( _.emitable(Histery), {
 
     if( path !== curPath ) {
       this.iframe && this.nav(path, {silent: true});
+      this.curPath = path;
       this.emit('change', path);
     }
   },
