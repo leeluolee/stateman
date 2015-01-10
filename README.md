@@ -126,6 +126,18 @@ use
 var StateMan = require('stateman');
 ```
 
+### [spm](http://spmjs.io/package/stateman)
+
+```js
+spm install stateman
+```
+
+use
+
+```js
+var StateMan = require('stateman');
+```
+
 ### component
 
 ```js
