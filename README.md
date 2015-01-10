@@ -3,6 +3,7 @@ StateMan
 
 
 [![Build Status](http://img.shields.io/travis/regularjs/regular/master.svg?style=flat-square)](http://travis-ci.org/regularjs/regular)
+[![spm package](http://spmjs.io/badge/stateman)](http://spmjs.io/package/stateman)
 
 
 stateman: A tiny foundation that providing nested state-based routing for complex web application. 
@@ -117,6 +118,18 @@ bower install stateman
 
 ```js
 npm install stateman
+```
+
+use
+
+```js
+var StateMan = require('stateman');
+```
+
+### [spm](http://spmjs.io/package/stateman)
+
+```js
+spm install stateman
 ```
 
 use
