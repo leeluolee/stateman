@@ -1,7 +1,7 @@
 *node_modules*
 *sublime*
 npm-debug.log
-*/tmp/*
+*/tmp*
 test/tmp/*
 test/coverage/*
 coverage*

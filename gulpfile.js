@@ -134,7 +134,9 @@ gulp.task('mocha', function(){
 
 
 gulp.task('watch', ["build", 'testbundle'], function(){
-  gulp.watch(['src/**/*.js'], ['build'])
+  gulp.watch(['src/**/*.js'], ['build']);
+gulp.watch(['docs/API.md'], ['doc']);
+
   gulp.watch(['test/spec/*.js', 'src/**/*.js'], ['testbundle'])
 })
 

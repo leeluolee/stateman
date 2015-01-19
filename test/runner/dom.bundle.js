@@ -1673,8 +1673,8 @@
 	    },
 	    nav: function(url, options, callback){
 	      if(typeof option === "function"){
-	        callback = option;
-	        option = {};
+	        callback = options;
+	        options = {};
 	      }
 	      callback && (this._cb = callback)
 
