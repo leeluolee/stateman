@@ -4,7 +4,8 @@
 
 # StateMan API Reference
 
-## Quirk Links
+## {Quirk Links % }
+
 
 ### API
 - [new StateMan(option) or StateMan(option)](#instance)

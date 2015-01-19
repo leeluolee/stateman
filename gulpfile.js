@@ -7,6 +7,7 @@ var mocha = require('gulp-mocha');
 var uglify = require('gulp-uglify');
 var _ = require("./src/util.js");
 var karma = require("karma").server;
+var translate = require("./scripts/gulp-trans.js")
 
 
 var pkg = require("./package.json");  
@@ -175,6 +176,11 @@ gulp.task('karma', function (done) {
 gulp.task("test", ["mocha", "karma"])
 
 
+gulp.task('doc', function(){
+  return gulp.src(["docs/API.md"]) 
+    .pipe(translate({}))
+    .pipe(gulp.dest("docs/"))
+})
 
 // 
 gulp.task("release", ["tag"])
