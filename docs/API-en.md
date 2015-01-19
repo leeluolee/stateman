@@ -2,53 +2,27 @@
 > Some people tell me there are __a lot of terrible lanuage errors__ in this page. I'm sorry for my poor english, I'll ask my colleague for help.
  and if somebody want to help me, please contact me(oe.zheng@gmail.com);
 
-# StateMan API Reference
-
-## Quirk Links
-
-### API
-- [new StateMan(option) or StateMan(option)](#instance)
-- [__stateman.state__](#state)
-- [__stateman.start__](#start)
-- [__stateman.nav__](#nav)
-- [__stateman.go__](#go)
-- [stateman.is](#is)
-- [stateman.encode](#encode)
-- [stateman.on](#on)
-- [stateman.off](#off)
-- [stateman.emit](#emit)
-- [stateman.stop](#stop)
-- [stateman.decode](#decode)
-
-### [Event](#event)
-
-- __`begin`__: emit when an navigating is begin
-- __`end`__:  emit when an navigating is over
-- `notfound`:  path is changed but no state is founded
-- `history:change`: if path  is changed . emitted by [stateman.history](). 
-
-### Properties
-
-- [stateman.current](#current):  target state;
-- [stateman.previous](#previous):  previous state;
-- [stateman.active](#active): valuable at navigating. represent the active state.
-- [stateman.param](#param1):  current param.
-
-### Deep Guide
-
-* [Class: State](#State1)
-* [asynchronous navigation](#async)
-* [__params in routing__](#param)
+# StateMan API Reference 
 
 
-### Before taking document into detail, suppose we already have a state config like below
+
+
+__ Before taking document into detail, suppose we already have a state config like this__
+
+
 
 ```js
 
 var config = {
-  enter: function(option){ console.log("enter: " + this.name + "; param: " + JSON.stringify(option.param)) },
-  leave: function(option){ console.log("leave: " + this.name + "; param: " + JSON.stringify(option.param)) },
-  update: function(option){ console.log("update: " + this.name + "; param: " + JSON.stringify(option.param)) },
+  enter: function(option){ 
+    console.log("enter: " + this.name + "; param: " + JSON.stringify(option.param)) 
+  },
+  leave: function(option){ 
+    console.log("leave: " + this.name + "; param: " + JSON.stringify(option.param)) 
+  },
+  update: function(option){ 
+    console.log("update: " + this.name + "; param: " + JSON.stringify(option.param)) 
+  },
 }
 
 function cfg(o){
@@ -87,19 +61,33 @@ stateman.state({
 
 ```
 
-config is used to help us record the navigating, you don't need to understand the example right now, document will explain later.
+
+Object `config` is used to help us record the navigating, you don't need to understand the example right now, document will explain later.
 
 You can find __the demo [here](http://leeluolee.github.io/stateman/api.html)__. type something in console can help you to understand api more clearly.
 
 
-## Class: StateMan
 
-<a name='instance'></a>
+## API
 
-### 1. new StateMan() or StateMan()
+### new StateMan
 
-__return__:  the StateMan instance
+__Usage__
 
+`new StateMan(option)`
+
+__Arguments__
+
+|Param|Type|Detail|
+|--|--|--|
+|options|Object| currenly, no options is needed |
+
+
+__Return__
+
+- type [Stateman] :The instance of StateMan
+
+__Example__
 
 ```javascript
 var StateMan = require("stateman");
@@ -109,110 +97,159 @@ var stateman = new StateMan();
 var stateman = StateMan();
 ```
 
+### stateman.state
 
-## Instance: stateman
+__Usage__
 
-<a id='state'></a>
-
-## 1. stateman.state(stateName[, config])
-
-stateman.state is the most important method in stateman
-
- __Arguments__
-
-- __stateName__ < String  |Object >: the state's name , like `contact.detail`, if a `Object` is passed in, there will be a multiple operation.
-- __config__ < Function | Object >: the configuration of the state.
-	if config is not passed, target [state](#State1)   will be return. if a `Function` is passed, it will be considered as the [enter](#enter) property. 
-  if the state is already exsits, the previous config will be override.
+`stateman.state(stateName[, config])`
 
 
- __Return__ : this
+stateman.state is used to add/update a state or get particular state(if param `config` is undefined) .
+
+
+
+__Arguments__
+
+|Param|Type|Detail|
+|--|--|--|
+|stateName|String  Object| the state's name , like `contact.detail`, if a `Object` is passed in, there will be a multiple operation |
+|config(optional)|Function Object| is config is not specified, target state will be return. it will be considered as the [enter](#enter) property. 
+  if the state is already exsits, the previous config will be override|
+
+ __Return__ : 
+
+ - type [StateMan]: this
+
 
 __Example__
 
 ```js
 
 stateman
-	.state("app", {
-		enter: function(){
-			console.log("enter the state: app")
-		},
-		leave: function(){
-			console.log("leave the state: app")
-		}
-	})
-	.state("app.contact", function(){
-			console.log("enter the app.contact state")
-	})
+  .state("app", {
+    enter: function(){
+      console.log("enter the state: app")
+    },
+    leave: function(){
+      console.log("leave the state: app")
+    }
+  })
+  // is equals to {enter: config}
+  .state("app.contact", function(){
+      console.log("enter the app.contact state")
+  })
 
 // pass in a Object for multiple operation
 stateman.state({
-	"demo.detail": function(){
-			console.log("enter the demo.detail state")
-	},
-	"demo.list": {
-		enter: function(){}
-		leave: function(){}
-	}
+  "demo.detail": function(){
+      console.log("enter the demo.detail state")
+  },
+  "demo.list": {
+    enter: function(){}
+    leave: function(){}
+  }
 })
 
 
 ```
 
-As you see, we haven't created the `demo` state before creating `demo.detail`, beacuse stateman have created it for you. 
 
+
+As you see, we haven't created the `demo` state before creating `demo.detail`, beacuse stateman have created it for you. 
 
 if config is not passing, `state.state(stateName)` will return the target state.
 
+
 ```js
 
-var state = stateman.state('demo.list'); // return the demo.list state
+// return the demo.list state
+var state = stateman.state('demo.list'); 
 
 ```
 
 
-### __The detail of the  `config`__
-
-
-* config.url:  default url is the lastName: like `detail` in `contact.detail`
-
-	```js
-    	 //=> /contact/:id
-	stateman.state('contact.detail', {url: ':id'}) 
-			
-	```
-
-	The whole url of a state is the combination of the whole path to this state. like `app.contact.detail` is the combination of `app`,`app.contact` and `app.contact.detail`. For Example: 
-
-
-	```js
-	state.state("app", {})
-		.state("app.contact", "users")
-		.state("app.contact.detail", "/:id")
-
-	```
-	the caputred url of `app.contact.detail` equals to `/app/users/:id`. YES, obviously you can define the param captured in the url. see [param in routing](#param) for more infomation.
-
-	missing `/` or redundancy of `/` is all valid.
-
-	__absolute url__: if you dont want the url that defined in ancestry, you can use a prefix `^` . for example
-	
-	```js
-	state.state("app.contact.detail", "^/detail/:id");
-	```
-	
-	the captured url will be `/detail/:id`.
-
-	__empty url__: if you pass `url:""`, the captured_url will be the same as its parent. but the child state have the higher Priority than the parent state. for Example, the state `app.user.list` and `app.user` that we defined before, have the same captured url `/app/user`, but stateman will match the state`app.user.list`.
 
 
 
-* __config.enter(option)__ : a function that will be called when the state be entered into.
+
+
+
+
+<a id='config'></a>
+
+### * Detail of `config`
+
+
+#### config.url: 
+
+default url is the lastName: like `detail` in `contact.detail`  
+
+```js
+  	 //=> /contact/:id
+stateman.state('contact.detail', {url: ':id'}) 
+		
+```
+
+
+The captured url of a particular state is the combination of the all states in the path to this state. like  For Example: 
+
+
+__Example__
+
+```js
+
+state.state("app", {})
+	.state("app.contact", "users")
+	.state("app.contact.detail", "/:id")
+
+```
+
+
+The captured url of `app.contact.detail` is equals to `/app/users/:id`. YES, obviously you can define the param captured in the url. see [param in routing](#param) for more infomation.
+
+
+missing `/` or redundancy of `/` is all valid.
+
+
+__absolute url__: 
+
+if you dont need the url that defined in parents, use a prefix `^` to make it absolute . __all children of the state will also be affect
+
+
+```js
+state.state("app.contact.detail", "^/detail/:id");
+state.state("app.contact.detail.message", "message");
+```
+
+
+The captured url of `app.contact.detail` will be `/detail/:id`. and the captured url of `app.contact.detail.message` will be `/detail/:id/message`.
+
+
+
+
+__empty url__: abandon the current url.
+
+if you pass `url:""`, the captured_url will be the same as its parent.
+
+
+
+
+#### enter, leave , update: 
+
+
+* __config.enter(option)__: a function that will be called when the state be entered into.
 * __config.leave(option)__: a function that will be called when the state be leaved out.
 * __config.update(option)__: a function called by states that included by current state, but not be entered into or leave out. 
 
 
-__example__: the current state is `app.contact.detail.setting`, when navigating to `app.contact.message`. the complete process is
+
+__Example__: 
+
+
+
+The current state is `app.contact.detail.setting`, when navigating to `app.contact.message`. the complete process is
+
+
 
 1. leave: app.contact.detail.setting
 2. leave: app.contact.detail
@@ -226,99 +263,141 @@ you can test it in [api.html](http://leeluolee.github.io/stateman/api.html);
 
 `enter`, `leave` and `update` they all accepet an param named `option`. option contains a special property `option.param` represent the param from url [see param for detail](#param)
 
-other property in option passed into [__stateman.go__](#go) or [__stateman.nav__](#nav), will also passed in `enter`, `leave`, `update`
+other options that passed into [__stateman.go__](#go) or [__stateman.nav__](#nav), will also be passed to `enter`, `leave`, `update`
+
+
+
 
 
 
 <a name='param'></a>
 
-### __Important: param captured in routing__
+### * Routing param
 
 
-####1. named param without pattern, the most usually usage.
+####1. named param without pattern, the most usually usage .
 
-```shell
-/contact/:id
-```
 
-the state  match the path `/contact/1`, and find the param `{id:1}`
+__Example__
 
-in fact, all named param have a default pattern `[-\$\w]+`. but you can change it use custom pattern.
+<!-- t -->
+captured url `/contact/:id` will  match the path `/contact/1`, and find the param `{id:1}`
 
-####2. named param with pattern
+In fact, all named param have a default pattern `[-\$\w]+`. but you can change it use custom pattern.
+
+
+####2. named param with pattern 
+
 
 named param follow with `(regexp)` can restrict the pattern for current param (don't use sub capture it regexp). for example.
 
-```sh
-/contact/:id(\\d+)
-```
 
-now, only the number is valid the "id" param;
+
+now , only the number is valid to match the id param of  `/contact/:id(\\d+)`
 
 
 ####3. unnamed param with pattern
-you can also define a plain pattern for route matching. imagine that you have a pattern like below
+
+
+you can also define a plain pattern for route matching.
+
+
+
+__Example__
 
 ```sh
 /contact/(friend|mate)/:id([0-9])/(message|option)
 ```
 
-it will match the path `/contact/friend/4/message` and get the param `{0: "friend", id: "4", 1: "message"}`
+<!-- t -->
+
+It will match the path `/contact/friend/4/message` and get the param `{0: "friend", id: "4", 1: "message"}`
 
 unnamed param will be put one by one in `param` use autoincrement index. 
 
+
 #### 4. param in search
+
 
 you can also passing query search in the url. take `/contact/:id` for example.
 
+
+<!-- t -->
 it will matched the url `/contact/1?name=heloo&age=1`, and get the param `{id:'1', name:'heloo', age: '1'}`
 
 
 
-
-
 <a name="start"></a>
-## 2. stateman.__start__ (option)
+### stateman.start
 
-start the state manager.
+start the state manager. 
 
-__return__: this;
+__Usage__
+
+`stateman.start(option)`
 
 __option__
 
-- **option.html5**: whether to open the html5 history support.
-- **option.root**: the root of the url , __only need when html5 is actived__. defualt is `/`
-- **option.prefix**: for the hash prefix , default is '' (you can pass `!` to make the hash like `#!/contact/100`), works in hash mode.
-- **option.autolink**: whether to delegate all link(a[href])'s navigating, only need when __html5 is actived__, default is `true`.
+
+|Param|Type|Detail|
+|--|--|--|
+|html5 |Boolean|(default false) whether to open the html5 history support |
+|root |String|(default '/') the root of the url , __only need when html5 is actived__. defualt is `/` |
+|prefix| String | for the hash prefix , default is '' (you can pass `!` to make the hash like `#!/contact/100`), works in hash mode.|
+|autolink| Boolean | (defualt true) whether to delegate all link(a[href])'s navigating, only need when __html5 is actived__, default is `true`.|
+
+
+__Example__
 	
 <a name="nav"></a>
-## 3. stateman.__nav__(url[, option][, callback]);
+### stateman.nav
 
-nav to a specified url, if pass a option ,it will  be also passed into function `enter`, `leave`, `update`.
+
+nav to particular url. [param from url](#param) will be merged to option and passed to function `enter`, `leave`, `update`.
+
+
+
+__Usage__
+
+`stateman.nav(url[, option][, callback])`;
+
+
 
 __Argument__
 
--	url < String >: url to navigate
-- option < Object > : [Optional] navigate option, option will merge the [param from url](#param) as its `param` property. and will be passed in `enter`, 'leave' and `update`, there are some special properties can control the navigating:
-	* option.silent: if silent is true, only the location is change in browser, but will not trigger the stateman's navigating process
-	* option.replace: if replace is true. the previous path in history will be replace by url( means you can't backto  or goto the previous path)
-- callback < Function >: [Optional] once navigating is done, callback will be called.
+|Param|Type|Detail|
+|--|--|--|
+|url |String|target url |
+|option(optional) |Object|navigate option, option will merge the [param from url](#param) as its `param` property. |
+|callback(optional)|Function|function called after navigating is done|
 
-All other property in option will passed to `enter`, `leave` , `update`.
 
-```js
-stateman.nav("/app/contact/1?name=leeluolee", {data: 1});
+__control option__
+
+* option.silent: if silent is true, only the location is change in browser, but will not trigger the stateman's navigating process
+* option.replace: if replace is true. the previous path in history will be replace by url( means you can't backto  or goto the previous path)
+
+
+__Example__
+
+  * ` stateman.nav("/app/contact/1?name=leeluolee", {data: 1});
+  `
 
 the final option passed to `enter`, `leave` and `update` is `{param: {id: "1", name:"leeluolee"}, data: 1}`.
 
-```
 
 
 
 <a name="go"></a>
-## 4. stateman.__go__(stateName [, option][, callback]);
 
-nav to specified state, very similar with [stateman.nav](#nav). but stateman use stateName to navigating. 
+### stateman.go
+
+nav to specified state, very similar with [stateman.nav](#nav). but `stateman.go` use stateName instead of url to navigating. 
+
+__Usage__
+
+`stateman.__go__(stateName [, option][, callback])`;
+
 
 __Arguments__
 
@@ -594,3 +673,36 @@ this method is equls to "stateman.state"
 
 
 
+
+### API
+- [__stateman.state__](#state)
+- [__stateman.start__](#start)
+- [__stateman.nav__](#nav)
+- [__stateman.go__](#go)
+- [stateman.is](#is)
+- [stateman.encode](#encode)
+- [stateman.on](#on)
+- [stateman.off](#off)
+- [stateman.emit](#emit)
+- [stateman.stop](#stop)
+- [stateman.decode](#decode)
+
+### [Event](#event)
+
+- __`begin`__: emit when an navigating is begin
+- __`end`__:  emit when an navigating is over
+- `notfound`:  path is changed but no state is founded
+- `history:change`: if path  is changed . emitted by [stateman.history](). 
+
+### Properties
+
+- [stateman.current](#current):  target state;
+- [stateman.previous](#previous):  previous state;
+- [stateman.active](#active): valuable at navigating. represent the active state.
+- [stateman.param](#param1):  current param.
+
+### Deep Guide
+
+* [Class: State](#State1)
+* [asynchronous navigation](#async)
+* [__params in routing__](#param)

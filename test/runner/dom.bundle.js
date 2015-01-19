@@ -1672,7 +1672,7 @@
 	      return this;
 	    },
 	    nav: function(url, options, callback){
-	      if(typeof option === "function"){
+	      if(typeof options === "function"){
 	        callback = options;
 	        options = {};
 	      }
