@@ -1,13 +1,12 @@
 
-> Some people tell me there are __a lot of terrible lanuage errors__ in this page. I'm sorry for my poor english, I'll ask my colleague for help.
- and if somebody want to help me, please contact me(oe.zheng@gmail.com);
+
+
 
 # StateMan  文档
 
 
 
-
-在文档开始前，假设我们已经配置了这样一段路由脚本
+为了更好的理解这不算多的API, 在文档开始前，假设我们已经配置了这样一段路由脚本.
 
 
 
@@ -62,9 +61,9 @@ stateman.state({
 ```
 
 
-对象`config`用来记录navgating的信息, 你不需要立刻理解这个例子. 稍后文档会慢慢告诉你一切.
+对象`config`用来输出navgating的相关信息, 你不需要立刻理解这个例子, 稍后文档会慢慢告诉你一切.
 
-你可以直接[在线](http://leeluolee.github.io/stateman/api.html) 访问到这个例子
+你可以直接通过【[在线DEMO](http://leeluolee.github.io/stateman/api.html)】 访问到这个例子, 有时候试着在console中测试API可以帮助你更好的理解它们
 
 
 
@@ -86,7 +85,7 @@ __Arguments__
 
 __Return__
 
-- type [Stateman] :The instance of StateMan
+- type [Stateman] :  StateMan的实例
 
 __Example__
 
@@ -105,7 +104,7 @@ __Usage__
 `stateman.state(stateName[, config])`
 
 
-stateman.state 用来增加/更新一个state, 或获取指定的state对象(加入 config 参数没有指定的话)
+stateman.state 用来增加/更新一个state, 或获取指定的state对象(假如 config 参数没有指定的话)
 
 
 
@@ -119,6 +118,10 @@ __Arguments__
  __Return__ : 
 
  - type [StateMan]: this
+
+  if config is not passed
+
+ - type [[State](#)]: the state.
 
 
 __Example__
@@ -176,10 +179,17 @@ var state = stateman.state('demo.list');
 
 <a id='config'></a>
 
-### * Detail of `config`
+### *  关于`config`
+
+
+所有config中的属性都会成为对应state的实例属性，但在这里, 需要对一些特殊的属性做说明
+
+
 
 
 #### config.url: 
+
+`url`属性用来配置 __当前状态__ (非全路径)的url片段
 
  默认的url是逗号分割的最后一个词, 如`contact.detail`的`detail` 
 
@@ -243,6 +253,8 @@ __空url__: 放弃当前这级的路径配置
 * __config.leave(option)__: 一个函数，当状态被__离开时__会被调用
 * __config.update(option)__: 一个函数，当状态__更新时__会被调用, 更新的意思是，路径有变化，但是此状态仍未被退出.
 
+`enter`, `update` and `leave`是state中最重要的三个时期, 每当这个stata被进入、离开和更新时会被调用
+
 
 
 
@@ -260,7 +272,14 @@ __Example__:
 3. update: app
 4. enter: app.contact.message
 
-you can test it in [api.html](http://leeluolee.github.io/stateman/api.html);
+
+你可以直接在这里页面来查看完整过程： [api.html](http://leeluolee.github.io/stateman/api.html);
+
+基本上，这里没有难度去理解`enter` 和 `leave`方法，但是`update`何时被调用呢?
+
+先看下我们文章开始的[【例子】](http://leeluolee.github.io/stateman/api.html)中定义的`app.contact.detail.setting`. 当我们从 `/app/contact/3/setting`跳转到`app/contact/2/setting`时，实际上stateman的当前状态并没有变化， 都是`app.contact.detail.setting`, 但是参数id改变了，这时我们称之为update, 所有被当前状态包含的状态(但没被enter和leave)都会运行update方法.
+
+
 
 
 
@@ -335,7 +354,7 @@ __Example__
 <a name="start"></a>
 ### stateman.start
 
-start the state manager. 
+ 启动stateman, 路由开始
 
 __Usage__
 
@@ -353,6 +372,15 @@ __option__
 
 
 __Example__
+
+```js
+stateman.start({
+  "html5": true,
+  "prefix": "!",
+  "root": "/blog" //the app is begin with '/blog'
+})
+
+```
 	
 <a name="nav"></a>
 ### stateman.nav
@@ -379,8 +407,11 @@ __Argument__
 
 __control option__
 
-* option.silent: if silent is true, only the location is change in browser, but will not trigger the stateman's navigating process
-* option.replace: if replace is true. the previous path in history will be replace by url( means you can't backto  or goto the previous path)
+
+
+* option.silent: 如果传入silent, 则只有url路径会发生改变，但是不触发stateman内部的状态改变, 即不会有enter, leave或updatec触发
+* option.replace: 如果replace === true, 之前历史的记录会被当前替换，即你无法通过浏览器的后退，回到原状态了
+
 
 
 __Example__
@@ -388,7 +419,11 @@ __Example__
   * ` stateman.nav("/app/contact/1?name=leeluolee", {data: 1});
   `
 
+{
 the final option passed to `enter`, `leave` and `update` is `{param: {id: "1", name:"leeluolee"}, data: 1}`.
+%
+最终传入到enter, leave与update的option参数会是`{param: {id: "1", name:"leeluolee"}, data: 1}`.
+}
 
 
 
@@ -397,7 +432,10 @@ the final option passed to `enter`, `leave` and `update` is `{param: {id: "1", n
 
 ### stateman.go
 
-nav to specified state, very similar with [stateman.nav](#nav). but `stateman.go` use stateName instead of url to navigating. 
+
+跳转到特定状态, 与 stateman.nav 非常相似，但是stateman.go 使用状态来代替url路径进行跳转
+
+
 
 __Usage__
 
@@ -452,7 +490,11 @@ stateman.state({
 
 
 <a name="is"></a>
-### 5. stateman.is( stateName[, param] [, isStrict] )
+### stateman.is
+
+__Usage__
+
+`stateman.is( stateName[, param] [, isStrict] )`
 
 determine if the active state is equal to or is the child of the state. If any params are passed then they will be tested for a match as well. not all the parameters need to be passed, just the ones you'd like to test for equality.
 
@@ -477,11 +519,16 @@ stateman.is("app.contact.detail", {id: "2", name: "leeluolee"}) // return false
 ```
 
 <a name="encode"></a>
-### 6. stateman.encode( stateName[, param] )
+### 
 
 get a url from state and specified param.
 
 method  [__go__](#go) is based on this method.
+
+__Usage__
+
+`stateman.encode( stateName[, param] )`
+
 
 __Arguments__
 
@@ -491,9 +538,13 @@ stateman.encode("app.contact.detail", {id: "1", name: "leeluolee"}) === "/app/co
 ```
 
 <a name="decode"></a>
-### 7. stateman.decode( url )
+### stateman.decode
 
-find the state that match the url, 
+__Usage__
+
+`stateman.decode( url )`
+
+find the state that be matched by the particluar url, will also return the param captured from url.
 
 method [__nav__](#nav) is based on this method
 
@@ -509,25 +560,34 @@ state.param // =>{id: "1", name: "leeluolee"}
 
 
 <a name="stop"></a>
-### 8. stateman.stop()
+### stateman.stop
+
+__Usage__
+
+`stateman.stop()`
 
 stop the stateman.
 
-### 9. Other Useful property in stateman
+## Properties
+
+Some living properties.
 
 <a name="current"></a>
-1. __stateman.current__: 
-	the current state, if a navigating is still in process, the current represent the destination state. 
+### __stateman.current__: 
+
+The target state.
 
 <a name="previous"></a>
-2. __stateman.previous__: 
-	the previous state.
+### __stateman.previous__: 
+
+The previous state.
 	
 <a name="active"></a>
-3. __stateman.active__: 
-	the active state, point to the state that still in active.
+### __stateman.active__: 
 
-imagine that you are navigating from state 'app.contact.detail' to state 'app.user', current will point to `app.user` and previous will point to 'app.contact.detail'. but the active state is dynamic, it is changed from `app.contact.detail` to `app.user`
+The active state, represent the state that still in pending.
+
+Imagine that you are navigating from __'app.contact.detail'__ to  __'app.user'__, __current__ will be pointing to `app.user` and __previous__ will be pointing to 'app.contact.detail'. But the active state is dynamic, it is changed from `app.contact.detail` to `app.user`. 
 
 __example__
 
@@ -559,11 +619,20 @@ stateman.state({
 
 ```
 
-open the [DEMO](http://leeluolee.github.io/stateman/active.html), and check the console.log
+Open the 【[DEMO](http://leeluolee.github.io/stateman/active.html) 】, and check the console.log.
 
 <a name="param1"></a>
 4. __stateman.param__:
-	the current param
+
+The current param captured from url or passed from the method __stateman.go__.
+
+__Example__
+
+```
+
+stateman.nav("app.detail", {})
+
+```
 
 
 
@@ -596,19 +665,75 @@ unbind handle
 trigger a specified event with specified param
 
 
-## StateMan's builtin Event
+## Builtin Event
 
-2. begin: when a navigating is perform
-3. end: when a navigating is over
-4. history:change: when a change envet is emitted by history
-5. notfound: when no state is founded during a navigating.
+### begin
 
 
+每当跳转开始时触发， 回调会获得一个特殊的参数`evt`用来控制跳转.
 
-<a name="state1"></a>
+
+
+__evt__
+
+|Property|Type|Detail|
+|--|--|--|
+|evt.stop | Function| 是否阻止这次事件|
+|evt.previous| State| 跳转时的状态|
+|evt.current| State| 要跳转到的状态|
+|evt.param| Object| 捕获到的参数|
+
+Because the navigating isn't really start, property like `previous`, `current` and `param` haven't been assigned to stateman.
+
+__Tips__
+
+你可以通过注册begin事件来阻止某次跳转
+
+
+```js
+stateman.on("begin", function(evt){
+  if(evt.current.name === 'app.contact.message' && evt.previous.name.indexOf("app.user") === 0){
+    evt.stop();
+    alert(" nav from 'app.user.*' to 'app.contact.message' is stoped");
+  }
+})
+
+```
+
+Paste code above to page [http://leeluolee.github.io/stateman/api.html#/app/user](http://leeluolee.github.io/stateman/api.html#/app/user), and click `app.contact.message` to see the log.
+
+
+### end
+
+Emitted when a navigating is end. 
+
+
+### notfound: 
+
+Emitted when target state is not founded.
+
+__Tips__
+
+你可以监听notfound事件，来将页面导向默认状态
+
+
+__Example__
+
+```js
+
+stateman.on("notfound", function(){
+  this.go("app.contact");
+})
+```
+
+
+
+
+
+<a id="state1"></a>
 ## Class: State
 
-you can use `stateman.state(stateName)` to get the target state. each state is instanceof `StateMan.State`. the context of the methods you defined in config(`enter`, `leave`, `update`) is pointed to state.
+you can use `stateman.state(stateName)` to get the target state. each state is instanceof `StateMan.State`. the context of the methods you defined in config(`enter`, `leave`, `update`) is belongs to state.
 
 ```js
 
@@ -620,7 +745,9 @@ state.name = "app.contact.detail"
 
 <a name="async"></a>
 
-### 1. state.async()
+### state.async
+
+___state.async__:
 
 you can pending a state until you want to continue. see the `app.user` config that we defined above.
 
@@ -651,17 +778,8 @@ if enter into or leave out from the state `app.user`, pending it for 1s. then go
 it is very useful if you have some asynchronous logic(xhr, animation...etc) to operate.
 
 
-### 2. state.config(config)
 
-In fact, `stateman.state("app.user", config)` is equals to `stateman.state("app.user").config(config)`.
-
-
-### 3. state.state()
-
-this method is equls to "stateman.state"
-
-
-### other property
+### other properties
 
 
 1. state.name: the state's stateName
@@ -673,38 +791,6 @@ this method is equls to "stateman.state"
 
 
 
-
-
-
-
-
-
-### API
-- [__stateman.state__](#state)
-- [__stateman.start__](#start)
-- [__stateman.nav__](#nav)
-- [__stateman.go__](#go)
-- [stateman.is](#is)
-- [stateman.encode](#encode)
-- [stateman.on](#on)
-- [stateman.off](#off)
-- [stateman.emit](#emit)
-- [stateman.stop](#stop)
-- [stateman.decode](#decode)
-
-### [Event](#event)
-
-- __`begin`__: emit when an navigating is begin
-- __`end`__:  emit when an navigating is over
-- `notfound`:  path is changed but no state is founded
-- `history:change`: if path  is changed . emitted by [stateman.history](). 
-
-### Properties
-
-- [stateman.current](#current):  target state;
-- [stateman.previous](#previous):  previous state;
-- [stateman.active](#active): valuable at navigating. represent the active state.
-- [stateman.param](#param1):  current param.
 
 ### Deep Guide
 

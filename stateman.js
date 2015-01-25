@@ -114,6 +114,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    stop: function(){
 	      this.history.stop();
 	    },
+	    async: function(){
+	      return this.active && this.active.async();
+	    },
 	    // @TODO direct go the point state
 	    go: function(state, option, callback){
 	      option = option || {};
@@ -151,7 +154,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	      if(state) _.extend(state.param, query);
 	      return state;
 	    },
-	    encode: State.prototype.encode,
+	    encode: function(stateName, param){
+	      return this.state(stateName).encode(param);
+	    },
 	    // notify specify state
 	    // check the active statename whether to match the passed condition (stateName and param)
 	    is: function(stateName, param, isStrict){
@@ -225,11 +230,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	        self.emit("begin", {
 	          previous: current,
 	          current: state,
+	          param: option.param,
 	          stop: function(){
 	            done(false);
 	          }
 	        });
-	        if(over === true) return;
+	        if(over === true){
+	          return current !== this && 
+	            this.nav(current.encode(current.param), {silent:true});
+	        }
 	        this.previous = current;
 	        this.current = state;
 	        this._leave(baseState, option, function(success){
@@ -884,17 +893,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    _.extend(this, _.normalize(this.pattern), true);
 	  },
-	  encode: function(stateName, param){
-	    var state;
-	    stateName = stateName || {};
-	    if( _.typeOf(stateName) === "object" ){
-	      state = this;
-	      param = stateName;
-	    }else{
-	      state = this.state(stateName);
-	    }
-	    var param = param || {};
-
+	  encode: function(param){
+	    var state = this;
+	    param = param || {};
+	    
 	    var matched = "%";
 
 	    var url = state.matches.replace(/\(([\w-]+)\)/g, function(all, capture){
@@ -943,8 +945,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	var win = window, 
 	  doc = document;
 
-
-
 	var b = module.exports = {
 	  hash: "onhashchange" in win && (!doc.documentMode || doc.documentMode > 7),
 	  history: win.history && "onpopstate" in win,
@@ -961,10 +961,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    : function(node,type,cb){return node.detachEvent( "on" + type, cb )}
 	}
 
-	b.msie = parseInt((/msie (\d+)/.exec(navigator.userAgent.toLowerCase()) || [])[1]);
-	if (isNaN(b.msie)) {
-	  b.msie = parseInt((/trident\/.*; rv:(\d+)/.exec(navigator.userAgent.toLowerCase()) || [])[1]);
-	}
 
 
 /***/ }

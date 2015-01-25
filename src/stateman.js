@@ -41,6 +41,9 @@ _.extend( _.emitable( StateMan ), {
     stop: function(){
       this.history.stop();
     },
+    async: function(){
+      return this.active && this.active.async();
+    },
     // @TODO direct go the point state
     go: function(state, option, callback){
       option = option || {};
@@ -78,7 +81,9 @@ _.extend( _.emitable( StateMan ), {
       if(state) _.extend(state.param, query);
       return state;
     },
-    encode: State.prototype.encode,
+    encode: function(stateName, param){
+      return this.state(stateName).encode(param);
+    },
     // notify specify state
     // check the active statename whether to match the passed condition (stateName and param)
     is: function(stateName, param, isStrict){
@@ -152,11 +157,15 @@ _.extend( _.emitable( StateMan ), {
         self.emit("begin", {
           previous: current,
           current: state,
+          param: option.param,
           stop: function(){
             done(false);
           }
         });
-        if(over === true) return;
+        if(over === true){
+          return current !== this && 
+            this.nav(current.encode(current.param), {silent:true});
+        }
         this.previous = current;
         this.current = state;
         this._leave(baseState, option, function(success){

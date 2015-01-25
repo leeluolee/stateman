@@ -2,8 +2,6 @@
 var win = window, 
   doc = document;
 
-
-
 var b = module.exports = {
   hash: "onhashchange" in win && (!doc.documentMode || doc.documentMode > 7),
   history: win.history && "onpopstate" in win,
@@ -20,7 +18,3 @@ var b = module.exports = {
     : function(node,type,cb){return node.detachEvent( "on" + type, cb )}
 }
 
-b.msie = parseInt((/msie (\d+)/.exec(navigator.userAgent.toLowerCase()) || [])[1]);
-if (isNaN(b.msie)) {
-  b.msie = parseInt((/trident\/.*; rv:(\d+)/.exec(navigator.userAgent.toLowerCase()) || [])[1]);
-}

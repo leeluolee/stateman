@@ -989,7 +989,6 @@
 	    stateman._states = {}
 	  })
 
-
 	  it("redirect at root, during redirect the callback should stashed, when end all callbacks should emit ", function(done){
 	    stateman
 	      .state( "app1.index", {
@@ -1008,11 +1007,8 @@
 	      // console.log("app1.index the redirect done")
 	      expect(stateman.active.name === "app1.blog").to.equal(true);
 	    })
-
 	  })
-
 	})
-	  
 	})
 
 /***/ },
@@ -1128,17 +1124,10 @@
 
 	    _.extend(this, _.normalize(this.pattern), true);
 	  },
-	  encode: function(stateName, param){
-	    var state;
-	    stateName = stateName || {};
-	    if( _.typeOf(stateName) === "object" ){
-	      state = this;
-	      param = stateName;
-	    }else{
-	      state = this.state(stateName);
-	    }
-	    var param = param || {};
-
+	  encode: function(param){
+	    var state = this;
+	    param = param || {};
+	    
 	    var matched = "%";
 
 	    var url = state.matches.replace(/\(([\w-]+)\)/g, function(all, capture){
@@ -1364,8 +1353,6 @@
 	var win = window, 
 	  doc = document;
 
-
-
 	var b = module.exports = {
 	  hash: "onhashchange" in win && (!doc.documentMode || doc.documentMode > 7),
 	  history: win.history && "onpopstate" in win,
@@ -1382,10 +1369,6 @@
 	    : function(node,type,cb){return node.detachEvent( "on" + type, cb )}
 	}
 
-	b.msie = parseInt((/msie (\d+)/.exec(navigator.userAgent.toLowerCase()) || [])[1]);
-	if (isNaN(b.msie)) {
-	  b.msie = parseInt((/trident\/.*; rv:(\d+)/.exec(navigator.userAgent.toLowerCase()) || [])[1]);
-	}
 
 
 /***/ },
@@ -1653,6 +1636,9 @@
 	    stop: function(){
 	      this.history.stop();
 	    },
+	    async: function(){
+	      return this.active && this.active.async();
+	    },
 	    // @TODO direct go the point state
 	    go: function(state, option, callback){
 	      option = option || {};
@@ -1690,7 +1676,9 @@
 	      if(state) _.extend(state.param, query);
 	      return state;
 	    },
-	    encode: State.prototype.encode,
+	    encode: function(stateName, param){
+	      return this.state(stateName).encode(param);
+	    },
 	    // notify specify state
 	    // check the active statename whether to match the passed condition (stateName and param)
 	    is: function(stateName, param, isStrict){
@@ -1764,11 +1752,15 @@
 	        self.emit("begin", {
 	          previous: current,
 	          current: state,
+	          param: option.param,
 	          stop: function(){
 	            done(false);
 	          }
 	        });
-	        if(over === true) return;
+	        if(over === true){
+	          return current !== this && 
+	            this.nav(current.encode(current.param), {silent:true});
+	        }
 	        this.previous = current;
 	        this.current = state;
 	        this._leave(baseState, option, function(success){

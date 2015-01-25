@@ -107,17 +107,10 @@ _.extend( _.emitable( State ), {
 
     _.extend(this, _.normalize(this.pattern), true);
   },
-  encode: function(stateName, param){
-    var state;
-    stateName = stateName || {};
-    if( _.typeOf(stateName) === "object" ){
-      state = this;
-      param = stateName;
-    }else{
-      state = this.state(stateName);
-    }
-    var param = param || {};
-
+  encode: function(param){
+    var state = this;
+    param = param || {};
+    
     var matched = "%";
 
     var url = state.matches.replace(/\(([\w-]+)\)/g, function(all, capture){

@@ -604,7 +604,6 @@ describe("Navigating", function(){
     stateman._states = {}
   })
 
-
   it("redirect at root, during redirect the callback should stashed, when end all callbacks should emit ", function(done){
     stateman
       .state( "app1.index", {
@@ -623,9 +622,6 @@ describe("Navigating", function(){
       // console.log("app1.index the redirect done")
       expect(stateman.active.name === "app1.blog").to.equal(true);
     })
-
   })
-
 })
-  
 })
