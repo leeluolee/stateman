@@ -21,8 +21,8 @@
 var stateman = new StateMan();
 
 var config = {
-  enter: function(option){ console.log("enter: " + this.name + "; active: " + stateman.active.name )},
-  leave: function(option){ console.log("leave: " + this.name + "; active: " + stateman.active.name) }
+  enter: function(option){ console.log("enter: " + this.name + "; active: " + stateman.active.name + "; current: " + stateman.current.name )},
+  leave: function(option){ console.log("leave: " + this.name + "; active: " + stateman.active.name + "; current:" + stateman.current.name) }
 }
 
 function cfg(o){
