@@ -125,8 +125,7 @@ __Arguments__
 |Param|Type|Detail|
 |--|--|--|
 |stateName|String  Object|{ the state's name , like `contact.detail`, if a `Object` is passed in, there will be a multiple operation % state名称，加入传入了一个对象，将成为一个多重设置}|
-|config(optional)|Function Object|{ is config is not specified, target state will be return. it will be considered as the [enter](#enter) property. 
-  if the state is already exsits, the previous config will be override% 如果config没有指定，将会返回指定的state, 假如传入的是一个函数，则相当于传入了`config.enter`, 如果指定的state已经存在，原设置会被覆盖 }|
+|config(optional)|Function Object|{ if config is not specified, target state will be return; if config is A `Function`,  it will be considered as the [enter](#enter) method; if the state is already exsits, the previous config will be override% 如果config没有指定，将会返回指定的state, 假如传入的是一个函数，则相当于传入了`config.enter`, 如果指定的state已经存在，原设置会被覆盖 }|
 
  __Return__ : 
 
@@ -173,7 +172,7 @@ stateman.state({
 
 As you see, we haven't created the `demo` state before creating `demo.detail`, beacuse stateman have created it for you. 
 
-if config is not passing, `state.state(stateName)` will return the target state.
+if config is not passed into state, `state.state(stateName)` will return the target state.
 %
 诚如你所见，我们并不需要在定义`demo.detail`之前定义`demo`, stateman会帮你创建中间state
 
@@ -209,21 +208,16 @@ Everything you defined in `config` will merged to the target state which the sta
 
 #### config.url: 
 
-`url`属性用来配置 __当前状态__ (非全路径)的url片段
+`url` {is used to describe the state's captured url % 属性用来配置state(非全路径)的url片段}
 
-{default url is the lastName: like `detail` in `contact.detail` % 默认的url是逗号分割的最后一个词, 如`contact.detail`的`detail`} 
-
-```js
-  	 //=> /contact/:id
-stateman.state('contact.detail', {url: ':id'}) 
-		
-```
 
 {
-The captured url of a particular state is the combination of the all states in the path to this state. like  For Example: 
+When using url routing together with nested states the default behavior is for child states to append their url to the urls of each of its parent states. for example. The routing url of `app.contact.detail` is the combination of  `app`,`app.contact` 和`app.contact.detail`
 %
 每个state对应的捕获url是所有在到此状态路径上的state的结合. 比如`app.contact.detail` 是 `app`,`app.contact` 和`app.contact.detail`的路径结合
 }
+
+
 
 __Example__
 
@@ -244,7 +238,7 @@ The captured url of `app.contact.detail` is equals to `/app/users/:id`. YES, obv
 missing `/` or redundancy of `/` is all valid.
 
 {
-__absolute url__: 
+__Absolute url__: 
 
 if you dont need the url that defined in parents, use a prefix `^` to make it absolute . __all children of the state will also be affect
 %
@@ -359,9 +353,11 @@ other options that passed into [__stateman.go__](#go) or [__stateman.nav__](#nav
 __Example__
 
 <!-- t -->
+
 captured url `/contact/:id` will  match the path `/contact/1`, and find the param `{id:1}`
 
 In fact, all named param have a default pattern `[-\$\w]+`. but you can change it use custom pattern.
+
 <!-- s -->
 
 捕获url`/contact/:id`可以匹配路径`/contact/1`, 并得到param`{id:1}`
@@ -370,7 +366,7 @@ In fact, all named param have a default pattern `[-\$\w]+`. but you can change i
 
 <!-- /t -->
 
-####2. {named param with pattern % 命名参数并指定的规则}
+####2. {named param with custom pattern % 命名参数并指定的规则}
 
 {
 named param follow with `(regexp)` can restrict the pattern for current param (don't use sub capture it regexp). for example.
@@ -387,6 +383,7 @@ now , only the number is valid to match the id param of  `/contact/:id(\\d+)`
 {
 you can also define a plain pattern for route matching.
 %
+
 你可以只捕获不命名
 }
 
@@ -454,6 +451,34 @@ stateman.start({
 })
 
 ```
+
+__Warning__
+
+{
+If you open set `html5=true`, but browser doesn't support this feature. stateman will fallback to hash-based routing.
+%
+如果你在不支持html5 pushState的浏览器开启了`html=true`, stateman会自动降级到hash的路由.
+}
+
+{
+Just like the code above, 
+
+1. If you visited `/blog/app`  in the browser that don't support html5. stateman will automately switch to hash-based routing and redirect to `/blog#/app` for you.
+
+2. If you visted `/blog#/app` in the browser that __support__ html5. stateman will also use the history-based routing, and fix the url to `/blog/app`__ for you.
+
+%
+就如同上例的配置.
+
+1. 如果我们在不支持html5(pushState相关)的浏览器访问`/blog/app`, stateman会降级到hash的路由，并自动定向到`/blog#/app`的初始状态.
+
+2. 如果我们在__支持html5__的浏览器范围__`/blog#/app`__, stateman同样会使用history的路由路径，并自动返回到 `/blog/app`的初始状态.
+}
+
+
+
+
+
 	
 <a name="nav"></a>
 ### stateman.nav
@@ -491,6 +516,7 @@ __control option__
 
 * option.silent: 如果传入silent, 则只有url路径会发生改变，但是不触发stateman内部的状态改变, 即不会有enter, leave或updatec触发
 * option.replace: 如果replace === true, 之前历史的记录会被当前替换，即你无法通过浏览器的后退，回到原状态了
+
 }
 
 
@@ -499,11 +525,13 @@ __Example__
   * ` stateman.nav("/app/contact/1?name=leeluolee", {data: 1});
   `
 
-{
+<!-- t -->
 the final option passed to `enter`, `leave` and `update` is `{param: {id: "1", name:"leeluolee"}, data: 1}`.
-%
+<!-- s -->
+
 最终传入到enter, leave与update的option参数会是`{param: {id: "1", name:"leeluolee"}, data: 1}`.
-}
+
+<!-- /t -->
 
 
 
@@ -513,7 +541,7 @@ the final option passed to `enter`, `leave` and `update` is `{param: {id: "1", n
 ### stateman.go
 
 {
-nav to particular state, very similar with [stateman.nav](#nav). but `stateman.go` use stateName instead of url to navigating. 
+nav to particular state, very similar with [stateman.nav](#nav). but `stateman.go` use stateName instead of url.
 %
 跳转到特定状态, 与 stateman.nav 非常相似，但是stateman.go 使用状态来代替url路径进行跳转
 }
@@ -521,24 +549,27 @@ nav to particular state, very similar with [stateman.nav](#nav). but `stateman.g
 
 __Usage__
 
-`stateman.__go__(stateName [, option][, callback])`;
+`stateman.go(stateName [, option][, callback])`;
 
 
 __Arguments__
 
 - stateName: the name of target state.
 
-- option.encode: default is true. if encode is false, url will not change at  location, only state is change (means will trigger the stateman's navigating process). stateman use the [__encode__](#encode) method to compute the real url.
-- option.param: the big different between __nav__ and __go__ is __go__ method  may need a param to compute the real url, and place it in location.
-you can use stateman.encode to test how stateman compute url from a state with specifed param
-- option.replace: the same as [stateman.nav](#nav)
+- option
+
+  - option.encode: default is true. if encode is false, url will not change at  location, only state is change (means will trigger the stateman's navigating process). stateman use the [__encode__](#encode) method to compute the real url.
+  - option.param: the big different between __nav__ and __go__ is: 
+
+     __go__ may need param to compute the real url, and place it in location.
+
+  you can use stateman.encode to test how stateman compute url from a state with specifed param
+
+  - option.replace: the same as [stateman.nav](#nav)
 
 - calback: if passed, it will be called if navigating is over.
 
-All other property in option will passed to `enter`, `leave` , `update`. just like nav.
-
-__we always recommend that use go instead of nav in large project to control the state more clearly __.
-
+All other property in option will passed to `enter`, `leave` , `update`. 
 
 __example__
 
@@ -546,10 +577,18 @@ __example__
 stateman.go('app.contact.detail', {param: {id:1, name: 'leeluolee'}});
 ```
 
-location.hash will change to `#/app/contact/1?name=leeluolee` , you can find that uncaputed param (name) will be append to url as the querystring.
+location.hash will change to `#/app/contact/1?name=leeluolee` , you can find that unnamed param (name) will be append to url as the querystring.
 
 
-__relative navigation__: you can pass special symbol to perform relative navigate.
+__Tips__: 
+
+we always recommend to using __go__ instead of __nav__ in large project to control the state more clearly.
+
+
+
+__relative navigation__: 
+
+you can use special symbol to perform relative navigating.
 
 1. "~":  represent the active state;
 2. "^":  represent the parent of active state ;
@@ -578,14 +617,14 @@ __Usage__
 
 `stateman.is( stateName[, param] [, isStrict] )`
 
-determine if the active state is equal to or is the child of the state. If any params are passed then they will be tested for a match as well. not all the parameters need to be passed, just the ones you'd like to test for equality.
+determine if the [current](#current) state is equal to or is the child of the state. If any params are passed then they will be tested for a match as well. not all the parameters need to be passed, just the ones you'd like to test for equality.
 
 
 __Arguments__
 
 - stateName: test state's name
 - param: the param need to be tested
-- isStrict: if the target state need strict equals to active state.
+- isStrict: if the target state need strict equals to current state.
 
 
 __example__
@@ -601,7 +640,7 @@ stateman.is("app.contact.detail", {id: "2", name: "leeluolee"}) // return false
 ```
 
 <a name="encode"></a>
-### 
+### stateman.encode
 
 get a url from state and specified param.
 
@@ -650,7 +689,140 @@ __Usage__
 
 stop the stateman.
 
-## Properties
+
+
+<a name="on"></a>
+
+### stateman.on
+
+bind handle to specified event.
+
+__Usage__
+
+`stateman.on(event, handle)`
+
+
+{
+StateMan have simple EventEmitter implementation for event driven development, The Following Class have the Emitter Mixin .
+%
+StateMan内置了一个小型Emitter 来帮助实现事件驱动的开发，以下Class都已经混入了Emitter的api.
+}
+
+
+
+1. __StateMan__: The State Manager.
+2. __StateMan.State__: Every state in state mannager is StateMan.State's instance
+2. StateMan.Histery : for cross-platform 's location manipulation, generally speaking, you will nerver to use it.
+
+{
+All Class that list above have same API below, take stateman for example:
+%
+一般来讲你只需要关心stateman的部分
+}
+
+
+<a name="off"></a>
+### stateman.off
+{
+unbind handle 
+%
+解绑一个监听器
+}
+
+__Usage__
+
+`stateman.off(event, handle)`
+
+
+<a name="emit"></a>
+### stateman.emit
+
+{
+trigger a specified event with specified param
+%
+触发一个事件，你可以传入对应的参数
+}
+
+
+__Usage__
+
+`stateman.emit(event, param)`
+
+
+## {Builtin Event % 内置事件}
+
+### begin
+
+{
+Emitted when a navigating is start. every listener got a special param : `evt`.
+%
+每当跳转开始时触发， 回调会获得一个特殊的参数`evt`用来控制跳转.
+}
+
+
+__evt__
+
+|Property|Type|Detail|
+|--|--|--|
+|evt.stop | Function|{ function used to stop the navigating % 是否阻止这次事件}|
+|evt.previous| State|{ previous state % 跳转时的状态}|
+|evt.current| State|{ target state % 要跳转到的状态}|
+|evt.param| Object|{ captured param % 捕获到的参数}|
+
+Because the navigating isn't really start, property like `previous`, `current` and `param` haven't been assigned to stateman.
+
+__Tips__
+{
+you can register a begin listener to stop particular navigating. 
+%
+你可以通过注册begin事件来阻止某次跳转
+}
+
+```js
+stateman.on("begin", function(evt){
+  if(evt.current.name === 'app.contact.message' && evt.previous.name.indexOf("app.user") === 0){
+    evt.stop();
+    alert(" nav from 'app.user.*' to 'app.contact.message' is stoped");
+  }
+})
+
+```
+
+{
+
+Paste code above to page [http://leeluolee.github.io/stateman/api.html#/app/user](http://leeluolee.github.io/stateman/api.html#/app/user), and click `app.contact.message` to see the log.
+%
+将上述代码复制到[http://leeluolee.github.io/stateman/api.html#/app/user](http://leeluolee.github.io/stateman/api.html#/app/user).并点击 `app.contact.message`. 你会发现跳转被终止了.
+}
+
+
+### end
+
+Emitted when a navigating is end. 
+
+
+### notfound: 
+
+Emitted when target state is not founded.
+
+__Tips__
+{
+you can register a notfound listener to redirect the page to default state
+%
+你可以监听notfound事件，来将页面导向默认状态
+}
+
+__Example__
+
+```js
+
+stateman.on("notfound", function(){
+  this.go("app.contact");
+})
+```
+
+
+## {Properties % 关键属性}
 
 Some living properties.
 
@@ -663,7 +835,7 @@ The target state.
 ### __stateman.previous__: 
 
 The previous state.
-	
+  
 <a name="active"></a>
 ### __stateman.active__: 
 
@@ -719,100 +891,7 @@ stateman.nav("app.detail", {})
 
 
 
-## Emitter
 
-StateMan have simple EventEmitter implementation for event driven development, The Following Class have the Emitter Mixin .
-
-
-
-1. __StateMan__: The State Manager.
-2. __StateMan.State__: Every state in state mannager is StateMan.State's instance
-2. StateMan.Histery : for cross-platform 's location manipulation, generally speaking, you will nerver to use it.
-
-all Class that list above have same API below
-
-
-<a name="on"></a>
-
-### 1. emitter.on(event, handle)
-bind handle to specified event.
-
-<a name="off"></a>
-### 2. emitter.off(event, handle)
-unbind handle 
-
-<a name="emit"></a>
-### 3. emitter.emit(event, param)
-
-trigger a specified event with specified param
-
-
-## Builtin Event
-
-### begin
-
-{
-Emitted when a navigating is start. every listener got a special param : `evt`.
-%
-每当跳转开始时触发， 回调会获得一个特殊的参数`evt`用来控制跳转.
-}
-
-
-__evt__
-
-|Property|Type|Detail|
-|--|--|--|
-|evt.stop | Function|{ function used to stop the navigating % 是否阻止这次事件}|
-|evt.previous| State|{ previous state % 跳转时的状态}|
-|evt.current| State|{ target state % 要跳转到的状态}|
-|evt.param| Object|{ captured param % 捕获到的参数}|
-
-Because the navigating isn't really start, property like `previous`, `current` and `param` haven't been assigned to stateman.
-
-__Tips__
-{
-you can register a begin listener to stop particular navigating. 
-%
-你可以通过注册begin事件来阻止某次跳转
-}
-
-```js
-stateman.on("begin", function(evt){
-  if(evt.current.name === 'app.contact.message' && evt.previous.name.indexOf("app.user") === 0){
-    evt.stop();
-    alert(" nav from 'app.user.*' to 'app.contact.message' is stoped");
-  }
-})
-
-```
-
-Paste code above to page [http://leeluolee.github.io/stateman/api.html#/app/user](http://leeluolee.github.io/stateman/api.html#/app/user), and click `app.contact.message` to see the log.
-
-
-### end
-
-Emitted when a navigating is end. 
-
-
-### notfound: 
-
-Emitted when target state is not founded.
-
-__Tips__
-{
-you can register a notfound listener to redirect the page to default state
-%
-你可以监听notfound事件，来将页面导向默认状态
-}
-
-__Example__
-
-```js
-
-stateman.on("notfound", function(){
-  this.go("app.contact");
-})
-```
 
 
 
@@ -867,7 +946,7 @@ it is very useful if you have some asynchronous logic(xhr, animation...etc) to o
 
 
 
-### other properties
+### other state's properties
 
 
 1. state.name: the state's stateName
@@ -877,11 +956,5 @@ it is very useful if you have some asynchronous logic(xhr, animation...etc) to o
 
 
 
+## QA
 
-
-
-### Deep Guide
-
-* [Class: State](#State1)
-* [asynchronous navigation](#async)
-* [__params in routing__](#param)

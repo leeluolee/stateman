@@ -29,7 +29,7 @@ But stateman is a __standalone library__ with extremely tiny codebase(10kb minif
 
 ## Quirk Start
 
-you may need a static server to run the demo. [puer](https://github.com/leeluolee/puer) is simple to get start.
+You may need a static server to run the demo. [puer](https://github.com/leeluolee/puer) is simple to get start.
 
 just pasting the code to your own `index.html`, then you can find the demo works. 
 
@@ -89,12 +89,24 @@ just pasting the code to your own `index.html`, then you can find the demo works
 open the console,  see the log when navigating.
 
 
-you can also check a simple layout demo that open the html5 support [here](http://leeluolee.github.io/stateman/layout.html)
 
 ## Reference
 
-- [English](https://github.com/leeluolee/stateman/tree/master/docs/API.md)
-- [中文](https://github.com/leeluolee/stateman/tree/master/docs/API-zh.md)
+- [English](http://leeluolee.github.io/stateman/)
+- [中文](http://leeluolee.github.io/stateman/?API-zh)
+
+
+## Demos
+
+###1.  [Simple Layout Demo:](http://leeluolee.github.io/stateman/layout.html) 
+
+Code of this Demo is dirty, In production development,  you need a view layer to create nested view.
+
+###2. An Simple SPA built upon [Regularjs(Living Template)](https://github.com/regularjs/regular) + requirejs + stateman: [Link](http://regularjs.github.io/regular-state/requirejs/index-min.html)
+
+I create a simple wraping([regular-state](https://github.com/regularjs/regular-state)) to integrate stateman with Regularjs, make it easily to build a single Page Application.  thanks for the concise API, [the code](https://github.com/regularjs/regular-state/blob/master/example/requirejs/index.js#L83) is very clean, integrating stateman with other libraries are also simple.
+
+
 
 
 
