@@ -212,7 +212,7 @@ Everything you defined in `config` will merged to the target state which the sta
 
 
 {
-When using url routing together with nested states the default behavior is for child states to append their url to the urls of each of its parent states. for example. The routing url of `app.contact.detail` is the combination of  `app`,`app.contact` 和`app.contact.detail`
+When using url routing together with nested states the default behavior is for child states to append their url to the urls of each of its parent states. for example. The routing url of `app.contact.detail` is the combination of  `app`,`app.contact` and `app.contact.detail`
 %
 每个state对应的捕获url是所有在到此状态路径上的state的结合. 比如`app.contact.detail` 是 `app`,`app.contact` 和`app.contact.detail`的路径结合
 }
@@ -240,7 +240,7 @@ missing `/` or redundancy of `/` is all valid.
 {
 __Absolute url__: 
 
-if you dont need the url that defined in parents, use a prefix `^` to make it absolute . __all children of the state will also be affect
+if you dont need the url that defined in parents, use a prefix `^` to make it absolute . __all children__ of the state will also be affect
 %
 
 __ 绝对路径__
@@ -314,9 +314,9 @@ The current state is `app.contact.detail.setting`, when navigating to `app.conta
 {
 you can test it in [api.html](http://leeluolee.github.io/stateman/api.html);
 
-There is no difficult to understand `enter` and `leave`, But What is update used for?  
+There is no difficult to understand `enter` and `leave`, But what is the update used for?  
 
-See state named `app.contact.detail.setting` that we defined in the 【[first example](http://leeluolee.github.io/stateman/api.html#/app/contact/3/setting)】. if we nav from `/app/contact/3/setting` to `/app/contact/2/setting`, the current state doesn't not change, only the param `id` changed. so stateman call the `state.update` method to notify state to process updating work. All states that  included in current state will update.
+See `app.contact.detail.setting` that we defined in the 【[first example](http://leeluolee.github.io/stateman/api.html#/app/contact/3/setting)】. if we nav from `/app/contact/3/setting` to `/app/contact/2/setting`, the current state doesn't not change, only the param `id` changed. so stateman call the `state.update` method to notify state to process updating work. All states that  included in current state will update.
 
 %
 你可以直接在这里页面来查看完整过程： [api.html](http://leeluolee.github.io/stateman/api.html);
@@ -841,7 +841,7 @@ The previous state.
 
 The active state, represent the state that still in pending.
 
-Imagine that you are navigating from __'app.contact.detail'__ to  __'app.user'__, __current__ will be pointing to `app.user` and __previous__ will be pointing to 'app.contact.detail'. But the active state is dynamic, it is changed from `app.contact.detail` to `app.user`. 
+Imagine that you are navigating from __'app.contact.detail'__ to  __'app.user'__, __current__ will point to `app.user` and __previous__ will point to 'app.contact.detail'. But the active state is dynamic, it is changed from `app.contact.detail` to `app.user`. 
 
 __example__
 
@@ -876,6 +876,7 @@ stateman.state({
 Open the 【[DEMO](http://leeluolee.github.io/stateman/active.html) 】, and check the console.log.
 
 <a name="param1"></a>
+
 4. __stateman.param__:
 
 The current param captured from url or passed from the method __stateman.go__.

@@ -730,7 +730,7 @@ The previous state.
 
 The active state, represent the state that still in pending.
 
-Imagine that you are navigating from __'app.contact.detail'__ to  __'app.user'__, __current__ will be pointing to `app.user` and __previous__ will be pointing to 'app.contact.detail'. But the active state is dynamic, it is changed from `app.contact.detail` to `app.user`. 
+Imagine that you are navigating from __'app.contact.detail'__ to  __'app.user'__, __current__ will point to `app.user` and __previous__ will point to 'app.contact.detail'. But the active state is dynamic, it is changed from `app.contact.detail` to `app.user`. 
 
 __example__
 
@@ -765,6 +765,7 @@ stateman.state({
 Open the 【[DEMO](http://leeluolee.github.io/stateman/active.html) 】, and check the console.log.
 
 <a name="param1"></a>
+
 4. __stateman.param__:
 
 The current param captured from url or passed from the method __stateman.go__.
