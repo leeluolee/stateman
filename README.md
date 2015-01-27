@@ -1,6 +1,8 @@
 StateMan
 =======
 
+[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/leeluolee/stateman?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 
 [![Build Status](http://img.shields.io/travis/regularjs/regular/master.svg?style=flat-square)](http://travis-ci.org/regularjs/regular)
 [![spm package](http://spmjs.io/badge/stateman)](http://spmjs.io/package/stateman)
