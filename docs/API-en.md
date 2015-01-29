@@ -459,43 +459,60 @@ __Usage__
 
 __Arguments__
 
-- stateName: the name of target state.
+- stateName [String]: the name of target state. 
 
-- option
+- option [Object] : 控制参数
 
-  - option.encode: default is true. if encode is false, url will not change at  location, only state is change (means will trigger the stateman's navigating process). stateman use the [__encode__](#encode) method to compute the real url.
-  - option.param: the big different between __nav__ and __go__ is: 
+  - option.encode: 
 
-     __go__ may need param to compute the real url, and place it in location.
+  default is true. if encode is false, url will not change at  location, only state is change (means will trigger the stateman's navigating process). stateman use the [__encode__](#encode) method to compute the real url. 
+
+  - option.param: 
+
+    the big different between __nav__ and __go__ is param: 
+
+     __go__ may need param to compute the real url, and place it in location. 
 
   you can use stateman.encode to test how stateman compute url from a state with specifed param
 
-  - option.replace: the same as [stateman.nav](#nav)
+  - option.replace: the same as  [stateman.nav](#nav)
 
-- calback: if passed, it will be called if navigating is over.
+- calback [Function]: if passed, it will be called if navigating is over.
+
 
 All other property in option will passed to `enter`, `leave` , `update`. 
 
-__example__
+
+
+__Example__
 
 ```
 stateman.go('app.contact.detail', {param: {id:1, name: 'leeluolee'}});
 ```
 
+
+
 location.hash will change to `#/app/contact/1?name=leeluolee` , you can find that unnamed param (name) will be append to url as the querystring.
 
 
+
 __Tips__: 
+
 
 we always recommend to using __go__ instead of __nav__ in large project to control the state more clearly.
 
 
 
-__relative navigation__: 
+
+
+__relative navigation__ : 
+
 
 you can use special symbol to perform relative navigating.
 
-1. "~":  represent the active state;
+
+
+1. "~":  represent the active state 
 2. "^":  represent the parent of active state ;
 
 __example__
@@ -522,14 +539,19 @@ __Usage__
 
 `stateman.is( stateName[, param] [, isStrict] )`
 
+
+
 determine if the [current](#current) state is equal to or is the child of the state. If any params are passed then they will be tested for a match as well. not all the parameters need to be passed, just the ones you'd like to test for equality.
 
 
 __Arguments__
 
-- stateName: test state's name
-- param: the param need to be tested
-- isStrict: if the target state need strict equals to current state.
+|Param|Type|Detail|
+|--|--|--|
+|stateName |String|stateName to be tested  |
+|param(optional)|Object|param used to be tested |
+|isStrict(optional)|Boolean| Whether the target state need strict equals to current state.|
+
 
 
 __example__
@@ -547,9 +569,15 @@ stateman.is("app.contact.detail", {id: "2", name: "leeluolee"}) // return false
 <a name="encode"></a>
 ### stateman.encode
 
-get a url from state and specified param.
+
+Get the particular url from state and specified param.
 
 method  [__go__](#go) is based on this method.
+
+
+
+
+
 
 __Usage__
 
@@ -558,21 +586,33 @@ __Usage__
 
 __Arguments__
 
+
+|Param|Type|Detail|
+|--|--|--|
+|stateName |String|stateName  |
+|param(optional)|Object|param used to rebuild url |
+
+
 ```js
-stateman.encode("app.contact.detail", {id: "1", name: "leeluolee"}) === "/app/contact/1?name=leeluolee"
+stateman.encode("app.contact.detail", {id: "1", name: "leeluolee"}) 
+// === "/app/contact/1?name=leeluolee"
 
 ```
 
 <a name="decode"></a>
 ### stateman.decode
 
+
+
+Find the state that be matched by url, the state will be returned with the computed param..
+
+method [__nav__](#nav) is based on this method
+
+
 __Usage__
 
 `stateman.decode( url )`
 
-find the state that be matched by the particluar url, will also return the param captured from url.
-
-method [__nav__](#nav) is based on this method
 
 __Example__
 

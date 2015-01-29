@@ -1,6 +1,6 @@
 /**
 @author	leeluolee
-@version	0.1.6
+@version	0.1.7
 @homepage	https://github.com/leeluolee/stateman
 */
 (function webpackUniversalModuleDefinition(root, factory) {

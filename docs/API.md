@@ -554,44 +554,71 @@ __Usage__
 
 __Arguments__
 
-- stateName: the name of target state.
+- stateName [String]: {the name of target state. % 目标状态}
 
-- option
+- option [Object] : 控制参数
 
-  - option.encode: default is true. if encode is false, url will not change at  location, only state is change (means will trigger the stateman's navigating process). stateman use the [__encode__](#encode) method to compute the real url.
-  - option.param: the big different between __nav__ and __go__ is: 
+  - option.encode: 
 
-     __go__ may need param to compute the real url, and place it in location.
+  {default is true. if encode is false, url will not change at  location, only state is change (means will trigger the stateman's navigating process). stateman use the [__encode__](#encode) method to compute the real url. % 默认是true, 如果encode是false. 则地址栏的url将不会发生变化，仅仅只是触发了内部状态的跳转. 当encode为true时， stateman会使用[encode](#encode) 函数去反推出真实的url路径显示在location中.
+  }
+
+  - option.param: 
+
+    {the big different between __nav__ and __go__ is param: % nav与go的最大区别就在于param参数 }
+
+     {__go__ may need param to compute the real url, and place it in location. % 如果你的路径中带有参数，则需要传入param来帮助encode函数推算出url路径}
 
   you can use stateman.encode to test how stateman compute url from a state with specifed param
 
-  - option.replace: the same as [stateman.nav](#nav)
+  - option.replace: {the same as  % 见}[stateman.nav](#nav)
 
-- calback: if passed, it will be called if navigating is over.
+- calback [Function]: {if passed, it will be called if navigating is over.%同nav}
 
+{
 All other property in option will passed to `enter`, `leave` , `update`. 
+%
+所有其它的option属性将会与param一起传入 `enter`, `leave` , `update`中.
+}
 
-__example__
+
+__Example__
 
 ```
 stateman.go('app.contact.detail', {param: {id:1, name: 'leeluolee'}});
 ```
 
+{
+
 location.hash will change to `#/app/contact/1?name=leeluolee` , you can find that unnamed param (name) will be append to url as the querystring.
+%
+地址会跳转到`#/app/contact/1?name=leeluolee`, 你可以发现未命名参数会直接拼接在url后方作为queryString 存在.
+}
 
 
 __Tips__: 
 
+{
 we always recommend to using __go__ instead of __nav__ in large project to control the state more clearly.
+%
+作者始终推荐在大型项目中使用go代替nav来进行跳转， 来获得更灵活安全的状态控制.
+
+}
 
 
 
-__relative navigation__: 
 
+{__relative navigation__ % __相对跳转__}: 
+
+{
 you can use special symbol to perform relative navigating.
+%
+stateman预定义了一些符号帮助你进行相对路径的跳转
+}
 
-1. "~":  represent the active state;
-2. "^":  represent the parent of active state ;
+
+1. "~":  {represent the active state % 代表当前所处的active状态}
+2. "^":  {represent the parent of active state %代表active状态的父状态};
 
 __example__
 
@@ -617,14 +644,22 @@ __Usage__
 
 `stateman.is( stateName[, param] [, isStrict] )`
 
-determine if the [current](#current) state is equal to or is the child of the state. If any params are passed then they will be tested for a match as well. not all the parameters need to be passed, just the ones you'd like to test for equality.
+{
 
+determine if the [current](#current) state is equal to or is the child of the state. If any params are passed then they will be tested for a match as well. not all the parameters need to be passed, just the ones you'd like to test for equality.
+%
+判断当前状态是否满足传入的stateName. 如果有param 参数传入，则除了状态，param也必须匹配. 你不必传入所有的参数， is 只会判断你传入的参数是否匹配.
+
+}
 
 __Arguments__
 
-- stateName: test state's name
-- param: the param need to be tested
-- isStrict: if the target state need strict equals to current state.
+|Param|Type|Detail|
+|--|--|--|
+|stateName |String|{stateName to be tested % 用测试的stateName} |
+|param(optional)|Object|{param used to be tested % 用于测试的参数对象}|
+|isStrict(optional)|Boolean|{ Whether the target state need strict equals to current state.% 传入状态是否要严格匹配当前状态}|
+
 
 
 __example__
@@ -642,9 +677,19 @@ stateman.is("app.contact.detail", {id: "2", name: "leeluolee"}) // return false
 <a name="encode"></a>
 ### stateman.encode
 
-get a url from state and specified param.
+{
+Get the particular url from state and specified param.
 
 method  [__go__](#go) is based on this method.
+
+%
+根据状态名和参数获得指定url.
+
+go函数即基于此方法
+}
+
+
+
 
 __Usage__
 
@@ -653,21 +698,37 @@ __Usage__
 
 __Arguments__
 
+
+|Param|Type|Detail|
+|--|--|--|
+|stateName |String|{stateName % stateName} |
+|param(optional)|Object|{param used to rebuild url % 用于组装url的参数对象}|
+
+
 ```js
-stateman.encode("app.contact.detail", {id: "1", name: "leeluolee"}) === "/app/contact/1?name=leeluolee"
+stateman.encode("app.contact.detail", {id: "1", name: "leeluolee"}) 
+// === "/app/contact/1?name=leeluolee"
 
 ```
 
 <a name="decode"></a>
 ### stateman.decode
 
+{
+
+Find the state that be matched by url, the state will be returned with the computed param..
+
+method [__nav__](#nav) is based on this method
+%
+解码传入的url, 获得匹配的状态，状态同时会带上计算出的参数对象
+
+方法[__nav__](#nav) 就是基于此方法实现
+}
+
 __Usage__
 
 `stateman.decode( url )`
 
-find the state that be matched by the particluar url, will also return the param captured from url.
-
-method [__nav__](#nav) is based on this method
 
 __Example__
 
@@ -695,7 +756,7 @@ stop the stateman.
 
 ### stateman.on
 
-bind handle to specified event.
+{bind handle to specified event.% 为指定函数名添加监听器}
 
 __Usage__
 
