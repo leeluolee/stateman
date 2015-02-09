@@ -396,6 +396,7 @@
 	var StateMan = __webpack_require__(8);
 	var expect = __webpack_require__(9)
 	var _ = __webpack_require__(5);
+	var doc = typeof document !== "undefined"? document: {};
 
 
 	// Backbone.js Trick for mock the location service
@@ -490,11 +491,24 @@
 	      location: location
 	    });
 
+	  after(function(){
+	    stateman.stop();
+	  })
 	  it("we can directly vist the leave1 leaf state", function(){
 
-	    stateman.nav("/l0_not_next")
-	    expect(obj.l0).to.equal(true)
+	    stateman.nav("/l0_not_next");
+	    expect(obj.l0).to.equal(true);
 
+	  })
+
+	  it("in strict mode, we can not touched the non-leaf state",function(){
+	    var location = loc("http://leeluolee.github.io/homepage");
+	    var stateman = new StateMan( {strict: true} );
+	    stateman.start({location: location});
+
+	    stateman.state("app.state", {})
+	    stateman.go("app");
+	    expect(stateman.current.name).to.not.equal("app");
 	  })
 
 	  it("we can directly vist the branch state, but have low poririty than leaf", function(){
@@ -652,6 +666,9 @@
 	      location: location
 	    })
 
+	  after(function(){
+	    stateman.stop();
+	  })
 	  it("we can use transition in enter and leave", function(done){
 
 	    stateman.nav("/book/1" , {},function(){
@@ -690,6 +707,9 @@
 	  var stateman2 = new StateMan();
 
 	  stateman2.start({location: loc2})
+	  after(function(){
+	    stateman.stop();
+	  })
 
 	  it("enter return false can stop a navigation", function(){
 	    stateman2.state("contact", {
@@ -757,6 +777,9 @@
 	  var stateman = new StateMan();
 
 	  stateman.start({location: location})
+	  after(function(){
+	    stateman.stop();
+	  })
 
 
 	  it("we can redirect at branch state, if it is not async", function(){
@@ -808,29 +831,29 @@
 	    var stateman = new StateMan();
 
 	    stateman.start({location: location})
+	    done();
 
-	    // beacuse the last state dont need async will dont need to async forever
-	    stateman.state("branch2", function(){
-	      var over = this.async()
-	      setTimeout(function(){
-	        over();
-	        stateman.go("branch3.leaf", null, function(){
-	          expect(this.current.name).to.equal("branch3.leaf");
-	          expect(obj.branch2_leaf).to.equal(true)
-	          expect(obj.branch3_leaf).to.equal(true)
-	          done()
-	        })
-	        over();
-	      },100)
-	    })
-	    .state("branch2.leaf", function(){
-	      obj.branch2_leaf = true
-	    })
-	    .state("branch3.leaf", function(){
-	      obj.branch3_leaf = true;
-	    })
+	    // // beacuse the last state dont need async will dont need to async forever
+	    // stateman.state("branch2", function(){
+	    //   var over = this.async()
+	    //   setTimeout(function(){
+	    //     over();
+	    //     stateman.go("branch3.leaf", null, function(){
+	    //       expect(this.current.name).to.equal("branch3.leaf");
+	    //       expect(obj.branch2_leaf).to.equal(true)
+	    //       expect(obj.branch3_leaf).to.equal(true)
+	    //       done()
+	    //     })
+	    //   },100)
+	    // })
+	    // .state("branch2.leaf", function(){
+	    //   obj.branch2_leaf = true
+	    // })
+	    // .state("branch3.leaf", function(){
+	    //   obj.branch3_leaf = true;
+	    // })
 
-	    stateman.nav("/branch2/leaf")
+	    // stateman.nav("/branch2/leaf")
 
 	  })
 
@@ -854,6 +877,9 @@
 	      }
 	    })
 
+	  after(function(){
+	    stateman.stop();
+	  })
 
 
 	  it("visited flag will add if the state is entered", function(){
@@ -955,6 +981,11 @@
 	    .start({location: location})
 
 
+	  after(function(){
+	    stateman.stop();
+	  })
+
+
 	  it("redirect at root, should stop navigating and redirect to new current", function(){
 	    var index =0, blog=0;
 	    stateman.state("app.index", {
@@ -1008,8 +1039,63 @@
 	      expect(stateman.active.name === "app1.blog").to.equal(true);
 	    })
 	  })
+
+	  it("option passed to nav, should also passed in enter, update and leave", function(done){
+	    var data = {id:1}, num =0;
+	    stateman.state("app2.index", {
+	      url: "index/:id",
+	      enter: function(option){
+	        expect(option.data).to.equal(data);
+	        expect(option.data).to.equal(data);
+	        expect(option.param.id).to.equal("2");
+	        done();
+	      }
+	    })
+	    stateman.nav("/app2/index/2", {data: data})
+
+	  })
+
+	  it("stateman.back should return the previous state", function(){
+
+	  })
+
+
+	})
+
+	describe("Config", function(){
+	  var location = loc("http://leeluolee.github.io/");
+	  var obj = {}; 
+	  var stateman = new StateMan();
+	  stateman.start({location: location})
+
+	  after(function(){
+	    stateman.stop();
+	  })
+
+	  it("title should accept String", function(){
+	    var baseTitle = doc.title;
+	    stateman.state({
+	      "app.hello": {
+	        title: "hello app"
+	      },
+	      "app.exam": {
+	        url: "exam/:id",
+	        title: function(){
+	          return "hello " + this.name + " " + stateman.param.id;
+	        }
+	      },
+	      "app.third": {}
+	    })
+	    stateman.go("app.hello")
+	    expect(doc.title).to.equal("hello app")
+	    stateman.go("app.exam", {param: {id: 1}})
+	    expect(doc.title).to.equal("hello app.exam 1")
+	    stateman.nav("/app/third");
+	    expect(doc.title).to.equal(baseTitle);
+	  })
 	})
 	})
+
 
 /***/ },
 /* 4 */
@@ -1183,6 +1269,7 @@
 	  }
 	  return o1;
 	}
+
 
 
 	// Object.create shim
@@ -1597,6 +1684,7 @@
 	  Histery = __webpack_require__(7),
 	  brow = __webpack_require__(6),
 	  _ = __webpack_require__(5),
+	  baseTitle = document.title,
 	  stateFn = State.prototype.state;
 
 
@@ -1608,6 +1696,11 @@
 	  this._states = {};
 	  this._stashCallback = [];
 	  this.current = this.active = this;
+	  this.strict = options.strict;
+	  this.on("end", function(){
+	    var title = this.current && this.current.title;
+	    document.title = typeof title === "function"? this.current.title(): String(title || baseTitle ) ;
+	  })
 	}
 
 
@@ -1662,10 +1755,12 @@
 	        callback = options;
 	        options = {};
 	      }
-	      callback && (this._cb = callback)
+	      options = options || {};
+	      // callback && (this._cb = callback)
 
-	      this.history.nav( url, options);
-	      this._cb = null;
+	      this.history.nav( url, _.extend({silent: true}, options));
+	      if(!options.silent) this._afterPathChange( _.cleanPath(url) , options , callback)
+	      // this._cb = null;
 	      return this;
 	    },
 	    decode: function(path){
@@ -1690,27 +1785,34 @@
 	    },
 	    // after pathchange changed
 	    // @TODO: afterPathChange need based on decode
-	    _afterPathChange: function(path){
+	    _afterPathChange: function(path, options ,callback){
 
 	      this.emit("history:change", path);
 
 
-	      var found = this.decode(path), callback = this._cb;
+	      var found = this.decode(path);
 
 	      this.path = path;
 
+	      options = options || {};
+
 	      if(!found){
 	        // loc.nav("$default", {silent: true})
-	        var $notfound = this.state("$notfound");
-	        if($notfound) this._go($notfound, {path: path}, callback);
-
-	        return this.emit("notfound", {path: path});
+	        options.path = path;
+	        return this._notfound(options);
 	      }
 
+	      options.param = found.param;
 
-	      this._go( found, { param: found.param}, callback );
+
+	      this._go( found, options, callback );
 	    },
+	    _notfound: function(options){
+	      var $notfound = this.state("$notfound");
+	      if($notfound) this._go($notfound, options);
 
+	      return this.emit("notfound", options);
+	    },
 	    // goto the state with some option
 	    _go: function(state, option, callback){
 	      var over;
@@ -1719,6 +1821,7 @@
 
 
 	      if(!state) return _.log("destination is not defined")
+	      if(state.hasNext && this.strict) return this._notfound({name: state.name});
 
 	      // not touch the end in previous transtion
 
@@ -1744,7 +1847,7 @@
 	      var done = function(success){
 	        over = true;
 	        self.current = self.active;
-	        if( success !== false ) self.emit("end")
+	        if( success !== false ) self.emit("end");
 	        self._popStash();
 	      }
 	      
@@ -1807,6 +1910,8 @@
 	          if( found ) return found;
 	        }
 	      }
+	      // in strict mode only leaf can be touched
+	      // if all children is don. will try it self
 	      param = state.regexp && state.decode(path);
 	      if(param){
 	        state.param = param;
@@ -3209,8 +3314,8 @@
 	 */
 
 	var base64 = __webpack_require__(14)
-	var ieee754 = __webpack_require__(12)
-	var isArray = __webpack_require__(13)
+	var ieee754 = __webpack_require__(13)
+	var isArray = __webpack_require__(12)
 
 	exports.Buffer = Buffer
 	exports.SlowBuffer = Buffer
@@ -3552,7 +3657,7 @@
 	}
 
 	function utf16leWrite (buf, string, offset, length) {
-	  var charsWritten = blitBuffer(utf16leToBytes(string), buf, offset, length)
+	  var charsWritten = blitBuffer(utf16leToBytes(string), buf, offset, length, 2)
 	  return charsWritten
 	}
 
@@ -4236,7 +4341,8 @@
 	  return base64.toByteArray(str)
 	}
 
-	function blitBuffer (src, dst, offset, length) {
+	function blitBuffer (src, dst, offset, length, unitSize) {
+	  if (unitSize) length -= length % unitSize;
 	  for (var i = 0; i < length; i++) {
 	    if ((i + offset >= dst.length) || (i >= src.length))
 	      break
@@ -4273,6 +4379,45 @@
 
 /***/ },
 /* 12 */
+/***/ function(module, exports, __webpack_require__) {
+
+	
+	/**
+	 * isArray
+	 */
+
+	var isArray = Array.isArray;
+
+	/**
+	 * toString
+	 */
+
+	var str = Object.prototype.toString;
+
+	/**
+	 * Whether or not the given `val`
+	 * is an array.
+	 *
+	 * example:
+	 *
+	 *        isArray([]);
+	 *        // > true
+	 *        isArray(arguments);
+	 *        // > false
+	 *        isArray('');
+	 *        // > false
+	 *
+	 * @param {mixed} val
+	 * @return {bool}
+	 */
+
+	module.exports = isArray || function (val) {
+	  return !! val && '[object Array]' == str.call(val);
+	};
+
+
+/***/ },
+/* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
 	exports.read = function(buffer, offset, isLE, mLen, nBytes) {
@@ -4358,45 +4503,6 @@
 	  for (; eLen > 0; buffer[offset + i] = e & 0xff, i += d, e /= 256, eLen -= 8);
 
 	  buffer[offset + i - d] |= s * 128;
-	};
-
-
-/***/ },
-/* 13 */
-/***/ function(module, exports, __webpack_require__) {
-
-	
-	/**
-	 * isArray
-	 */
-
-	var isArray = Array.isArray;
-
-	/**
-	 * toString
-	 */
-
-	var str = Object.prototype.toString;
-
-	/**
-	 * Whether or not the given `val`
-	 * is an array.
-	 *
-	 * example:
-	 *
-	 *        isArray([]);
-	 *        // > true
-	 *        isArray(arguments);
-	 *        // > false
-	 *        isArray('');
-	 *        // > false
-	 *
-	 * @param {mixed} val
-	 * @return {bool}
-	 */
-
-	module.exports = isArray || function (val) {
-	  return !! val && '[object Array]' == str.call(val);
 	};
 
 

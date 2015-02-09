@@ -253,6 +253,8 @@ __空url__: 放弃当前这级的路径配置
 
 
 
+
+
 __Example__: 
 
 
@@ -283,8 +285,39 @@ __Example__:
 
 
 
+<a href="#" name="title"></a>
 
+#### config.title
 
+when navigating is end. the document.title will replaced by stateman.current.title ( if it has)
+
+__Argument__
+
+- config.title [String or Function]: if title is a Function, document.title will use its returnValue
+
+__Example__
+
+```
+stateman.state({
+  "app.test": {
+    title: "App test"
+  },
+  "app.exam": {
+    url: "exam/:id",
+    title: function(){
+      return "Exam " + stateman.param.id
+    }
+  }
+})
+
+stateman.go("app.test");
+
+// document.title === "App test"
+
+stateman.nav("/app/test/1");
+
+// document.title === "Exam 1"
+```
 
 
 <a name='param'></a>

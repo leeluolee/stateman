@@ -253,6 +253,8 @@ if you pass `url:""`, the captured_url will be the same as its parent.
 
 
 
+
+
 __Example__: 
 
 
@@ -284,8 +286,39 @@ See `app.contact.detail.setting` that we defined in the 【[first example](http:
 other options that passed into [__stateman.go__](#go) or [__stateman.nav__](#nav), will also be passed to `enter`, `leave`, `update`
 
 
+<a href="#" name="title"></a>
 
+#### config.title
 
+when navigating is end. the document.title will replaced by stateman.current.title ( if it has)
+
+__Argument__
+
+- config.title [String or Function]: if title is a Function, document.title will use its returnValue
+
+__Example__
+
+```
+stateman.state({
+  "app.test": {
+    title: "App test"
+  },
+  "app.exam": {
+    url: "exam/:id",
+    title: function(){
+      return "Exam " + stateman.param.id
+    }
+  }
+})
+
+stateman.go("app.test");
+
+// document.title === "App test"
+
+stateman.nav("/app/test/1");
+
+// document.title === "Exam 1"
+```
 
 
 <a name='param'></a>

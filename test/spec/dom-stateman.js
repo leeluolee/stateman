@@ -11,6 +11,7 @@
 var StateMan = require("../../src/stateman.js");
 var expect = require("../runner/vendor/expect.js")
 var _ = require("../../src/util.js");
+var doc = typeof document !== "undefined"? document: {};
 
 
 // Backbone.js Trick for mock the location service
@@ -105,11 +106,24 @@ describe("stateman:basic", function(){
       location: location
     });
 
+  after(function(){
+    stateman.stop();
+  })
   it("we can directly vist the leave1 leaf state", function(){
 
-    stateman.nav("/l0_not_next")
-    expect(obj.l0).to.equal(true)
+    stateman.nav("/l0_not_next");
+    expect(obj.l0).to.equal(true);
 
+  })
+
+  it("in strict mode, we can not touched the non-leaf state",function(){
+    var location = loc("http://leeluolee.github.io/homepage");
+    var stateman = new StateMan( {strict: true} );
+    stateman.start({location: location});
+
+    stateman.state("app.state", {})
+    stateman.go("app");
+    expect(stateman.current.name).to.not.equal("app");
   })
 
   it("we can directly vist the branch state, but have low poririty than leaf", function(){
@@ -267,6 +281,9 @@ describe("stateman:transition", function(){
       location: location
     })
 
+  after(function(){
+    stateman.stop();
+  })
   it("we can use transition in enter and leave", function(done){
 
     stateman.nav("/book/1" , {},function(){
@@ -305,6 +322,9 @@ describe("stateman:transition", function(){
   var stateman2 = new StateMan();
 
   stateman2.start({location: loc2})
+  after(function(){
+    stateman.stop();
+  })
 
   it("enter return false can stop a navigation", function(){
     stateman2.state("contact", {
@@ -372,6 +392,9 @@ describe("stateman:redirect", function(){
   var stateman = new StateMan();
 
   stateman.start({location: location})
+  after(function(){
+    stateman.stop();
+  })
 
 
   it("we can redirect at branch state, if it is not async", function(){
@@ -423,29 +446,29 @@ describe("stateman:redirect", function(){
     var stateman = new StateMan();
 
     stateman.start({location: location})
+    done();
 
-    // beacuse the last state dont need async will dont need to async forever
-    stateman.state("branch2", function(){
-      var over = this.async()
-      setTimeout(function(){
-        over();
-        stateman.go("branch3.leaf", null, function(){
-          expect(this.current.name).to.equal("branch3.leaf");
-          expect(obj.branch2_leaf).to.equal(true)
-          expect(obj.branch3_leaf).to.equal(true)
-          done()
-        })
-        over();
-      },100)
-    })
-    .state("branch2.leaf", function(){
-      obj.branch2_leaf = true
-    })
-    .state("branch3.leaf", function(){
-      obj.branch3_leaf = true;
-    })
+    // // beacuse the last state dont need async will dont need to async forever
+    // stateman.state("branch2", function(){
+    //   var over = this.async()
+    //   setTimeout(function(){
+    //     over();
+    //     stateman.go("branch3.leaf", null, function(){
+    //       expect(this.current.name).to.equal("branch3.leaf");
+    //       expect(obj.branch2_leaf).to.equal(true)
+    //       expect(obj.branch3_leaf).to.equal(true)
+    //       done()
+    //     })
+    //   },100)
+    // })
+    // .state("branch2.leaf", function(){
+    //   obj.branch2_leaf = true
+    // })
+    // .state("branch3.leaf", function(){
+    //   obj.branch3_leaf = true;
+    // })
 
-    stateman.nav("/branch2/leaf")
+    // stateman.nav("/branch2/leaf")
 
   })
 
@@ -469,6 +492,9 @@ describe("stateman:other", function(){
       }
     })
 
+  after(function(){
+    stateman.stop();
+  })
 
 
   it("visited flag will add if the state is entered", function(){
@@ -570,6 +596,11 @@ describe("Navigating", function(){
     .start({location: location})
 
 
+  after(function(){
+    stateman.stop();
+  })
+
+
   it("redirect at root, should stop navigating and redirect to new current", function(){
     var index =0, blog=0;
     stateman.state("app.index", {
@@ -622,6 +653,60 @@ describe("Navigating", function(){
       // console.log("app1.index the redirect done")
       expect(stateman.active.name === "app1.blog").to.equal(true);
     })
+  })
+
+  it("option passed to nav, should also passed in enter, update and leave", function(done){
+    var data = {id:1}, num =0;
+    stateman.state("app2.index", {
+      url: "index/:id",
+      enter: function(option){
+        expect(option.data).to.equal(data);
+        expect(option.data).to.equal(data);
+        expect(option.param.id).to.equal("2");
+        done();
+      }
+    })
+    stateman.nav("/app2/index/2", {data: data})
+
+  })
+
+  it("stateman.back should return the previous state", function(){
+
+  })
+
+
+})
+
+describe("Config", function(){
+  var location = loc("http://leeluolee.github.io/");
+  var obj = {}; 
+  var stateman = new StateMan();
+  stateman.start({location: location})
+
+  after(function(){
+    stateman.stop();
+  })
+
+  it("title should accept String", function(){
+    var baseTitle = doc.title;
+    stateman.state({
+      "app.hello": {
+        title: "hello app"
+      },
+      "app.exam": {
+        url: "exam/:id",
+        title: function(){
+          return "hello " + this.name + " " + stateman.param.id;
+        }
+      },
+      "app.third": {}
+    })
+    stateman.go("app.hello")
+    expect(doc.title).to.equal("hello app")
+    stateman.go("app.exam", {param: {id: 1}})
+    expect(doc.title).to.equal("hello app.exam 1")
+    stateman.nav("/app/third");
+    expect(doc.title).to.equal(baseTitle);
   })
 })
 })

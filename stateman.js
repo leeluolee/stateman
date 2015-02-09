@@ -75,6 +75,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  Histery = __webpack_require__(2),
 	  brow = __webpack_require__(5),
 	  _ = __webpack_require__(3),
+	  baseTitle = document.title,
 	  stateFn = State.prototype.state;
 
 
@@ -86,6 +87,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	  this._states = {};
 	  this._stashCallback = [];
 	  this.current = this.active = this;
+	  this.strict = options.strict;
+	  this.on("end", function(){
+	    var title = this.current && this.current.title;
+	    document.title = typeof title === "function"? this.current.title(): String(title || baseTitle ) ;
+	  })
 	}
 
 
@@ -140,10 +146,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	        callback = options;
 	        options = {};
 	      }
-	      callback && (this._cb = callback)
+	      options = options || {};
+	      // callback && (this._cb = callback)
 
-	      this.history.nav( url, options);
-	      this._cb = null;
+	      this.history.nav( url, _.extend({silent: true}, options));
+	      if(!options.silent) this._afterPathChange( _.cleanPath(url) , options , callback)
+	      // this._cb = null;
 	      return this;
 	    },
 	    decode: function(path){
@@ -168,27 +176,34 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 	    // after pathchange changed
 	    // @TODO: afterPathChange need based on decode
-	    _afterPathChange: function(path){
+	    _afterPathChange: function(path, options ,callback){
 
 	      this.emit("history:change", path);
 
 
-	      var found = this.decode(path), callback = this._cb;
+	      var found = this.decode(path);
 
 	      this.path = path;
 
+	      options = options || {};
+
 	      if(!found){
 	        // loc.nav("$default", {silent: true})
-	        var $notfound = this.state("$notfound");
-	        if($notfound) this._go($notfound, {path: path}, callback);
-
-	        return this.emit("notfound", {path: path});
+	        options.path = path;
+	        return this._notfound(options);
 	      }
 
+	      options.param = found.param;
 
-	      this._go( found, { param: found.param}, callback );
+
+	      this._go( found, options, callback );
 	    },
+	    _notfound: function(options){
+	      var $notfound = this.state("$notfound");
+	      if($notfound) this._go($notfound, options);
 
+	      return this.emit("notfound", options);
+	    },
 	    // goto the state with some option
 	    _go: function(state, option, callback){
 	      var over;
@@ -197,6 +212,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	      if(!state) return _.log("destination is not defined")
+	      if(state.hasNext && this.strict) return this._notfound({name: state.name});
 
 	      // not touch the end in previous transtion
 
@@ -222,7 +238,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      var done = function(success){
 	        over = true;
 	        self.current = self.active;
-	        if( success !== false ) self.emit("end")
+	        if( success !== false ) self.emit("end");
 	        self._popStash();
 	      }
 	      
@@ -285,6 +301,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	          if( found ) return found;
 	        }
 	      }
+	      // in strict mode only leaf can be touched
+	      // if all children is don. will try it self
 	      param = state.regexp && state.decode(path);
 	      if(param){
 	        state.param = param;
@@ -618,6 +636,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 	  return o1;
 	}
+
 
 
 	// Object.create shim
