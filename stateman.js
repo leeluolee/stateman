@@ -88,9 +88,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	  this._stashCallback = [];
 	  this.current = this.active = this;
 	  this.strict = options.strict;
+	  this.title = options.title;
 	  this.on("end", function(){
-	    var title = this.current && this.current.title;
-	    document.title = typeof title === "function"? this.current.title(): String(title || baseTitle ) ;
+	    var cur = this.current,title;
+	    while( cur ){
+	      title = cur.title;
+	      if(title) break; 
+	      cur = cur.parent;
+	    }
+	    document.title = typeof title === "function"? cur.title(): String( title || baseTitle ) ;
 	  })
 	}
 

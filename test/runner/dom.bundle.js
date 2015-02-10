@@ -1093,6 +1093,19 @@
 	    stateman.nav("/app/third");
 	    expect(doc.title).to.equal(baseTitle);
 	  })
+
+	  it("title should Recursive up search", function(){
+	    var baseTitle = doc.title;
+	    stateman.state({
+	      "app2": {
+	        title: "APP"
+	      },
+	      "app2.third": {}
+	    })
+	    stateman.go("app2.third")
+
+	    expect(doc.title).to.equal("APP")
+	  })
 	})
 	})
 
@@ -1697,9 +1710,15 @@
 	  this._stashCallback = [];
 	  this.current = this.active = this;
 	  this.strict = options.strict;
+	  this.title = options.title;
 	  this.on("end", function(){
-	    var title = this.current && this.current.title;
-	    document.title = typeof title === "function"? this.current.title(): String(title || baseTitle ) ;
+	    var cur = this.current,title;
+	    while( cur ){
+	      title = cur.title;
+	      if(title) break; 
+	      cur = cur.parent;
+	    }
+	    document.title = typeof title === "function"? cur.title(): String( title || baseTitle ) ;
 	  })
 	}
 
@@ -3314,8 +3333,8 @@
 	 */
 
 	var base64 = __webpack_require__(14)
-	var ieee754 = __webpack_require__(13)
-	var isArray = __webpack_require__(12)
+	var ieee754 = __webpack_require__(12)
+	var isArray = __webpack_require__(13)
 
 	exports.Buffer = Buffer
 	exports.SlowBuffer = Buffer
@@ -4381,45 +4400,6 @@
 /* 12 */
 /***/ function(module, exports, __webpack_require__) {
 
-	
-	/**
-	 * isArray
-	 */
-
-	var isArray = Array.isArray;
-
-	/**
-	 * toString
-	 */
-
-	var str = Object.prototype.toString;
-
-	/**
-	 * Whether or not the given `val`
-	 * is an array.
-	 *
-	 * example:
-	 *
-	 *        isArray([]);
-	 *        // > true
-	 *        isArray(arguments);
-	 *        // > false
-	 *        isArray('');
-	 *        // > false
-	 *
-	 * @param {mixed} val
-	 * @return {bool}
-	 */
-
-	module.exports = isArray || function (val) {
-	  return !! val && '[object Array]' == str.call(val);
-	};
-
-
-/***/ },
-/* 13 */
-/***/ function(module, exports, __webpack_require__) {
-
 	exports.read = function(buffer, offset, isLE, mLen, nBytes) {
 	  var e, m,
 	      eLen = nBytes * 8 - mLen - 1,
@@ -4503,6 +4483,45 @@
 	  for (; eLen > 0; buffer[offset + i] = e & 0xff, i += d, e /= 256, eLen -= 8);
 
 	  buffer[offset + i - d] |= s * 128;
+	};
+
+
+/***/ },
+/* 13 */
+/***/ function(module, exports, __webpack_require__) {
+
+	
+	/**
+	 * isArray
+	 */
+
+	var isArray = Array.isArray;
+
+	/**
+	 * toString
+	 */
+
+	var str = Object.prototype.toString;
+
+	/**
+	 * Whether or not the given `val`
+	 * is an array.
+	 *
+	 * example:
+	 *
+	 *        isArray([]);
+	 *        // > true
+	 *        isArray(arguments);
+	 *        // > false
+	 *        isArray('');
+	 *        // > false
+	 *
+	 * @param {mixed} val
+	 * @return {bool}
+	 */
+
+	module.exports = isArray || function (val) {
+	  return !! val && '[object Array]' == str.call(val);
 	};
 
 

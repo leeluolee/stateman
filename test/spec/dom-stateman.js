@@ -708,5 +708,18 @@ describe("Config", function(){
     stateman.nav("/app/third");
     expect(doc.title).to.equal(baseTitle);
   })
+
+  it("title should Recursive up search", function(){
+    var baseTitle = doc.title;
+    stateman.state({
+      "app2": {
+        title: "APP"
+      },
+      "app2.third": {}
+    })
+    stateman.go("app2.third")
+
+    expect(doc.title).to.equal("APP")
+  })
 })
 })

@@ -80,7 +80,8 @@ __Arguments__
 
 |Param|Type|Detail|
 |--|--|--|
-|options|Object| 目前还没有配置项|
+|option.title|strict| Default: false . 是否只有叶子节点可以被访问到 |
+|option.title| String|  设置文档标题， 见  [config.title](#title)|
 
 
 __Return__
@@ -92,10 +93,16 @@ __Example__
 ```javascript
 var StateMan = require("stateman");
 
-var stateman = new StateMan();  
+var stateman = new StateMan({
+  title: "Application",
+  strict: true
+});  
 // or...
 var stateman = StateMan();
 ```
+
+如果strict为true, 会导致上例的 `app.contact`等状态不能被直接定位(即无法成为stateman.current了). 只有像`app.contact.message` 这样的叶子节点可以被直接访问.
+
 
 ### stateman.state
 
@@ -289,7 +296,10 @@ __Example__:
 
 #### config.title
 
-when navigating is end. the document.title will replaced by stateman.current.title ( if it has)
+
+一旦跳转结束， 我们可以控制标签栏的title值(当然 你可以在enter, update, leave中来更精确的手动使用document.title来设置)
+
+
 
 __Argument__
 
@@ -299,6 +309,9 @@ __Example__
 
 ```
 stateman.state({
+  "app": {
+    title: "APP"
+  },
   "app.test": {
     title: "App test"
   },
@@ -307,7 +320,8 @@ stateman.state({
     title: function(){
       return "Exam " + stateman.param.id
     }
-  }
+  },
+  "app.notitle": {}
 })
 
 stateman.go("app.test");
@@ -317,7 +331,16 @@ stateman.go("app.test");
 stateman.nav("/app/test/1");
 
 // document.title === "Exam 1"
+
+stateman.nav("/app/notitle");
+
+// document.title === "App"
 ```
+
+
+正如你所见， 如果当前状态的title没有配置，stateman会去找它父状态的title， 直到stateman本身为止.
+
+
 
 
 <a name='param'></a>

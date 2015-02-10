@@ -82,7 +82,8 @@ __Arguments__
 
 |Param|Type|Detail|
 |--|--|--|
-|options|Object| currenly, no options is needed |
+|option.title|strict| Default: false . whether only the leaf state can be visited |
+|option.title| String| document.title, See   [config.title](#title)|
 
 
 __Return__
@@ -94,10 +95,18 @@ __Example__
 ```javascript
 var StateMan = require("stateman");
 
-var stateman = new StateMan();  
+var stateman = new StateMan({
+  title: "Application",
+  strict: true
+});  
 // or...
 var stateman = StateMan();
 ```
+
+
+if strict is true, it will make the state `app.contact` in the example above can't be visited anymore( in other words , won't be stateman.current). only the __leaf state__ like `app.contact.message` can be visited.
+
+
 
 ### stateman.state
 
@@ -290,7 +299,10 @@ other options that passed into [__stateman.go__](#go) or [__stateman.nav__](#nav
 
 #### config.title
 
-when navigating is end. the document.title will replaced by stateman.current.title ( if it has)
+
+when navigating is end. the document.title will replaced by particular title.
+
+
 
 __Argument__
 
@@ -300,6 +312,9 @@ __Example__
 
 ```
 stateman.state({
+  "app": {
+    title: "APP"
+  },
   "app.test": {
     title: "App test"
   },
@@ -308,7 +323,8 @@ stateman.state({
     title: function(){
       return "Exam " + stateman.param.id
     }
-  }
+  },
+  "app.notitle": {}
 })
 
 stateman.go("app.test");
@@ -318,7 +334,16 @@ stateman.go("app.test");
 stateman.nav("/app/test/1");
 
 // document.title === "Exam 1"
+
+stateman.nav("/app/notitle");
+
+// document.title === "App"
 ```
+
+
+Just as you have seen, if current.title isn't founded, stateman will search title in its parent, and stop searching at stateman self.
+
+
 
 
 <a name='param'></a>
