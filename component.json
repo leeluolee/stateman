@@ -1,6 +1,6 @@
 {
   "name": "stateman",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "main": "src/index.js",
   "description": "A tiny foundation that providing nested state-based routing for complex web application.",
   "keywords": [
