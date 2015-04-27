@@ -1,6 +1,6 @@
 /**
 @author	leeluolee
-@version	0.1.7
+@version	0.1.8
 @homepage	https://github.com/leeluolee/stateman
 */
 (function webpackUniversalModuleDefinition(root, factory) {
@@ -255,12 +255,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	          param: option.param,
 	          stop: function(){
 	            done(false);
+	            self.nav(current!==self? current.encode(current.param): "/", {silent:true});
 	          }
 	        });
-	        if(over === true){
-	          return current !== this && 
-	            this.nav(current.encode(current.param), {silent:true});
-	        }
+	        if(over === true) return;
 	        this.previous = current;
 	        this.current = state;
 	        this._leave(baseState, option, function(success){

@@ -182,12 +182,10 @@ _.extend( _.emitable( StateMan ), {
           param: option.param,
           stop: function(){
             done(false);
+            self.nav(current!==self? current.encode(current.param): "/", {silent:true});
           }
         });
-        if(over === true){
-          return current !== this && 
-            this.nav(current.encode(current.param), {silent:true});
-        }
+        if(over === true) return;
         this.previous = current;
         this.current = state;
         this._leave(baseState, option, function(success){
