@@ -12,14 +12,6 @@ _.extend = function(o1, o2, override){
 
 
 
-// Object.create shim
-_.ocreate = Object.create || function(o) {
-  var Foo = function(){};
-  Foo.prototype = o;
-  return new Foo;
-}
-
-
 _.slice = function(arr, index){
   return slice.call(arr, index);
 }
