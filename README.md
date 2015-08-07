@@ -8,12 +8,12 @@ StateMan
 [![spm package](http://spmjs.io/badge/stateman)](http://spmjs.io/package/stateman)
 
 
-stateman: A tiny foundation that providing nested state-based routing for complex web application. 
+stateman: A tiny foundation that provides nested state-based routing for complex web applications. 
 
 
-stateman is highly inspired by [ui-router](https://github.com/angular-ui/ui-router) , you can find many features similiar with it. 
+stateman is highly inspired by [ui-router](https://github.com/angular-ui/ui-router); you will find many features similar to it.
 
-But stateman is a __standalone library__ with extremely tiny codebase(10kb minified). feel free to integrated it with whatever framework you like! 
+But stateman is a __standalone library__ with an extremely tiny codebase (10kb minified). Feel free to integrate it with whatever framework you like! 
 
 
 ## Feature
@@ -29,11 +29,11 @@ But stateman is a __standalone library__ with extremely tiny codebase(10kb minif
 
 
 
-## Quirk Start
+## Quick Start
 
 You may need a static server to run the demo. [puer](https://github.com/leeluolee/puer) is simple to get start.
 
-just pasting the code to your own `index.html`, then you can find the demo works. 
+just paste the code to your own `index.html`, and load it up in a browser. 
 
 ```html
 
@@ -88,7 +88,7 @@ just pasting the code to your own `index.html`, then you can find the demo works
 
 ```
 
-open the console,  see the log when navigating.
+open the console to see the output when navigating.
 
 
 
@@ -102,11 +102,11 @@ open the console,  see the log when navigating.
 
 ###1.  [Simple Layout Demo:](http://leeluolee.github.io/stateman/layout.html) 
 
-Code of this Demo is dirty, In production development,  you need a view layer to create nested view.
+The code in this demo is for demonstration only. In a production development, you will want a view layer to create nested views.
 
-###2. An Simple SPA built upon [Regularjs(Living Template)](https://github.com/regularjs/regular) + requirejs + stateman: [Link](http://regularjs.github.io/regular-state/requirejs/index-min.html)
+###2. A simple SPA built upon [Regularjs (Living Template)](https://github.com/regularjs/regular) + requirejs + stateman: [Link](http://regularjs.github.io/regular-state/requirejs/index-min.html)
 
-I create a simple wraping([regular-state](https://github.com/regularjs/regular-state)) to integrate stateman with Regularjs, make it easily to build a single Page Application.  thanks for the concise API, [the code](https://github.com/regularjs/regular-state/blob/master/example/requirejs/index.js#L83) is very clean, integrating stateman with other libraries are also simple.
+I create a simple wrapping ([regular-state](https://github.com/regularjs/regular-state)) to integrate stateman with Regularjs, which makes it easy to build a single Page Application.  thanks to the concise API, [the code](https://github.com/regularjs/regular-state/blob/master/example/requirejs/index.js#L83) is very clean. You will find that integrating stateman with other libraries is also simple.
 
 
 
@@ -114,19 +114,19 @@ I create a simple wraping([regular-state](https://github.com/regularjs/regular-s
 
 ## Browser Support 
 
-1. Modern Broswer contains mobile devices
+1. Modern browsers, including mobile devices
 2. IE6+
 
 
-## installation
+## Installation
 
-###bower
+### Bower
 
 ```javascript
 bower install stateman
 ```
 
-`stateman.js` have been packaged as a standard UMD, you can use it in AMD、commonjs and global.
+`stateman.js` have been packaged as a standard UMD, so you can use it in AMD, CommonJS and as a global.
 
 ### npm (browserify or other based on commonjs)
 
@@ -134,7 +134,7 @@ bower install stateman
 npm install stateman
 ```
 
-use
+To use:
 
 ```js
 var StateMan = require('stateman');
@@ -146,18 +146,19 @@ var StateMan = require('stateman');
 spm install stateman
 ```
 
-use
+To use:
 
 ```js
 var StateMan = require('stateman');
 ```
 
-### component
+### Component
 
 ```js
 component install leeluolee/stateman
 ```
-use
+
+To use:
 
 ```js
 var StateMan = require('leeluolee/stateman');
@@ -165,7 +166,7 @@ var StateMan = require('leeluolee/stateman');
 
 
 
-### Directly download
+### Direct downloads
 
 1. [stateman.js](https://rawgit.com/leeluolee/stateman/master/stateman.js)
 2. [stateman.min.js](https://rawgit.com/leeluolee/stateman/master/stateman.min.js)
@@ -176,9 +177,9 @@ var StateMan = require('leeluolee/stateman');
 
 
 
-## Example
+## Examples
 
-some basic example has been placed at [example](https://github.com/leeluolee/stateman/tree/master/example)
+Some basic examples can be found in [the examples directory](https://github.com/leeluolee/stateman/tree/master/example).
 
 __run demo local__
 
