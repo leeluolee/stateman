@@ -97,7 +97,7 @@ _.extend( _.emitable( StateMan ), {
     },
     encode: function(stateName, param){
       var state = this.state(stateName);
-      return state? this.state(stateName).encode(param) : '';
+      return state? state.encode(param) : '';
     },
     // notify specify state
     // check the active statename whether to match the passed condition (stateName and param)
