@@ -159,6 +159,14 @@ _.log = function(msg, type){
   typeof console !== "undefined" && console[type || "log"](msg)
 }
 
+_.isPromise = function( obj ){
+
+  return !!obj && (typeof obj === 'object' || typeof obj === 'function') && typeof obj.then === 'function';
+
+}
+
+_.retTrue = function(){return true}
+
 
 _.normalize = normalizePath;
 

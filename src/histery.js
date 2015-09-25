@@ -145,6 +145,7 @@ _.extend( _.emitable(Histery), {
     // if(this.mode !== 2) return;
     var prefix = this.prefix, self = this;
     browser.on( document.body, "click", function(ev){
+
       var target = ev.target || ev.srcElement;
       if( target.tagName.toLowerCase() !== "a" ) return;
       var tmp = (browser.getHref(target)||"").match(self.rPrefix);

@@ -213,13 +213,13 @@ describe("stateman:transition", function(){
     .state("home", {})
     .state("contact", {
       // animation basic
-      enter: function(){
-        var done = this.async();
+      enter: function(option){
+        var done = option.async();
         setTimeout(done, 100)
       },
 
-      leave: function(){
-        var done = this.async();
+      leave: function(option){
+        var done = option.async();
         setTimeout(done, 100)
       }
     })
@@ -236,7 +236,7 @@ describe("stateman:transition", function(){
       url: ":id",
       // animation basic
       enter: function(option){
-        var done = this.async();
+        var done = option.async();
         setTimeout(function(){
           obj.contact_detail = option.param.id
           done();
@@ -251,7 +251,7 @@ describe("stateman:transition", function(){
     .state("book", {
       // animation basic
       enter: function(option){
-        var done = this.async();
+        var done = option.async();
         setTimeout(function(){
           obj.book = true;
           done()
@@ -259,7 +259,7 @@ describe("stateman:transition", function(){
       },
 
       leave: function(option){
-        var done = this.async();
+        var done = option.async();
         setTimeout(function(){
           obj.book = false;
           done();
@@ -328,29 +328,27 @@ describe("stateman:transition", function(){
 
   it("enter return false can stop a navigation", function(){
     stateman2.state("contact", {
-      enter: function(option){
-        if(option.stop){
-          return false;
-        }
+      enter: function( option ){
+        return !option.ban;
       }
     });
     stateman2.state("contact.detail", {
       leave: function(option){
-        if(option.stop) return false;
+        return !option.ban
       }
     })
 
-    stateman2.go("contact.detail", { stop:true })
-    expect(stateman2.current.name).to.equal("contact")
-    stateman2.go("contact.detail", { stop: false })
-    stateman2.go("contact", {stop:true});
+    stateman2.go("contact.detail", {  ban:true })
+    expect( stateman2.active.name ).to.equal("contact")
+    stateman2.go("contact.detail", {  ban: false })
+    stateman2.go("contact", { ban:true});
     expect(stateman2.current.name).to.equal("contact.detail")
   })
   it("pass false to done, can stop a async ", function(done){
 
     stateman2.state("user", {
       enter: function(option){
-        var done = this.async();
+        var done = option.async();
         setTimeout(function(){
           done(option.success)
         },50)
@@ -358,7 +356,7 @@ describe("stateman:transition", function(){
     });
     stateman2.state("user.detail", {
       leave: function(option){
-        var done = this.async();
+        var done = option.async();
         setTimeout(function(){
           done(option.success)
         },50)
@@ -366,7 +364,7 @@ describe("stateman:transition", function(){
     })
     stateman2.state("user.message", {
       enter: function(){
-        this.async()
+        option.async()
       }
     })
 
@@ -403,7 +401,10 @@ describe("stateman:redirect", function(){
       .state("branch1", {
         enter: function(opt){
           if(opt.param.id == "1"){
+            opt.stop();
+
             stateman.nav("branch2")
+
           }
         },
         leave: function(){
@@ -422,6 +423,7 @@ describe("stateman:redirect", function(){
 
     expect(stateman.current.name).to.equal("branch2");
     expect(obj.branch1_leave).to.equal(true);
+    expect(obj.branch2).to.equal(true);
     expect(obj.branch1_leaf).to.equal(undefined);
   })
 
@@ -429,9 +431,13 @@ describe("stateman:redirect", function(){
     reset(stateman);
 
     stateman.state("branch1.leaf", function(){
+
       stateman.go("branch2.leaf")
+
     }).state("branch2.leaf", function(){
+
       obj.branch2_leaf = true;
+
     })
 
     stateman.nav("/branch1/leaf");
@@ -640,7 +646,6 @@ describe("Navigating", function(){
       .state( "app1.index", {
         enter:function(){
           stateman.go("app1.blog", function(){
-            // console.log("app1.blog done")
             expect(stateman.active.name === "app1.blog").to.equal(true);
             expect(stateman._stashCallback.length).to.equal(0);
             done();
@@ -649,10 +654,7 @@ describe("Navigating", function(){
       })
       .state( "app1.blog", {enter: function(){}})
 
-    stateman.go("app1.index", function(){
-      // console.log("app1.index the redirect done")
-      expect(stateman.active.name === "app1.blog").to.equal(true);
-    })
+    stateman.go("app1.index")
   })
 
   it("option passed to nav, should also passed in enter, update and leave", function(done){
