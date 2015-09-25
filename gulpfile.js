@@ -179,7 +179,7 @@ gulp.task("test", ["mocha", "karma"])
 
 
 gulp.task('doc', function(){
-  return gulp.src(["docs/API.md"]) 
+  return gulp.src(["docs/API.md", "docs/API_*.md"]) 
     .pipe(translate({}))
     .pipe(gulp.dest("docs/"))
 })

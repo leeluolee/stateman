@@ -8,13 +8,16 @@ var State = require("./state.js"),
 
 
 function StateMan(options){
+
   if(this instanceof StateMan === false){ return new StateMan(options)}
   options = options || {};
   if(options.history) this.history = options.history;
+  // for config 
+  if(options.init) options.init.call(this, options);
   this._states = {};
   this._stashCallback = [];
-  this.current = this.active = this;
   this.strict = options.strict;
+  this.current = this.active = this;
   this.title = options.title;
   this.on("end", function(){
     var cur = this.current,title;
@@ -25,15 +28,18 @@ function StateMan(options){
     }
     document.title = typeof title === "function"? cur.title(): String( title || baseTitle ) ;
   })
+
 }
 
 
 _.extend( _.emitable( StateMan ), {
-    // start StateMan
+    // keep blank
+    name: '',
 
     state: function(stateName, config){
+
       var active = this.active;
-      if(typeof stateName === "string" && active.name){
+      if(typeof stateName === "string" && active){
          stateName = stateName.replace("~", active.name)
          if(active.parent) stateName = stateName.replace("^", active.parent.name || "");
       }
@@ -41,20 +47,20 @@ _.extend( _.emitable( StateMan ), {
       // ~ represent  current
       // only 
       return stateFn.apply(this, arguments);
+
     },
     start: function(options){
+
       if( !this.history ) this.history = new Histery(options); 
       if( !this.history.isStart ){
         this.history.on("change", _.bind(this._afterPathChange, this));
         this.history.start();
       } 
       return this;
+
     },
     stop: function(){
       this.history.stop();
-    },
-    async: function(){
-      return this.active && this.active.async();
     },
     // @TODO direct go the point state
     go: function(state, option, callback){
@@ -68,10 +74,12 @@ _.extend( _.emitable( StateMan ), {
 
       if(option.encode !== false){
         var url = state.encode(option.param)
+        option.path = url;
         this.nav(url, {silent: true, replace: option.replace});
-        this.path = url;
       }
+
       this._go(state, option, callback);
+
       return this;
     },
     nav: function(url, options, callback){
@@ -80,20 +88,23 @@ _.extend( _.emitable( StateMan ), {
         options = {};
       }
       options = options || {};
-      // callback && (this._cb = callback)
+
+      options.path = url;
 
       this.history.nav( url, _.extend({silent: true}, options));
       if(!options.silent) this._afterPathChange( _.cleanPath(url) , options , callback)
-      // this._cb = null;
+
       return this;
     },
     decode: function(path){
+
       var pathAndQuery = path.split("?");
       var query = this._findQuery(pathAndQuery[1]);
       path = pathAndQuery[0];
       var state = this._findState(this, path);
       if(state) _.extend(state.param, query);
       return state;
+
     },
     encode: function(stateName, param){
       var state = this.state(stateName);
@@ -114,104 +125,277 @@ _.extend( _.emitable( StateMan ), {
 
       this.emit("history:change", path);
 
-
       var found = this.decode(path);
-
-      this.path = path;
 
       options = options || {};
 
+      options.path = path;
+
       if(!found){
         // loc.nav("$default", {silent: true})
-        options.path = path;
         return this._notfound(options);
       }
 
       options.param = found.param;
 
-
       this._go( found, options, callback );
     },
     _notfound: function(options){
+
       var $notfound = this.state("$notfound");
-      if($notfound) this._go($notfound, options);
+
+      if( $notfound ) this._go($notfound, options);
 
       return this.emit("notfound", options);
     },
     // goto the state with some option
     _go: function(state, option, callback){
+
       var over;
 
       if(typeof state === "string") state = this.state(state);
-
 
       if(!state) return _.log("destination is not defined")
       if(state.hasNext && this.strict) return this._notfound({name: state.name});
 
       // not touch the end in previous transtion
 
-      if(this.active !== this.current){
-        // we need return
-
-        _.log("naving to [" + this.current.name + "] will be stoped, trying to ["+state.name+"] now");
-        if(this.active.done){
-          this.active.done(false);
-        }
-        this.current = this.active;
-        // back to before
+      if( this.pending ){
+        var pendingCurrent = this.pending.current;
+        this.pending.stop();
+        _.log("naving to [" + pendingCurrent.name + "] will be stoped, trying to ["+state.name+"] now");
       }
+      // if(this.active !== this.current){
+      //   // we need return
+      //   _.log("naving to [" + this.current.name + "] will be stoped, trying to ["+state.name+"] now");
+      //   this.current = this.active;
+      //   // back to before
+      // }
       option.param = option.param || {};
-      this.param = option.param;
 
       var current = this.current,
         baseState = this._findBase(current, state),
+        prepath = this.path,
         self = this;
+
 
       if( typeof callback === "function" ) this._stashCallback.push(callback);
       // if we done the navigating when start
-      var done = function(success){
+      function done(success){
         over = true;
-        self.current = self.active;
         if( success !== false ) self.emit("end");
+        self.pending = null;
         self._popStash();
       }
       
+      option.previous = current;
+      option.current = state;
+
       if(current !== state){
-        self.emit("begin", {
-          previous: current,
-          current: state,
-          param: option.param,
-          stop: function(){
-            done(false);
-            self.nav(current!==self? current.encode(current.param): "/", {silent:true});
-          }
-        });
-        if(over === true) return;
-        this.previous = current;
-        this.current = state;
-        this._leave(baseState, option, function(success){
-          self._checkQueryAndParam(baseState, option);
-          if(success === false) return done(success)
-          self._enter(state, option, done)
-        })
+        option.stop = function(){
+          done(false);
+          self.nav( prepath? prepath: "/", {silent:true});
+        }
+        self.emit("begin", option);
+
+      }
+      // if we stop it in 'begin' listener
+      if(over === true) return;
+
+      if(current !== state){
+        // option as transition object.
+
+        this._walk(current, state, option, true ,function( notRejected ){
+
+          if( notRejected===false ){
+
+            // if reject in callForPermission, we will return to old 
+            prepath && this.nav( prepath, {silent: true})
+
+            return this.emit('abort', option);
+
+          } 
+
+          // start transition
+          this.preOption = this.pending;
+          this.pending = option;
+          this.path = option.path;
+          this.current = option.current;
+          this.param = option.param;
+          this.previous = option.previous;
+          this._walk(current, state, option, false, function( notRejected ){
+
+            if( notRejected === false ){
+              this.current = this.active;
+              done(false)
+              return this.emit('abort', option);
+            }
+
+            this.active = option.current;
+
+            return done()
+
+          }.bind(this) )
+
+        }.bind(this) )
+
       }else{
         self._checkQueryAndParam(baseState, option);
+        this.pending = null;
         done();
       }
       
     },
     _popStash: function(){
+
+      console.log('stash')
+
       var stash = this._stashCallback, len = stash.length;
+
       this._stashCallback = [];
+
       if(!len) return;
 
       for(var i = 0; i < len; i++){
         stash[i].call(this)
       }
+    },
+
+    // the transition logic  Used in Both canLeave canEnter && leave enter LifeCycle
+
+    _walk: function(from, to, option, callForPermit , callback){
+
+      // nothing -> app.state
+      var parent = this._findBase(from , to);
+
+
+      option.basckward = true;
+      this._transit( from, parent, option, callForPermit , function( notRejected ){
+
+        if( notRejected === false ) return callback( notRejected );
+
+        // only actual transiton need update base state;
+        if( !callForPermit )  this._checkQueryAndParam(parent, option)
+
+        option.basckward = false;
+        this._transit( parent, to, option, callForPermit,  callback)
+
+      }.bind(this) )
+
+    },
+
+    _transit: function(from, to, option, callForPermit, callback){
+      //  touch the ending
+      if( from === to ) return callback();
+
+      var back = from.name.length > to.name.length;
+      var method = back? 'leave': 'enter';
+      var applied;
+
+      // use canEnter to detect permission
+      if( callForPermit) method = 'can' + method.replace(/^\w/, function(a){ return a.toUpperCase() });
+
+      var loop = function( notRejected ){
+
+
+        // stop transition or touch the end
+        if( applied === to || notRejected === false ) return callback(notRejected);
+
+        if( !applied ) {
+
+          applied = back? from : this._computeNext(from, to);
+
+        }else{
+
+          applied = this._computeNext(applied, to);
+        }
+
+        if( (back && applied === to) || !applied )return callback( notRejected )
+
+        this._moveOn( applied, method, option, loop );
+
+      }.bind(this);
+
+      loop();
+    },
+
+    _moveOn: function( applied, method, option, callback){
+
+      var isDone = false;
+      var isPending = false;
+
+      option.async = function(){
+
+        isPending = true;
+
+        return done;
+      }
+
+      function done( notRejected ){
+        if( isDone ) return;
+        isPending = false;
+        isDone = true;
+        callback( notRejected );
+      }
+
+      
+
+      option.stop = function(){
+        done( false );
+      }
+
+
+      this.active = applied;
+      var retValue = applied[method]? applied[method]( option ): true;
+
+      if(method === 'enter') applied.visited = true;
+      // promise
+      // need breadk , if we call option.stop first;
+
+      if( _.isPromise(retValue) ){
+
+        return this._wrapPromise(retValue, done); 
+
+      }
+
+      // if haven't call option.async yet
+      if( !isPending ) done( retValue )
+
+    },
+
+
+    _wrapPromise: function( promise, next ){
+
+      return promise.then( next, next.bind(this, false) ) ;
+
+    },
+
+    _computeNext: function( from, to ){
+
+      var fname = from.name;
+      var tname = to.name;
+
+      var tsplit = tname.split('.')
+      var fsplit = fname.split('.')
+
+      var tlen = tsplit.length;
+      var flen = fsplit.length;
+
+      if(fname === '') flen = 0;
+      if(tname === '') tlen = 0;
+
+      if( flen < tlen ){
+        fsplit[flen] = tsplit[flen];
+      }else{
+        fsplit.pop();
+      }
+
+      return this.state(fsplit.join('.'))
 
     },
 
     _findQuery: function(querystr){
+
       var queries = querystr && querystr.split("&"), query= {};
       if(queries){
         var len = queries.length;
@@ -222,6 +406,7 @@ _.extend( _.emitable( StateMan ), {
         }
       }
       return query;
+
     },
     _findState: function(state, path){
       var states = state._states, found, param;
@@ -245,6 +430,7 @@ _.extend( _.emitable( StateMan ), {
     },
     // find the same branch;
     _findBase: function(now, before){
+
       if(!now || !before || now == this || before == this) return this;
       var np = now, bp = before, tmp;
       while(np && bp){
@@ -256,77 +442,17 @@ _.extend( _.emitable( StateMan ), {
         np = np.parent;
       }
       return this;
-    },
-    _enter: function(end, options, callback){
 
-      callback = callback || _.noop;
-
-      var active = this.active;
-
-      if(active == end) return callback();
-      var stage = [];
-      while(end !== active && end){
-        stage.push(end);
-        end = end.parent;
-      }
-      this._enterOne(stage, options, callback)
-    },
-    _enterOne: function(stage, options, callback){
-
-      var cur = stage.pop(), self = this;
-      if(!cur) return callback();
-
-      this.active = cur;
-
-      cur.done = function(success){
-        cur._pending = false;
-        cur.done = null;
-        cur.visited = true;
-        if(success !== false){
-          self._enterOne(stage, options, callback)
-          
-        }else{
-          return callback(success);
-        }
-      }
-
-      if(!cur.enter) cur.done();
-      else {
-        var success = cur.enter(options);
-        if(!cur._pending && cur.done) cur.done(success);
-      }
-    },
-    _leave: function(end, options, callback){
-      callback = callback || _.noop;
-      if(end == this.active) return callback();
-      this._leaveOne(end, options,callback)
-    },
-    _leaveOne: function(end, options, callback){
-      if( end === this.active ) return callback();
-      var cur = this.active, self = this;
-      cur.done = function( success ){
-        cur._pending = false;
-        cur.done = null;
-        if(success !== false){
-          if(cur.parent) self.active = cur.parent;
-          self._leaveOne(end, options, callback)
-        }else{
-          return callback(success);
-        }
-      }
-      if(!cur.leave) cur.done();
-      else{
-        var success = cur.leave(options);
-        if( !cur._pending && cur.done) cur.done(success);
-      }
     },
     // check the query and Param
     _checkQueryAndParam: function(baseState, options){
+
       var from = baseState;
       while( from !== this ){
         from.update && from.update(options);
         from = from.parent;
       }
+
     }
 
 }, true)
@@ -334,3 +460,4 @@ _.extend( _.emitable( StateMan ), {
 
 
 module.exports = StateMan;
+

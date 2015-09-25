@@ -30,25 +30,79 @@
 
   function create(o){
     o = o || {};
-    o.enter= config.enter;
-    o.leave = config.leave;
+    o.enter= o.enter || config.enter;
+    o.leave = o.leave || config.leave;
     return o;
+  }
+
+  var delay = function(time){
+    return new Promise(function(resolve){
+      setTimeout( resolve, time)
+    })
+  }
+
+  var confirmp = function(str){
+    return new Promise(function (resolve, reject){
+      if( confirm(str) ) return resolve()
+      reject();
+    })
   }
 
   var stateman = new StateMan();
 
   stateman
-    .state("home", config)
+    .state("home", create({
+      canEnter: function(){
+        return confirmp('真的要进home么').then(function(){
+
+          console.log('允许进入home', stateman.current)
+          return true;
+
+        })['catch'](function(){
+
+          console.log('拒绝进入home', stateman.current)
+          return false;
+
+        })
+      },
+      canLeave: function(){
+        return confirmp('真的要离开home么').then(function(){
+
+          console.log('允许离开home', stateman.current)
+
+        })['catch'](function(){
+
+          console.log('拒绝离开home', stateman.current)
+          return false;
+
+        })
+
+      }
+    }))
     .state("contact", config)
-    .state("contact.list", config )
+    .state("contact.list", create({
+      enter: function(option){
+        this.delay = true;
+        return delay(2000).then(function(){
+          console.log('enter contact.list')
+          this.delay = false
+        }.bind(this))
+        // console.log('enter contact.list')
+      },
+      canLeave: function(){
+        if(this.delay){
+          console.log('nav permit');
+          return false;
+        }
+      }
+    }) )
     .state("contact.detail", create({url: ":id(\\d+)"}))
     .state("contact.detail.option", config)
     .state("contact.detail.message", config)
     .state("contact.detail.data", config)
     .on("begin", function(option){
       if(option.current.name === "contact.detail"){
-        console.log("haha")
-        option.stop(false);
+        option.stop();
         this.go("contact.detail.message", {
           param: {id: 3}
         })

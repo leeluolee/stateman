@@ -1,5 +1,7 @@
 var _ = require("./util.js");
 
+
+
 function State(option){
   this._states = {};
   this._pending = false;
@@ -140,11 +142,15 @@ _.extend( _.emitable( State ), {
       return false;
     }
   },
+  // by default, all lifecycle is permitted
+  canEnter: _.retTrue,
+  canLeave: _.retTrue,
+  enter: _.retTrue,
+  leave: _.retTrue,
+
   async: function(){
-    var self = this;
-    this._pending = true;
-    return this.done;
-  }
+    throw new Error( 'please use option.async instead')
+  },
 
 })
 
