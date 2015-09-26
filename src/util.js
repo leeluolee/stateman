@@ -38,6 +38,10 @@ _.eql = function(o1, o2){
 
 // small emitter 
 _.emitable = (function(){
+  function norm(ev){
+    var eventAndNamespace = (ev||'').split(':');
+    return {event: eventAndNamespace[0], namespace: eventAndNamespace[1]}
+  }
   var API = {
     once: function(event, fn){
       var callback = function(){
@@ -51,40 +55,48 @@ _.emitable = (function(){
         for (var i in event) {
           this.on(i, event[i]);
         }
-      }else{
+        return this;
+      }
+      var ne = norm(event);
+      event=ne.event;
+      if(event && typeof fn === 'function' ){
         var handles = this._handles || (this._handles = {}),
           calls = handles[event] || (handles[event] = []);
+        fn._ns = ne.namespace;
         calls.push(fn);
       }
       return this;
     },
     off: function(event, fn) {
+      var ne = norm(event); event = ne.event;
       if(!event || !this._handles) this._handles = {};
-      if(!this._handles) return;
 
       var handles = this._handles , calls;
 
       if (calls = handles[event]) {
-        if (!fn) {
+        if (!fn && !ne.namespace) {
           handles[event] = [];
-          return this;
-        }
-        for (var i = 0, len = calls.length; i < len; i++) {
-          if (fn === calls[i]) {
-            calls.splice(i, 1);
-            return this;
+        }else{
+          for (var i = 0, len = calls.length; i < len; i++) {
+            if ( (!fn || fn === calls[i]) && (!ne.namespace || calls[i]._ns === ne.namespace) ) {
+              calls.splice(i, 1);
+              return this;
+            }
           }
         }
       }
       return this;
     },
     emit: function(event){
+      var ne = norm(event); event = ne.event;
+
       var args = _.slice(arguments, 1),
         handles = this._handles, calls;
 
       if (!handles || !(calls = handles[event])) return this;
       for (var i = 0, len = calls.length; i < len; i++) {
-        calls[i].apply(this, args)
+        var fn = calls[i];
+        if( !ne.namespace || fn._ns === ne.namespace ) fn.apply(this, args)
       }
       return this;
     }
@@ -96,7 +108,6 @@ _.emitable = (function(){
 })();
 
 
-_.noop = function(){}
 
 _.bind = function(fn, context){
   return function(){
@@ -165,7 +176,6 @@ _.isPromise = function( obj ){
 
 }
 
-_.retTrue = function(){return true}
 
 
 _.normalize = normalizePath;

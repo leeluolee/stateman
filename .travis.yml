@@ -4,5 +4,6 @@ node_js:
 branches:
   only:
   - master
+  - develop
 before_install:
 - npm install -g casperjs phantomjs gulp

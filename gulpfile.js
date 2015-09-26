@@ -13,10 +13,9 @@ var translate = require("./scripts/gulp-trans.js")
 var pkg = require("./package.json");  
 
 // release
-require("./scripts/release.js")(gulp);
+require("gulp-release-it")(gulp);
 
 
-    
 var wpConfig = {
  output: {
     filename: "stateman.js",
@@ -177,9 +176,8 @@ gulp.task('karma', function (done) {
 
 gulp.task("test", ["mocha", "karma"])
 
-
 gulp.task('doc', function(){
-  return gulp.src(["docs/API.md", "docs/API_*.md"]) 
+  return gulp.src(["docs/src/API*.md"]) 
     .pipe(translate({}))
     .pipe(gulp.dest("docs/"))
 })

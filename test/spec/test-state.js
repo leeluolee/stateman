@@ -23,6 +23,21 @@ describe("State", function(){
       expect(state.state("contact.detail").name).to.equal("contact.detail")
       expect(state.state("contact.detail.message").name).to.equal("contact.detail.message")
     })
+    it("we can define absolute url when start with '^'", function(){
+      var state = new State();
+      state.state('contact.detail', {});
+      state.state('contact.detail.app', {url: '^/home/code/:id'});
+      expect(state.state("contact.detail.app").encode({id: 1})).to.equal("/home/code/1")
+
+    })
+    it("state.async has been removed after v0.2.0", function(){
+      var state = new State();
+      expect(function(){
+        state.async()
+      }).to.throwError();
+      
+    })
+
   })
 
 

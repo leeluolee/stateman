@@ -6,14 +6,12 @@ var State = require("./state.js"),
   stateFn = State.prototype.state;
 
 
-
 function StateMan(options){
 
   if(this instanceof StateMan === false){ return new StateMan(options)}
   options = options || {};
-  if(options.history) this.history = options.history;
-  // for config 
-  if(options.init) options.init.call(this, options);
+  // if(options.history) this.history = options.history;
+
   this._states = {};
   this._stashCallback = [];
   this.strict = options.strict;
@@ -66,6 +64,8 @@ _.extend( _.emitable( StateMan ), {
     go: function(state, option, callback){
       option = option || {};
       if(typeof state === "string") state = this.state(state);
+
+      if(!state) return;
 
       if(typeof option === "function"){
         callback = option;
@@ -153,9 +153,10 @@ _.extend( _.emitable( StateMan ), {
 
       var over;
 
-      if(typeof state === "string") state = this.state(state);
+      // if(typeof state === "string") state = this.state(state);
 
-      if(!state) return _.log("destination is not defined")
+      // if(!state) return _.log("destination is not defined")
+
       if(state.hasNext && this.strict) return this._notfound({name: state.name});
 
       // not touch the end in previous transtion
@@ -185,7 +186,7 @@ _.extend( _.emitable( StateMan ), {
         over = true;
         if( success !== false ) self.emit("end");
         self.pending = null;
-        self._popStash();
+        self._popStash(option);
       }
       
       option.previous = current;
@@ -205,12 +206,15 @@ _.extend( _.emitable( StateMan ), {
       if(current !== state){
         // option as transition object.
 
+        option.phase = 'permission';
         this._walk(current, state, option, true ,function( notRejected ){
 
           if( notRejected===false ){
 
             // if reject in callForPermission, we will return to old 
             prepath && this.nav( prepath, {silent: true})
+
+            done(false, 2)
 
             return this.emit('abort', option);
 
@@ -223,6 +227,7 @@ _.extend( _.emitable( StateMan ), {
           this.current = option.current;
           this.param = option.param;
           this.previous = option.previous;
+          option.phase = 'navigation';
           this._walk(current, state, option, false, function( notRejected ){
 
             if( notRejected === false ){
@@ -233,6 +238,7 @@ _.extend( _.emitable( StateMan ), {
 
             this.active = option.current;
 
+            option.phase = 'completion';
             return done()
 
           }.bind(this) )
@@ -246,9 +252,7 @@ _.extend( _.emitable( StateMan ), {
       }
       
     },
-    _popStash: function(){
-
-      console.log('stash')
+    _popStash: function(option){
 
       var stash = this._stashCallback, len = stash.length;
 
@@ -257,7 +261,7 @@ _.extend( _.emitable( StateMan ), {
       if(!len) return;
 
       for(var i = 0; i < len; i++){
-        stash[i].call(this)
+        stash[i].call(this, option)
       }
     },
 
@@ -441,8 +445,6 @@ _.extend( _.emitable( StateMan ), {
         }
         np = np.parent;
       }
-      return this;
-
     },
     // check the query and Param
     _checkQueryAndParam: function(baseState, options){

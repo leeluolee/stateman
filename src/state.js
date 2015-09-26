@@ -59,7 +59,7 @@ _.extend( _.emitable( State ), {
   },
 
   config: function(configure){
-    if(!configure ) return;
+
     configure = this._getConfig(configure);
 
     for(var i in configure){
@@ -143,10 +143,6 @@ _.extend( _.emitable( State ), {
     }
   },
   // by default, all lifecycle is permitted
-  canEnter: _.retTrue,
-  canLeave: _.retTrue,
-  enter: _.retTrue,
-  leave: _.retTrue,
 
   async: function(){
     throw new Error( 'please use option.async instead')

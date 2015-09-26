@@ -1,6 +1,6 @@
 /**
 @author	leeluolee
-@version	0.1.8
+@version	0.2.0
 @homepage	https://github.com/leeluolee/stateman
 */
 (function webpackUniversalModuleDefinition(root, factory) {
@@ -80,14 +80,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	  stateFn = State.prototype.state;
 
 
-
 	function StateMan(options){
 
 	  if(this instanceof StateMan === false){ return new StateMan(options)}
 	  options = options || {};
-	  if(options.history) this.history = options.history;
-	  // for config 
-	  if(options.init) options.init.call(this, options);
+	  // if(options.history) this.history = options.history;
+
 	  this._states = {};
 	  this._stashCallback = [];
 	  this.strict = options.strict;
@@ -140,6 +138,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    go: function(state, option, callback){
 	      option = option || {};
 	      if(typeof state === "string") state = this.state(state);
+
+	      if(!state) return;
 
 	      if(typeof option === "function"){
 	        callback = option;
@@ -227,9 +227,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	      var over;
 
-	      if(typeof state === "string") state = this.state(state);
+	      // if(typeof state === "string") state = this.state(state);
 
-	      if(!state) return _.log("destination is not defined")
+	      // if(!state) return _.log("destination is not defined")
+
 	      if(state.hasNext && this.strict) return this._notfound({name: state.name});
 
 	      // not touch the end in previous transtion
@@ -259,7 +260,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        over = true;
 	        if( success !== false ) self.emit("end");
 	        self.pending = null;
-	        self._popStash();
+	        self._popStash(option);
 	      }
 	      
 	      option.previous = current;
@@ -279,12 +280,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	      if(current !== state){
 	        // option as transition object.
 
+	        option.phase = 'permission';
 	        this._walk(current, state, option, true ,function( notRejected ){
 
 	          if( notRejected===false ){
 
 	            // if reject in callForPermission, we will return to old 
 	            prepath && this.nav( prepath, {silent: true})
+
+	            done(false, 2)
 
 	            return this.emit('abort', option);
 
@@ -297,6 +301,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	          this.current = option.current;
 	          this.param = option.param;
 	          this.previous = option.previous;
+	          option.phase = 'navigation';
 	          this._walk(current, state, option, false, function( notRejected ){
 
 	            if( notRejected === false ){
@@ -307,6 +312,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	            this.active = option.current;
 
+	            option.phase = 'completion';
 	            return done()
 
 	          }.bind(this) )
@@ -320,9 +326,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      }
 	      
 	    },
-	    _popStash: function(){
-
-	      console.log('stash')
+	    _popStash: function(option){
 
 	      var stash = this._stashCallback, len = stash.length;
 
@@ -331,7 +335,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      if(!len) return;
 
 	      for(var i = 0; i < len; i++){
-	        stash[i].call(this)
+	        stash[i].call(this, option)
 	      }
 	    },
 
@@ -515,8 +519,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        np = np.parent;
 	      }
-	      return this;
-
 	    },
 	    // check the query and Param
 	    _checkQueryAndParam: function(baseState, options){
@@ -800,6 +802,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	// small emitter 
 	_.emitable = (function(){
+	  function norm(ev){
+	    var eventAndNamespace = (ev||'').split(':');
+	    return {event: eventAndNamespace[0], namespace: eventAndNamespace[1]}
+	  }
 	  var API = {
 	    once: function(event, fn){
 	      var callback = function(){
@@ -813,40 +819,48 @@ return /******/ (function(modules) { // webpackBootstrap
 	        for (var i in event) {
 	          this.on(i, event[i]);
 	        }
-	      }else{
+	        return this;
+	      }
+	      var ne = norm(event);
+	      event=ne.event;
+	      if(event && typeof fn === 'function' ){
 	        var handles = this._handles || (this._handles = {}),
 	          calls = handles[event] || (handles[event] = []);
+	        fn._ns = ne.namespace;
 	        calls.push(fn);
 	      }
 	      return this;
 	    },
 	    off: function(event, fn) {
+	      var ne = norm(event); event = ne.event;
 	      if(!event || !this._handles) this._handles = {};
-	      if(!this._handles) return;
 
 	      var handles = this._handles , calls;
 
 	      if (calls = handles[event]) {
-	        if (!fn) {
+	        if (!fn && !ne.namespace) {
 	          handles[event] = [];
-	          return this;
-	        }
-	        for (var i = 0, len = calls.length; i < len; i++) {
-	          if (fn === calls[i]) {
-	            calls.splice(i, 1);
-	            return this;
+	        }else{
+	          for (var i = 0, len = calls.length; i < len; i++) {
+	            if ( (!fn || fn === calls[i]) && (!ne.namespace || calls[i]._ns === ne.namespace) ) {
+	              calls.splice(i, 1);
+	              return this;
+	            }
 	          }
 	        }
 	      }
 	      return this;
 	    },
 	    emit: function(event){
+	      var ne = norm(event); event = ne.event;
+
 	      var args = _.slice(arguments, 1),
 	        handles = this._handles, calls;
 
 	      if (!handles || !(calls = handles[event])) return this;
 	      for (var i = 0, len = calls.length; i < len; i++) {
-	        calls[i].apply(this, args)
+	        var fn = calls[i];
+	        if( !ne.namespace || fn._ns === ne.namespace ) fn.apply(this, args)
 	      }
 	      return this;
 	    }
@@ -858,7 +872,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	})();
 
 
-	_.noop = function(){}
 
 	_.bind = function(fn, context){
 	  return function(){
@@ -927,7 +940,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	}
 
-	_.retTrue = function(){return true}
 
 
 	_.normalize = normalizePath;
@@ -999,7 +1011,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  },
 
 	  config: function(configure){
-	    if(!configure ) return;
+
 	    configure = this._getConfig(configure);
 
 	    for(var i in configure){
@@ -1083,10 +1095,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	  },
 	  // by default, all lifecycle is permitted
-	  canEnter: _.retTrue,
-	  canLeave: _.retTrue,
-	  enter: _.retTrue,
-	  leave: _.retTrue,
 
 	  async: function(){
 	    throw new Error( 'please use option.async instead')

@@ -42,10 +42,62 @@ function reset(stateman){
 
 describe("stateman", function(){
 
+describe("Util", function(){
+  it("util.eql", function( ){
+    expect(_.eql({a:1}, [2,1])).to.be.equal(false);
+    expect(_.eql({a:1, b:3}, {a:1})).to.be.equal(false);
+    expect(_.eql({a:1, b:3}, {a:1, b:3})).to.be.equal(true);
+    expect(_.eql(1, 1)).to.be.equal(true);
+  })
+  it("util.emitable:basic", function(){
+    var emitter = _.emitable({}); 
+    var obj = {basic1:0,basic2:0,basic3:0};
 
+    emitter.on('basic1', function(){
+      obj.basic1++
+    })
+    emitter.on('basic2', function(){
+      obj.basic2++
+    })
+    emitter.on('basic3', function(){
+      obj.basic3++
+    })
+    emitter.emit('basic1');
+    expect(obj.basic1).to.equal(1);
+    emitter.off('basic1')
+    emitter.emit('basic1');
+    expect(obj.basic1).to.equal(1);
+    emitter.off()
+    emitter.emit('basic2');
+    emitter.emit('basic3');
+    expect(obj.basic2).to.equal(0);
+    expect(obj.basic2).to.equal(0);
+
+  })
+  it("util.emitable:namespace", function(){
+    var emitter = _.emitable({}); 
+    obj = {enter_app: 0, enter_blog: 0}
+
+    emitter.on('enter:app', function(){
+      obj.enter_app++
+    })
+    emitter.on('enter:blog', function(){
+      obj.enter_blog++
+    })
+    emitter.off('enter:app')
+    emitter.emit('enter');
+    expect(obj.enter_blog).to.equal(1)
+    expect(obj.enter_app).to.equal(0)
+    emitter.emit('enter:blog')
+    expect(obj.enter_blog).to.equal(2)
+    emitter.off('enter');
+    emitter.emit('enter');
+    expect(obj.enter_blog).to.equal(2)
+  })
+})
 
 describe("stateman:basic", function(){
-  var stateman = new StateMan( {} );
+  var stateman = StateMan( {} );
   var location = loc("http://leeluolee.github.io/homepage");
 
 
@@ -115,7 +167,16 @@ describe("stateman:basic", function(){
     expect(obj.l0).to.equal(true);
 
   })
+  it("some Edge test should not throw error", function(){
 
+    expect(function(){
+      stateman.nav("");
+      stateman.nav(undefined);
+      stateman.go();
+    }).to.not.throwError()
+
+  })
+ 
   it("in strict mode, we can not touched the non-leaf state",function(){
     var location = loc("http://leeluolee.github.io/homepage");
     var stateman = new StateMan( {strict: true} );
@@ -196,7 +257,6 @@ describe("stateman:navigation", function(){
 
 // current previous pending and others
 describe("stateman:property", function(){
-
 })
 
 
@@ -283,6 +343,16 @@ describe("stateman:transition", function(){
 
   after(function(){
     stateman.stop();
+  })
+
+ it("we can use callback as second param", function(done){
+
+    stateman.state('callback.second', {})
+    stateman.nav('/callback/second', function(option){
+      expect(option.current.name ==='callback.second')
+      done();
+    })
+
   })
   it("we can use transition in enter and leave", function(done){
 
@@ -580,16 +650,138 @@ describe("stateman: matches and relative go", function(){
     expect( stateman.is("contact.user.param", {})).to.equal(true);
     expect( stateman.is("contact.user", {id: "1"})).to.equal(true);
     expect( stateman.is("contact.user", {id: "2"})).to.equal(false);
+    expect( stateman.is()).to.equal(false);
 
     stateman.state("contactmanage.detail",{})
 
     stateman.go("contactmanage.detail");
     expect(stateman.is("contact")).to.equal(false)
   })
+
 })
 
+describe("LifeCycle: callForPermission", function(){
 
-describe("Navigating", function(){
+    var location = loc("http://leeluolee.github.io/homepage");
+    var obj = {}; 
+    var stateman = StateMan();
+      stateman.state({
+        "normal": { },
+        "normal.blog": {
+          canEnter: function(){
+            return false 
+          },
+          enter: function(){
+            obj['normal.blog']  = true 
+          }
+        },
+        'normal.user': {
+          canLeave: function(){
+            return false
+          },
+          canEnter: function(){
+
+          },
+          enter: function(){
+            obj['normal.chat'] = true
+          }
+        },
+        'normal.chat': {
+          enter: function(){
+            obj['normal.chat'] = true
+          }
+        }
+      })
+      .start({location: location});
+  it("return false in canEnter or canLeave, will stop navigation", function( ){
+    stateman.go('normal.chat')
+    expect(stateman.current.name).to.equal('normal.chat')
+    stateman.go('normal.blog')
+    expect(stateman.current.name).to.equal('normal.chat')
+    stateman.go('normal.user')
+    expect(stateman.current.name).to.equal('normal.user')
+    expect(stateman.active.name).to.equal('normal.user')
+    expect(stateman.previous.name).to.equal('normal.chat')
+    stateman.go('normal.chat')
+    expect(stateman.current.name).to.equal('normal.user')
+    expect(stateman.active.name).to.equal('normal.user')
+    expect(stateman.previous.name).to.equal('normal.chat')
+    
+  })
+  if(typeof Promise !== 'undefined'){
+    var obj = {}; 
+    var pstateman = StateMan();
+
+    pstateman.state({
+      "promise": { },
+      "promise.blog": {
+        canEnter: function(){
+          return Promise.reject()
+        },
+        enter: function(){
+          pstateman['promise.blog']  = true 
+        }
+      },
+      'promise.user': {
+        canLeave: function(){
+          return new Promise(function(resolve, reject){
+            setTimeout(reject, 300)
+          })
+        }
+      },
+      'promise.chat': {
+        enter: function(){
+          return new Promise(function(resolve, reject){
+            setTimeout(function(){
+              pstateman['promise.chat'] = true;
+              resolve();
+            }, 300)
+          })
+        },
+        leave: function(){
+          return new Promise(function(resolve, reject){
+            setTimeout(function(){
+              pstateman['promise.chat'] = false;
+              resolve();
+            }, 300)
+          })
+        }
+      }
+    }).start({'location':loc("http://leeluolee.github.io/homepage")} )
+    it("canEnter and canLeave accpet [Promise] as return value", function( done ){
+      pstateman.go('promise.chat', function(option){
+        expect(option.phase).to.equal('completion')
+        expect(pstateman['promise.chat']).to.equal(true)
+        pstateman.go('promise.blog', function(option){
+          expect(option.phase).to.equal('permission')
+          expect(pstateman['promise.blog']).to.equal(undefined)
+          pstateman.go('promise.user', function(option){
+            expect(option.phase).to.equal('completion')
+            expect(pstateman.current.name).to.equal('promise.user')
+            expect(pstateman.active.name).to.equal('promise.user')
+            expect(pstateman.previous.name).to.equal('promise.chat')
+            pstateman.nav('/promise/chat', function(option){
+              expect(option.phase).to.equal('permission')
+              expect(pstateman.current.name).to.equal('promise.user')
+              expect(pstateman.active.name).to.equal('promise.user')
+              expect(pstateman.previous.name).to.equal('promise.chat')
+              done()
+            })
+
+          })
+        })
+        expect(pstateman['promise.blog']).to.equal(undefined)
+      })
+      expect(pstateman['promise.chat']).to.equal(undefined)
+    })
+    it("if you resolve promise with `false`, it is same as reject", function(){
+
+    })
+  }
+
+})
+
+describe("LifeCycle: Navigating", function(){
   var location = loc("http://leeluolee.github.io/");
   var obj = {}; 
   var stateman = new StateMan();
