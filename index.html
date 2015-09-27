@@ -19,13 +19,10 @@
   <title>StateMan Reference</title>
 
   <!-- Flatdoc -->
-  <script src="bower_components/jquery/dist/jquery.js"></script>
-  <script src='bower_components/flatdoc/legacy.js'></script>
-  <script src='js/flat-fix.js'></script>
+  <script src='flat-bundle.js'></script>
 
   <!-- Flatdoc theme -->
-  <link  href='bower_components/flatdoc/theme-white/style.css' rel='stylesheet'>
-  <script src='bower_components/flatdoc/theme-white/script.js'></script>
+  <link  href='flat-style.css' rel='stylesheet'>
 
   <!-- Meta -->
   <meta content="StateMan Reference" property="og:title">
@@ -68,10 +65,10 @@
       <h1> <a href="/api">StateMan reference</a></h1>
       <ul>
         <li>
-          <a href='?API-en' class='english j-toggle'>English</a>
+          <a href='?lang=en' class='english j-toggle'>English</a>
         </li>
         <li>
-          <a href='?API-zh' class='english j-toggle'>中文</a>
+          <a href='?lang=zh' class='english j-toggle'>中文</a>
         </li>
       </ul>
     </div>
@@ -92,30 +89,55 @@
   <script>
 
   function render(config, pushHistory){
-    var name  = config.doc + "-" + config.lang;
+    var name  = config.doc + (config.v?'_v'+config.v:'') + "-" + config.lang;
     Flatdoc.run({
-      fetcher: Flatdoc.file("https://rawgit.com/leeluolee/stateman/master/docs/" + name + ".md")
+      fetcher: Flatdoc.file("./document/" + name + ".md")
     });
-    pushHistory && history.pushState({}, "StateMan Reference","?" + name)
+    pushHistory && history.pushState({}, "StateMan Reference","?" + obj2str(config) )
   }
-  function getDocAndLang(search){
-    search = search.replace( "?" ,'').split("-");
-    var lang = search[1] || "en";
-    var doc = search[0] || "API";
-    return {
-      doc: search[0] || "API",
-      lang: search[1] || "en"
+
+  function obj2str(o){
+    var str = ''
+    for(var i in o){
+      if(o[i]) str += i + '=' + o[i] + '&';
     }
+    return str.slice(0, -1);
   }
+
+  function getSearch(search){
+    search = search || document.location.search;
+    var obj = {}
+    if(search){
+        var params = search.substr(1).split('&') ;
+        for ( var i = 0 ; i < params.length ; i++ ) {
+           var param = params[i].split('=') ;
+           var paramName = decodeURIComponent( param[0] ) ;
+           var paramValue = decodeURIComponent( param[1] ) ;
+           obj[ paramName ] = paramValue ;
+        }
+    }
+    return obj;
+  }
+
+  function getDocAndLang(){
+    var obj = getSearch();
+    obj.doc = obj.doc || 'API';
+    obj.lang = obj.lang || 'en';
+    return obj
+  }
+
   
-  render(getDocAndLang(location.search));
+  render(getDocAndLang());
 
   $(window).on("popstate", function(){
-    render(getDocAndLang(location.search));
+    render(getDocAndLang());
   })
   $('.j-toggle').on("click", function(ev){
     ev.preventDefault();
-    render( getDocAndLang( this.search ) , true);
+    var config = getDocAndLang();
+    var modifier = getSearch(this.search);
+    config.lang = modifier.lang;
+    render( config , true);
 
   })
 

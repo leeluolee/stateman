@@ -1,1 +1,0 @@
-<input type="text" r-model={name} > {name}
