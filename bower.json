@@ -15,6 +15,7 @@
     "node_modules",
     "bin",
     "test",
+    "docs",
     "gulpfile.js",
     "*.json",
     "*.md"

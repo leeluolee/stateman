@@ -1,4 +1,5 @@
 var through = require('through2');
+var deploy = require("gulp-gh-pages");
 var shell = require("gulp-shell");
 var gulp = require('gulp');
 var webpack = require('gulp-webpack');
@@ -134,7 +135,7 @@ gulp.task('mocha', function(){
 
 gulp.task('watch', ["build", 'testbundle'], function(){
   gulp.watch(['src/**/*.js'], ['build']);
-gulp.watch(['docs/API.md'], ['doc']);
+gulp.watch(['docs/src/*.md'], ['doc']);
 
   gulp.watch(['test/spec/*.js', 'src/**/*.js'], ['testbundle'])
 })
@@ -179,7 +180,7 @@ gulp.task("test", ["mocha", "karma"])
 gulp.task('doc', function(){
   return gulp.src(["docs/src/API*.md"]) 
     .pipe(translate({}))
-    .pipe(gulp.dest("docs/"))
+    .pipe(gulp.dest("docs/pages/document"))
 })
 
 // 
@@ -193,6 +194,18 @@ gulp.task('travis', ['jshint' ,'build','mocha',  'karma']);
 gulp.task('server', ['build'], shell.task([
   "./node_modules/puer/bin/puer"
 ]))
+
+
+gulp.task('gh-pages', function () {
+  gulp.src("docs/pages/**/*.*")
+    .pipe(deploy({
+      remoteUrl: "git@github.com:leeluolee/stateman",
+      branch: "gh-pages"
+    }))
+    .on("error", function(err){
+      console.log(err)
+    })
+});
 
 
 

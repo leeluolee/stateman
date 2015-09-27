@@ -43,15 +43,16 @@ stateman.state({
   "app.contact.detail.setting": config, 
   "app.contact.message": config,
   "app.user": cfg({
-    enter: function(){
-      var done = this.async();
-      console.log(this.name + "is pending, 1s later to enter next state")
+    enter: function(option){
+      var done = option.async();
+      console.log(this.name + "is pending, 1s later to get into next state")
       setTimeout(done, 1000)
     },
     leave: function(){
-      var done = this.async();
       console.log(this.name + "is pending, 1s later to leave out")
-      setTimeout(done, 1000)
+      return new Promise(function(resolve){
+        setTimeout(resolve, 1000)
+      })
     }
   }),
   "app.user.list": cfg({url: ""})

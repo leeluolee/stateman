@@ -20,7 +20,7 @@ But stateman is a __standalone library__ with an extremely tiny codebase (10kb m
 
 0. nested routing support.
 1. standalone with tiny codebase.
-2. async routing support if you need asynchronous logic in navigating. 
+2. async routing support if you need asynchronous logic in navigating. Support Promise
 3. html5 history supported, fallback to hash-based in old browser. 
 5. [concise API](https://github.com/leeluolee/stateman/tree/master/docs/API.md), deadly simple to getting start with it.
 6. support IE6+ and other modern browsers.

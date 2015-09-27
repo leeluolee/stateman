@@ -1,0 +1,156 @@
+<!doctype html>
+<!--
+  Instructions:
+
+  - Save this file.
+  - Replace "USER" with your GitHub username.
+  - Replace "REPO" with your GitHub repo name.
+  - Replace "Your Project" with your project name.
+  - Upload this file (or commit to GitHub Pages).
+
+  Customize as you see fit!
+-->
+<html>
+<head>
+  <meta charset='utf-8'>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width">
+
+  <title>StateMan Reference</title>
+
+  <!-- Flatdoc -->
+  <script src='flat-bundle.js'></script>
+
+  <!-- Flatdoc theme -->
+  <link  href='flat-style.css' rel='stylesheet'>
+
+  <!-- Meta -->
+  <meta content="StateMan Reference" property="og:title">
+  <meta content="StateMan Reference" name="description">
+  <style>
+  body{
+    font-size: 14px;
+  }
+  .content h2{
+    text-transform: none;
+  }
+
+  .header li{
+    padding: 0 12px;
+  }
+  .header li a{
+    padding: 0 2px;
+    display: inline-block;
+  }
+
+  .content pre > code{
+    letter-spacing: 0;
+  }
+  .content code{
+   font-family: Consolas, "Liberation Mono", Menlo, Courier, monospace;
+    font-size: 12px;
+  }
+  .content pre > code{
+    
+  }
+
+  </style>
+
+  <!-- Initializer -->
+</head>
+<body role='flatdoc' class='big-h3'>
+
+  <div class='header'>
+    <div class='left'>
+      <h1> <a href="/api">StateMan reference</a></h1>
+      <ul>
+        <li>
+          <a href='?lang=en' class='english j-toggle'>English</a>
+        </li>
+        <li>
+          <a href='?lang=zh' class='english j-toggle'>中文</a>
+        </li>
+      </ul>
+    </div>
+    <div class='right'>
+      <iframe src="http://ghbtns.com/github-btn.html?user=leeluolee&amp;repo=stateman&amp;type=watch&amp;count=true" allowtransparency="true" frameborder="0" scrolling="0" width="110" height="20"></iframe>
+    </div>
+  </div>
+
+  <div class='content-root'>
+    <div class='menubar'>
+      <div class='menu section' role='flatdoc-menu'></div>
+      <div class='section'>
+      </div>
+    </div>
+    <div role='flatdoc-content' class='content'></div>
+  </div>
+
+  <script>
+
+  function render(config, pushHistory){
+    var name  = config.doc + (config.v?'_v'+config.v:'') + "-" + config.lang;
+    Flatdoc.run({
+      fetcher: Flatdoc.file("./document/" + name + ".md")
+    });
+    pushHistory && history.pushState({}, "StateMan Reference","?" + obj2str(config) )
+  }
+
+  function obj2str(o){
+    var str = ''
+    for(var i in o){
+      if(o[i]) str += i + '=' + o[i] + '&';
+    }
+    return str.slice(0, -1);
+  }
+
+  function getSearch(search){
+    search = search || document.location.search;
+    var obj = {}
+    if(search){
+        var params = search.substr(1).split('&') ;
+        for ( var i = 0 ; i < params.length ; i++ ) {
+           var param = params[i].split('=') ;
+           var paramName = decodeURIComponent( param[0] ) ;
+           var paramValue = decodeURIComponent( param[1] ) ;
+           obj[ paramName ] = paramValue ;
+        }
+    }
+    return obj;
+  }
+
+  function getDocAndLang(){
+    var obj = getSearch();
+    obj.doc = obj.doc || 'API';
+    obj.lang = obj.lang || 'en';
+    return obj
+  }
+
+  
+  render(getDocAndLang());
+
+  $(window).on("popstate", function(){
+    render(getDocAndLang());
+  })
+  $('.j-toggle').on("click", function(ev){
+    ev.preventDefault();
+    var config = getDocAndLang();
+    var modifier = getSearch(this.search);
+    config.lang = modifier.lang;
+    render( config , true);
+
+  })
+
+  $(document).on('flatdoc:ready', function() {
+    // I don't like this section to appear
+    if(location.hash && location.hash !== "#"){
+      $('html, body').animate({
+        scrollTop: $(location.hash).offset().top
+      }, 100);
+    }
+   
+  });
+
+  </script>
+</body>
+</html>

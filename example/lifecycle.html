@@ -2,104 +2,78 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>StateMan API test</title>
+  <title>StateMan Test</title>
   <script src="../stateman.js"></script>
 </head>
 <body>
 
-<div>
-<RouterApp on-end={}>
-  <div class="g-sd">
-  </div>
-  <div class="g-main">
-    <Route name='user' url='/hello/:id' >
-      <tab></tab>
-      <Route name = 'config' ></Route>
-    </Route>
-    <Route name='blog' component='hello'>
-      <Route name = 'config' ></Route>
-    </Route>
-    <Route></Route>
-  </div>
-</RouterApp>
-</div>
-
-<h2>OPEN console to find the log</h2>
-
 <ul>
-  <li><strong>(app)</strong>  <a href="#/app">/app </a></li>
-  <li><strong>(app.contact)</strong>  <a href="#/app/contact">/app/contact </a></li>
-  <li><strong>(app.contact.message)</strong>  <a href="#/app/contact/message">/app/contact/message </a></li>
-  <li><strong>(app.contact.detail)</strong>  <a href="#/app/contact/2?name=leeluolee">/app/contact/2?name=leeluolee </a></li>
-  <li><strong>(app.contact.detail.setting)</strong>  <a href="#/app/contact/2/setting">/app/contact/2/setting </a></li>
-  <li><strong>(app.contact.detail.setting)</strong>  <a href="#/app/contact/3/setting">/app/contact/3/setting </a></li>
-  <li><strong>(app.user.list)</strong>  <a href="#/app/user">/app/user </a></li>
+  <li><a href="#/app">/app"</a></li>
+  <li><a href="#/app/blog">/app/blog"</a></li>
+  <li><a href="#/app/blog/detail">/app/blog/detail</a></li>
 </ul>
-
+  
 <script>
-var config = {
-  enter: function(option){ console.log("enter: " + this.name + "; param: " + JSON.stringify(option.param)) },
-  leave: function(option){ console.log("leave: " + this.name + "; param: " + JSON.stringify(option.param)) },
-  update: function(option){ console.log("update: " + this.name + "; param: " + JSON.stringify(option.param)) },
-}
 
-function cfg(o){
-  o.enter = o.enter || config.enter  
-  o.leave = o.leave || config.leave  
-  o.update = o.update || config.update  
-  return o;
-}
-
-var stateman = new StateMan();
-
-stateman.state({
-
-  "app": config,
-  "app.contact":  config,
-  "app.contact.detail": cfg({url: ":id(\\d+)"}),
-  "app.contact.detail.setting": config, 
-  "app.contact.message": config,
-  "app.user": cfg({
-
-
-    // enter: function( option ){
-
-    //   var done = option.async();
-
-    //   $.ajax('/home', function(json){
-    //     done(false)
-    //   })
-
-    //   stateman.go();
-
-    // },
-
-    enter: function(option){
-      this.loading = true
-      return cache.getList().then(function(json){
-        option.blogs = blog.lists = list
-      })
+  var config = {
+    enter: function(){
+      console.log("enter: " + this.name)
     },
-
+    leave: function(){
+      console.log("leave: " + this.name)
+    },
+    canEnter: function(){
+      console.log("canEnter: " + this.name)
+    },
     canLeave: function(){
-      if(this.loading) return false; 
+      console.log("canLeave: " + this.name)
     }
-
-  }),
-  "app.user.list": cfg({url: ""})
-
-}).on("notfound", function(){
-
-  this.go('app') // if not found
-
-}).start();
-
-stateman.on("begin", function(evt){
-  if(evt.current.name === 'app.contact.message' && evt.previous.name.indexOf("app.user") === 0){
-    evt.stop();
-    alert(" nav from 'app.user.*' to 'app.contact.message' is stoped");
   }
-})
+
+  function create(o){
+    o = o || {};
+    o.enter= o.enter || config.enter;
+    o.leave = o.leave || config.leave;
+    return o;
+  }
+
+  var delay = function(time){
+    return new Promise(function(resolve){
+      setTimeout( resolve, time)
+    })
+  }
+
+  var confirmp = function(str){
+    return new Promise(function (resolve, reject){
+      if( confirm(str) ) return resolve()
+      reject();
+    })
+  }
+
+  var stateman = new StateMan();
+
+  var blogDelay = false;
+
+  stateman
+    .state("app", config)
+    .state("app.blog", create({
+      enter: function(option){
+        blogDelay = true;
+        console.log('app.blog is blocked for 4s ')
+        return delay(4000).then(function(){
+          console.log('enter app.blog')
+          blogDelay = false
+        })
+        // console.log('enter contact.list')
+      },
+      canLeave: function(option){
+        if(blogDelay){
+          return confirmp('blog is pending, want to leave?')
+        }
+      }
+    }))
+    .state('app.blog.detail', config)
+    .start({})
 
 
 </script>

@@ -235,11 +235,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	      // not touch the end in previous transtion
 
-	      if( this.pending ){
-	        var pendingCurrent = this.pending.current;
-	        this.pending.stop();
-	        _.log("naving to [" + pendingCurrent.name + "] will be stoped, trying to ["+state.name+"] now");
-	      }
+	      // if( this.pending ){
+	      //   var pendingCurrent = this.pending.current;
+	      //   this.pending.stop();
+	      //   _.log("naving to [" + pendingCurrent.name + "] will be stoped, trying to ["+state.name+"] now");
+	      // }
 	      // if(this.active !== this.current){
 	      //   // we need return
 	      //   _.log("naving to [" + this.current.name + "] will be stoped, trying to ["+state.name+"] now");
@@ -284,7 +284,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this._walk(current, state, option, true ,function( notRejected ){
 
 	          if( notRejected===false ){
-
 	            // if reject in callForPermission, we will return to old 
 	            prepath && this.nav( prepath, {silent: true})
 
@@ -294,8 +293,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	          } 
 
-	          // start transition
-	          this.preOption = this.pending;
+	          // stop previous pending.
+	          if(this.pending) this.pending.stop() 
 	          this.pending = option;
 	          this.path = option.path;
 	          this.current = option.current;
@@ -309,6 +308,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	              done(false)
 	              return this.emit('abort', option);
 	            }
+
 
 	            this.active = option.current;
 

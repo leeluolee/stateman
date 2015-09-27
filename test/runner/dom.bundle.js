@@ -57,7 +57,7 @@
 /* 1 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var State = __webpack_require__(8);
+	var State = __webpack_require__(4);
 	var expect = __webpack_require__(9)
 
 
@@ -408,7 +408,7 @@
 	//    For all details and documentation:
 	//    http://backbonejs.org
 
-	var StateMan = __webpack_require__(4);
+	var StateMan = __webpack_require__(8);
 	var expect = __webpack_require__(9)
 	var _ = __webpack_require__(5);
 	var doc = typeof document !== "undefined"? document: {};
@@ -1323,472 +1323,160 @@
 /* 4 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var State = __webpack_require__(8),
-	  Histery = __webpack_require__(7),
-	  brow = __webpack_require__(6),
-	  _ = __webpack_require__(5),
-	  baseTitle = document.title,
-	  stateFn = State.prototype.state;
+	var _ = __webpack_require__(5);
 
 
-	function StateMan(options){
 
-	  if(this instanceof StateMan === false){ return new StateMan(options)}
-	  options = options || {};
-	  // if(options.history) this.history = options.history;
-
+	function State(option){
 	  this._states = {};
-	  this._stashCallback = [];
-	  this.strict = options.strict;
-	  this.current = this.active = this;
-	  this.title = options.title;
-	  this.on("end", function(){
-	    var cur = this.current,title;
-	    while( cur ){
-	      title = cur.title;
-	      if(title) break; 
-	      cur = cur.parent;
-	    }
-	    document.title = typeof title === "function"? cur.title(): String( title || baseTitle ) ;
-	  })
-
+	  this._pending = false;
+	  this.visited = false;
+	  if(option) this.config(option);
 	}
 
 
-	_.extend( _.emitable( StateMan ), {
-	    // keep blank
-	    name: '',
+	//regexp cache
+	State.rCache = {};
 
-	    state: function(stateName, config){
-
-	      var active = this.active;
-	      if(typeof stateName === "string" && active){
-	         stateName = stateName.replace("~", active.name)
-	         if(active.parent) stateName = stateName.replace("^", active.parent.name || "");
+	_.extend( _.emitable( State ), {
+	  
+	  state: function(stateName, config){
+	    if(_.typeOf(stateName) === "object"){
+	      for(var i in stateName){
+	        this.state(i, stateName[i])
 	      }
-	      // ^ represent current.parent
-	      // ~ represent  current
-	      // only 
-	      return stateFn.apply(this, arguments);
-
-	    },
-	    start: function(options){
-
-	      if( !this.history ) this.history = new Histery(options); 
-	      if( !this.history.isStart ){
-	        this.history.on("change", _.bind(this._afterPathChange, this));
-	        this.history.start();
-	      } 
 	      return this;
-
-	    },
-	    stop: function(){
-	      this.history.stop();
-	    },
-	    // @TODO direct go the point state
-	    go: function(state, option, callback){
-	      option = option || {};
-	      if(typeof state === "string") state = this.state(state);
-
-	      if(!state) return;
-
-	      if(typeof option === "function"){
-	        callback = option;
-	        option = {};
-	      }
-
-	      if(option.encode !== false){
-	        var url = state.encode(option.param)
-	        option.path = url;
-	        this.nav(url, {silent: true, replace: option.replace});
-	      }
-
-	      this._go(state, option, callback);
-
-	      return this;
-	    },
-	    nav: function(url, options, callback){
-	      if(typeof options === "function"){
-	        callback = options;
-	        options = {};
-	      }
-	      options = options || {};
-
-	      options.path = url;
-
-	      this.history.nav( url, _.extend({silent: true}, options));
-	      if(!options.silent) this._afterPathChange( _.cleanPath(url) , options , callback)
-
-	      return this;
-	    },
-	    decode: function(path){
-
-	      var pathAndQuery = path.split("?");
-	      var query = this._findQuery(pathAndQuery[1]);
-	      path = pathAndQuery[0];
-	      var state = this._findState(this, path);
-	      if(state) _.extend(state.param, query);
-	      return state;
-
-	    },
-	    encode: function(stateName, param){
-	      var state = this.state(stateName);
-	      return state? state.encode(param) : '';
-	    },
-	    // notify specify state
-	    // check the active statename whether to match the passed condition (stateName and param)
-	    is: function(stateName, param, isStrict){
-	      if(!stateName) return false;
-	      var stateName = (stateName.name || stateName);
-	      var current = this.current, currentName = current.name;
-	      var matchPath = isStrict? currentName === stateName : (currentName + ".").indexOf(stateName + ".")===0;
-	      return matchPath && (!param || _.eql(param, this.param)); 
-	    },
-	    // after pathchange changed
-	    // @TODO: afterPathChange need based on decode
-	    _afterPathChange: function(path, options ,callback){
-
-	      this.emit("history:change", path);
-
-	      var found = this.decode(path);
-
-	      options = options || {};
-
-	      options.path = path;
-
-	      if(!found){
-	        // loc.nav("$default", {silent: true})
-	        return this._notfound(options);
-	      }
-
-	      options.param = found.param;
-
-	      this._go( found, options, callback );
-	    },
-	    _notfound: function(options){
-
-	      var $notfound = this.state("$notfound");
-
-	      if( $notfound ) this._go($notfound, options);
-
-	      return this.emit("notfound", options);
-	    },
-	    // goto the state with some option
-	    _go: function(state, option, callback){
-
-	      var over;
-
-	      // if(typeof state === "string") state = this.state(state);
-
-	      // if(!state) return _.log("destination is not defined")
-
-	      if(state.hasNext && this.strict) return this._notfound({name: state.name});
-
-	      // not touch the end in previous transtion
-
-	      if( this.pending ){
-	        var pendingCurrent = this.pending.current;
-	        this.pending.stop();
-	        _.log("naving to [" + pendingCurrent.name + "] will be stoped, trying to ["+state.name+"] now");
-	      }
-	      // if(this.active !== this.current){
-	      //   // we need return
-	      //   _.log("naving to [" + this.current.name + "] will be stoped, trying to ["+state.name+"] now");
-	      //   this.current = this.active;
-	      //   // back to before
-	      // }
-	      option.param = option.param || {};
-
-	      var current = this.current,
-	        baseState = this._findBase(current, state),
-	        prepath = this.path,
-	        self = this;
-
-
-	      if( typeof callback === "function" ) this._stashCallback.push(callback);
-	      // if we done the navigating when start
-	      function done(success){
-	        over = true;
-	        if( success !== false ) self.emit("end");
-	        self.pending = null;
-	        self._popStash(option);
-	      }
-	      
-	      option.previous = current;
-	      option.current = state;
-
-	      if(current !== state){
-	        option.stop = function(){
-	          done(false);
-	          self.nav( prepath? prepath: "/", {silent:true});
-	        }
-	        self.emit("begin", option);
-
-	      }
-	      // if we stop it in 'begin' listener
-	      if(over === true) return;
-
-	      if(current !== state){
-	        // option as transition object.
-
-	        option.phase = 'permission';
-	        this._walk(current, state, option, true ,function( notRejected ){
-
-	          if( notRejected===false ){
-
-	            // if reject in callForPermission, we will return to old 
-	            prepath && this.nav( prepath, {silent: true})
-
-	            done(false, 2)
-
-	            return this.emit('abort', option);
-
-	          } 
-
-	          // start transition
-	          this.preOption = this.pending;
-	          this.pending = option;
-	          this.path = option.path;
-	          this.current = option.current;
-	          this.param = option.param;
-	          this.previous = option.previous;
-	          option.phase = 'navigation';
-	          this._walk(current, state, option, false, function( notRejected ){
-
-	            if( notRejected === false ){
-	              this.current = this.active;
-	              done(false)
-	              return this.emit('abort', option);
-	            }
-
-	            this.active = option.current;
-
-	            option.phase = 'completion';
-	            return done()
-
-	          }.bind(this) )
-
-	        }.bind(this) )
-
-	      }else{
-	        self._checkQueryAndParam(baseState, option);
-	        this.pending = null;
-	        done();
-	      }
-	      
-	    },
-	    _popStash: function(option){
-
-	      var stash = this._stashCallback, len = stash.length;
-
-	      this._stashCallback = [];
-
-	      if(!len) return;
-
-	      for(var i = 0; i < len; i++){
-	        stash[i].call(this, option)
-	      }
-	    },
-
-	    // the transition logic  Used in Both canLeave canEnter && leave enter LifeCycle
-
-	    _walk: function(from, to, option, callForPermit , callback){
-
-	      // nothing -> app.state
-	      var parent = this._findBase(from , to);
-
-
-	      option.basckward = true;
-	      this._transit( from, parent, option, callForPermit , function( notRejected ){
-
-	        if( notRejected === false ) return callback( notRejected );
-
-	        // only actual transiton need update base state;
-	        if( !callForPermit )  this._checkQueryAndParam(parent, option)
-
-	        option.basckward = false;
-	        this._transit( parent, to, option, callForPermit,  callback)
-
-	      }.bind(this) )
-
-	    },
-
-	    _transit: function(from, to, option, callForPermit, callback){
-	      //  touch the ending
-	      if( from === to ) return callback();
-
-	      var back = from.name.length > to.name.length;
-	      var method = back? 'leave': 'enter';
-	      var applied;
-
-	      // use canEnter to detect permission
-	      if( callForPermit) method = 'can' + method.replace(/^\w/, function(a){ return a.toUpperCase() });
-
-	      var loop = function( notRejected ){
-
-
-	        // stop transition or touch the end
-	        if( applied === to || notRejected === false ) return callback(notRejected);
-
-	        if( !applied ) {
-
-	          applied = back? from : this._computeNext(from, to);
-
-	        }else{
-
-	          applied = this._computeNext(applied, to);
-	        }
-
-	        if( (back && applied === to) || !applied )return callback( notRejected )
-
-	        this._moveOn( applied, method, option, loop );
-
-	      }.bind(this);
-
-	      loop();
-	    },
-
-	    _moveOn: function( applied, method, option, callback){
-
-	      var isDone = false;
-	      var isPending = false;
-
-	      option.async = function(){
-
-	        isPending = true;
-
-	        return done;
-	      }
-
-	      function done( notRejected ){
-	        if( isDone ) return;
-	        isPending = false;
-	        isDone = true;
-	        callback( notRejected );
-	      }
-
-	      
-
-	      option.stop = function(){
-	        done( false );
-	      }
-
-
-	      this.active = applied;
-	      var retValue = applied[method]? applied[method]( option ): true;
-
-	      if(method === 'enter') applied.visited = true;
-	      // promise
-	      // need breadk , if we call option.stop first;
-
-	      if( _.isPromise(retValue) ){
-
-	        return this._wrapPromise(retValue, done); 
-
-	      }
-
-	      // if haven't call option.async yet
-	      if( !isPending ) done( retValue )
-
-	    },
-
-
-	    _wrapPromise: function( promise, next ){
-
-	      return promise.then( next, next.bind(this, false) ) ;
-
-	    },
-
-	    _computeNext: function( from, to ){
-
-	      var fname = from.name;
-	      var tname = to.name;
-
-	      var tsplit = tname.split('.')
-	      var fsplit = fname.split('.')
-
-	      var tlen = tsplit.length;
-	      var flen = fsplit.length;
-
-	      if(fname === '') flen = 0;
-	      if(tname === '') tlen = 0;
-
-	      if( flen < tlen ){
-	        fsplit[flen] = tsplit[flen];
-	      }else{
-	        fsplit.pop();
-	      }
-
-	      return this.state(fsplit.join('.'))
-
-	    },
-
-	    _findQuery: function(querystr){
-
-	      var queries = querystr && querystr.split("&"), query= {};
-	      if(queries){
-	        var len = queries.length;
-	        var query = {};
-	        for(var i =0; i< len; i++){
-	          var tmp = queries[i].split("=");
-	          query[tmp[0]] = tmp[1];
-	        }
-	      }
-	      return query;
-
-	    },
-	    _findState: function(state, path){
-	      var states = state._states, found, param;
-
-	      // leaf-state has the high priority upon branch-state
-	      if(state.hasNext){
-	        for(var i in states) if(states.hasOwnProperty(i)){
-	          found = this._findState( states[i], path );
-	          if( found ) return found;
-	        }
-	      }
-	      // in strict mode only leaf can be touched
-	      // if all children is don. will try it self
-	      param = state.regexp && state.decode(path);
-	      if(param){
-	        state.param = param;
-	        return state;
-	      }else{
-	        return false;
-	      }
-	    },
-	    // find the same branch;
-	    _findBase: function(now, before){
-
-	      if(!now || !before || now == this || before == this) return this;
-	      var np = now, bp = before, tmp;
-	      while(np && bp){
-	        tmp = bp;
-	        while(tmp){
-	          if(np === tmp) return tmp;
-	          tmp = tmp.parent;
-	        }
-	        np = np.parent;
-	      }
-	    },
-	    // check the query and Param
-	    _checkQueryAndParam: function(baseState, options){
-
-	      var from = baseState;
-	      while( from !== this ){
-	        from.update && from.update(options);
-	        from = from.parent;
-	      }
-
 	    }
+	    var current, next, nextName, states = this._states, i=0;
 
-	}, true)
+	    if( typeof stateName === "string" ) stateName = stateName.split(".");
+
+	    var slen = stateName.length, current = this;
+	    var stack = [];
 
 
+	    do{
+	      nextName = stateName[i];
+	      next = states[nextName];
+	      stack.push(nextName);
+	      if(!next){
+	        if(!config) return;
+	        next = states[nextName] = new State();
+	        _.extend(next, {
+	          parent: current,
+	          manager: current.manager || current,
+	          name: stack.join("."),
+	          currentName: nextName
+	        })
+	        current.hasNext = true;
+	        next.configUrl();
+	      }
+	      current = next;
+	      states = next._states;
+	    }while((++i) < slen )
 
-	module.exports = StateMan;
+	    if(config){
+	       next.config(config);
+	       return this;
+	    } else {
+	      return current;
+	    }
+	  },
+
+	  config: function(configure){
+
+	    configure = this._getConfig(configure);
+
+	    for(var i in configure){
+	      var prop = configure[i];
+	      switch(i){
+	        case "url": 
+	          if(typeof prop === "string"){
+	            this.url = prop;
+	            this.configUrl();
+	          }
+	          break;
+	        case "events": 
+	          this.on(prop)
+	          break;
+	        default:
+	          this[i] = prop;
+	      }
+	    }
+	  },
+
+	  // children override
+	  _getConfig: function(configure){
+	    return typeof configure === "function"? {enter: configure} : configure;
+	  },
+
+	  //from url 
+
+	  configUrl: function(){
+	    var url = "" , base = this, currentUrl;
+	    var _watchedParam = [];
+
+	    while( base ){
+
+	      url = (typeof base.url === "string" ? base.url: (base.currentName || "")) + "/" + url;
+
+	      // means absolute;
+	      if(url.indexOf("^/") === 0) {
+	        url = url.slice(1);
+	        break;
+	      }
+	      base = base.parent;
+	    }
+	    this.pattern = _.cleanPath("/" + url);
+	    var pathAndQuery = this.pattern.split("?");
+	    this.pattern = pathAndQuery[0];
+	    // some Query we need watched
+
+	    _.extend(this, _.normalize(this.pattern), true);
+	  },
+	  encode: function(param){
+	    var state = this;
+	    param = param || {};
+	    
+	    var matched = "%";
+
+	    var url = state.matches.replace(/\(([\w-]+)\)/g, function(all, capture){
+	      var sec = param[capture] || "";
+	      matched+= capture + "%";
+	      return sec;
+	    }) + "?";
+
+	    // remained is the query, we need concat them after url as query
+	    for(var i in param) {
+	      if( matched.indexOf("%"+i+"%") === -1) url += i + "=" + param[i] + "&";
+	    }
+	    return _.cleanPath( url.replace(/(?:\?|&)$/,"") )
+	  },
+	  decode: function( path ){
+	    var matched = this.regexp.exec(path),
+	      keys = this.keys;
+
+	    if(matched){
+
+	      var param = {};
+	      for(var i =0,len=keys.length;i<len;i++){
+	        param[keys[i]] = matched[i+1] 
+	      }
+	      return param;
+	    }else{
+	      return false;
+	    }
+	  },
+	  // by default, all lifecycle is permitted
+
+	  async: function(){
+	    throw new Error( 'please use option.async instead')
+	  },
+
+	})
 
 
+	module.exports = State;
 
 /***/ },
 /* 5 */
@@ -2227,160 +1915,472 @@
 /* 8 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var _ = __webpack_require__(5);
+	var State = __webpack_require__(4),
+	  Histery = __webpack_require__(7),
+	  brow = __webpack_require__(6),
+	  _ = __webpack_require__(5),
+	  baseTitle = document.title,
+	  stateFn = State.prototype.state;
 
 
+	function StateMan(options){
 
-	function State(option){
+	  if(this instanceof StateMan === false){ return new StateMan(options)}
+	  options = options || {};
+	  // if(options.history) this.history = options.history;
+
 	  this._states = {};
-	  this._pending = false;
-	  this.visited = false;
-	  if(option) this.config(option);
+	  this._stashCallback = [];
+	  this.strict = options.strict;
+	  this.current = this.active = this;
+	  this.title = options.title;
+	  this.on("end", function(){
+	    var cur = this.current,title;
+	    while( cur ){
+	      title = cur.title;
+	      if(title) break; 
+	      cur = cur.parent;
+	    }
+	    document.title = typeof title === "function"? cur.title(): String( title || baseTitle ) ;
+	  })
+
 	}
 
 
-	//regexp cache
-	State.rCache = {};
+	_.extend( _.emitable( StateMan ), {
+	    // keep blank
+	    name: '',
 
-	_.extend( _.emitable( State ), {
-	  
-	  state: function(stateName, config){
-	    if(_.typeOf(stateName) === "object"){
-	      for(var i in stateName){
-	        this.state(i, stateName[i])
+	    state: function(stateName, config){
+
+	      var active = this.active;
+	      if(typeof stateName === "string" && active){
+	         stateName = stateName.replace("~", active.name)
+	         if(active.parent) stateName = stateName.replace("^", active.parent.name || "");
 	      }
+	      // ^ represent current.parent
+	      // ~ represent  current
+	      // only 
+	      return stateFn.apply(this, arguments);
+
+	    },
+	    start: function(options){
+
+	      if( !this.history ) this.history = new Histery(options); 
+	      if( !this.history.isStart ){
+	        this.history.on("change", _.bind(this._afterPathChange, this));
+	        this.history.start();
+	      } 
 	      return this;
-	    }
-	    var current, next, nextName, states = this._states, i=0;
 
-	    if( typeof stateName === "string" ) stateName = stateName.split(".");
+	    },
+	    stop: function(){
+	      this.history.stop();
+	    },
+	    // @TODO direct go the point state
+	    go: function(state, option, callback){
+	      option = option || {};
+	      if(typeof state === "string") state = this.state(state);
 
-	    var slen = stateName.length, current = this;
-	    var stack = [];
+	      if(!state) return;
 
-
-	    do{
-	      nextName = stateName[i];
-	      next = states[nextName];
-	      stack.push(nextName);
-	      if(!next){
-	        if(!config) return;
-	        next = states[nextName] = new State();
-	        _.extend(next, {
-	          parent: current,
-	          manager: current.manager || current,
-	          name: stack.join("."),
-	          currentName: nextName
-	        })
-	        current.hasNext = true;
-	        next.configUrl();
+	      if(typeof option === "function"){
+	        callback = option;
+	        option = {};
 	      }
-	      current = next;
-	      states = next._states;
-	    }while((++i) < slen )
 
-	    if(config){
-	       next.config(config);
-	       return this;
-	    } else {
-	      return current;
-	    }
-	  },
-
-	  config: function(configure){
-
-	    configure = this._getConfig(configure);
-
-	    for(var i in configure){
-	      var prop = configure[i];
-	      switch(i){
-	        case "url": 
-	          if(typeof prop === "string"){
-	            this.url = prop;
-	            this.configUrl();
-	          }
-	          break;
-	        case "events": 
-	          this.on(prop)
-	          break;
-	        default:
-	          this[i] = prop;
+	      if(option.encode !== false){
+	        var url = state.encode(option.param)
+	        option.path = url;
+	        this.nav(url, {silent: true, replace: option.replace});
 	      }
-	    }
-	  },
 
-	  // children override
-	  _getConfig: function(configure){
-	    return typeof configure === "function"? {enter: configure} : configure;
-	  },
+	      this._go(state, option, callback);
 
-	  //from url 
-
-	  configUrl: function(){
-	    var url = "" , base = this, currentUrl;
-	    var _watchedParam = [];
-
-	    while( base ){
-
-	      url = (typeof base.url === "string" ? base.url: (base.currentName || "")) + "/" + url;
-
-	      // means absolute;
-	      if(url.indexOf("^/") === 0) {
-	        url = url.slice(1);
-	        break;
+	      return this;
+	    },
+	    nav: function(url, options, callback){
+	      if(typeof options === "function"){
+	        callback = options;
+	        options = {};
 	      }
-	      base = base.parent;
-	    }
-	    this.pattern = _.cleanPath("/" + url);
-	    var pathAndQuery = this.pattern.split("?");
-	    this.pattern = pathAndQuery[0];
-	    // some Query we need watched
+	      options = options || {};
 
-	    _.extend(this, _.normalize(this.pattern), true);
-	  },
-	  encode: function(param){
-	    var state = this;
-	    param = param || {};
-	    
-	    var matched = "%";
+	      options.path = url;
 
-	    var url = state.matches.replace(/\(([\w-]+)\)/g, function(all, capture){
-	      var sec = param[capture] || "";
-	      matched+= capture + "%";
-	      return sec;
-	    }) + "?";
+	      this.history.nav( url, _.extend({silent: true}, options));
+	      if(!options.silent) this._afterPathChange( _.cleanPath(url) , options , callback)
 
-	    // remained is the query, we need concat them after url as query
-	    for(var i in param) {
-	      if( matched.indexOf("%"+i+"%") === -1) url += i + "=" + param[i] + "&";
-	    }
-	    return _.cleanPath( url.replace(/(?:\?|&)$/,"") )
-	  },
-	  decode: function( path ){
-	    var matched = this.regexp.exec(path),
-	      keys = this.keys;
+	      return this;
+	    },
+	    decode: function(path){
 
-	    if(matched){
+	      var pathAndQuery = path.split("?");
+	      var query = this._findQuery(pathAndQuery[1]);
+	      path = pathAndQuery[0];
+	      var state = this._findState(this, path);
+	      if(state) _.extend(state.param, query);
+	      return state;
 
-	      var param = {};
-	      for(var i =0,len=keys.length;i<len;i++){
-	        param[keys[i]] = matched[i+1] 
+	    },
+	    encode: function(stateName, param){
+	      var state = this.state(stateName);
+	      return state? state.encode(param) : '';
+	    },
+	    // notify specify state
+	    // check the active statename whether to match the passed condition (stateName and param)
+	    is: function(stateName, param, isStrict){
+	      if(!stateName) return false;
+	      var stateName = (stateName.name || stateName);
+	      var current = this.current, currentName = current.name;
+	      var matchPath = isStrict? currentName === stateName : (currentName + ".").indexOf(stateName + ".")===0;
+	      return matchPath && (!param || _.eql(param, this.param)); 
+	    },
+	    // after pathchange changed
+	    // @TODO: afterPathChange need based on decode
+	    _afterPathChange: function(path, options ,callback){
+
+	      this.emit("history:change", path);
+
+	      var found = this.decode(path);
+
+	      options = options || {};
+
+	      options.path = path;
+
+	      if(!found){
+	        // loc.nav("$default", {silent: true})
+	        return this._notfound(options);
 	      }
-	      return param;
-	    }else{
-	      return false;
+
+	      options.param = found.param;
+
+	      this._go( found, options, callback );
+	    },
+	    _notfound: function(options){
+
+	      var $notfound = this.state("$notfound");
+
+	      if( $notfound ) this._go($notfound, options);
+
+	      return this.emit("notfound", options);
+	    },
+	    // goto the state with some option
+	    _go: function(state, option, callback){
+
+	      var over;
+
+	      // if(typeof state === "string") state = this.state(state);
+
+	      // if(!state) return _.log("destination is not defined")
+
+	      if(state.hasNext && this.strict) return this._notfound({name: state.name});
+
+	      // not touch the end in previous transtion
+
+	      // if( this.pending ){
+	      //   var pendingCurrent = this.pending.current;
+	      //   this.pending.stop();
+	      //   _.log("naving to [" + pendingCurrent.name + "] will be stoped, trying to ["+state.name+"] now");
+	      // }
+	      // if(this.active !== this.current){
+	      //   // we need return
+	      //   _.log("naving to [" + this.current.name + "] will be stoped, trying to ["+state.name+"] now");
+	      //   this.current = this.active;
+	      //   // back to before
+	      // }
+	      option.param = option.param || {};
+
+	      var current = this.current,
+	        baseState = this._findBase(current, state),
+	        prepath = this.path,
+	        self = this;
+
+
+	      if( typeof callback === "function" ) this._stashCallback.push(callback);
+	      // if we done the navigating when start
+	      function done(success){
+	        over = true;
+	        if( success !== false ) self.emit("end");
+	        self.pending = null;
+	        self._popStash(option);
+	      }
+	      
+	      option.previous = current;
+	      option.current = state;
+
+	      if(current !== state){
+	        option.stop = function(){
+	          done(false);
+	          self.nav( prepath? prepath: "/", {silent:true});
+	        }
+	        self.emit("begin", option);
+
+	      }
+	      // if we stop it in 'begin' listener
+	      if(over === true) return;
+
+	      if(current !== state){
+	        // option as transition object.
+
+	        option.phase = 'permission';
+	        this._walk(current, state, option, true ,function( notRejected ){
+
+	          if( notRejected===false ){
+	            // if reject in callForPermission, we will return to old 
+	            prepath && this.nav( prepath, {silent: true})
+
+	            done(false, 2)
+
+	            return this.emit('abort', option);
+
+	          } 
+
+	          // stop previous pending.
+	          if(this.pending) this.pending.stop() 
+	          this.pending = option;
+	          this.path = option.path;
+	          this.current = option.current;
+	          this.param = option.param;
+	          this.previous = option.previous;
+	          option.phase = 'navigation';
+	          this._walk(current, state, option, false, function( notRejected ){
+
+	            if( notRejected === false ){
+	              this.current = this.active;
+	              done(false)
+	              return this.emit('abort', option);
+	            }
+
+
+	            this.active = option.current;
+
+	            option.phase = 'completion';
+	            return done()
+
+	          }.bind(this) )
+
+	        }.bind(this) )
+
+	      }else{
+	        self._checkQueryAndParam(baseState, option);
+	        this.pending = null;
+	        done();
+	      }
+	      
+	    },
+	    _popStash: function(option){
+
+	      var stash = this._stashCallback, len = stash.length;
+
+	      this._stashCallback = [];
+
+	      if(!len) return;
+
+	      for(var i = 0; i < len; i++){
+	        stash[i].call(this, option)
+	      }
+	    },
+
+	    // the transition logic  Used in Both canLeave canEnter && leave enter LifeCycle
+
+	    _walk: function(from, to, option, callForPermit , callback){
+
+	      // nothing -> app.state
+	      var parent = this._findBase(from , to);
+
+
+	      option.basckward = true;
+	      this._transit( from, parent, option, callForPermit , function( notRejected ){
+
+	        if( notRejected === false ) return callback( notRejected );
+
+	        // only actual transiton need update base state;
+	        if( !callForPermit )  this._checkQueryAndParam(parent, option)
+
+	        option.basckward = false;
+	        this._transit( parent, to, option, callForPermit,  callback)
+
+	      }.bind(this) )
+
+	    },
+
+	    _transit: function(from, to, option, callForPermit, callback){
+	      //  touch the ending
+	      if( from === to ) return callback();
+
+	      var back = from.name.length > to.name.length;
+	      var method = back? 'leave': 'enter';
+	      var applied;
+
+	      // use canEnter to detect permission
+	      if( callForPermit) method = 'can' + method.replace(/^\w/, function(a){ return a.toUpperCase() });
+
+	      var loop = function( notRejected ){
+
+
+	        // stop transition or touch the end
+	        if( applied === to || notRejected === false ) return callback(notRejected);
+
+	        if( !applied ) {
+
+	          applied = back? from : this._computeNext(from, to);
+
+	        }else{
+
+	          applied = this._computeNext(applied, to);
+	        }
+
+	        if( (back && applied === to) || !applied )return callback( notRejected )
+
+	        this._moveOn( applied, method, option, loop );
+
+	      }.bind(this);
+
+	      loop();
+	    },
+
+	    _moveOn: function( applied, method, option, callback){
+
+	      var isDone = false;
+	      var isPending = false;
+
+	      option.async = function(){
+
+	        isPending = true;
+
+	        return done;
+	      }
+
+	      function done( notRejected ){
+	        if( isDone ) return;
+	        isPending = false;
+	        isDone = true;
+	        callback( notRejected );
+	      }
+
+	      
+
+	      option.stop = function(){
+	        done( false );
+	      }
+
+
+	      this.active = applied;
+	      var retValue = applied[method]? applied[method]( option ): true;
+
+	      if(method === 'enter') applied.visited = true;
+	      // promise
+	      // need breadk , if we call option.stop first;
+
+	      if( _.isPromise(retValue) ){
+
+	        return this._wrapPromise(retValue, done); 
+
+	      }
+
+	      // if haven't call option.async yet
+	      if( !isPending ) done( retValue )
+
+	    },
+
+
+	    _wrapPromise: function( promise, next ){
+
+	      return promise.then( next, next.bind(this, false) ) ;
+
+	    },
+
+	    _computeNext: function( from, to ){
+
+	      var fname = from.name;
+	      var tname = to.name;
+
+	      var tsplit = tname.split('.')
+	      var fsplit = fname.split('.')
+
+	      var tlen = tsplit.length;
+	      var flen = fsplit.length;
+
+	      if(fname === '') flen = 0;
+	      if(tname === '') tlen = 0;
+
+	      if( flen < tlen ){
+	        fsplit[flen] = tsplit[flen];
+	      }else{
+	        fsplit.pop();
+	      }
+
+	      return this.state(fsplit.join('.'))
+
+	    },
+
+	    _findQuery: function(querystr){
+
+	      var queries = querystr && querystr.split("&"), query= {};
+	      if(queries){
+	        var len = queries.length;
+	        var query = {};
+	        for(var i =0; i< len; i++){
+	          var tmp = queries[i].split("=");
+	          query[tmp[0]] = tmp[1];
+	        }
+	      }
+	      return query;
+
+	    },
+	    _findState: function(state, path){
+	      var states = state._states, found, param;
+
+	      // leaf-state has the high priority upon branch-state
+	      if(state.hasNext){
+	        for(var i in states) if(states.hasOwnProperty(i)){
+	          found = this._findState( states[i], path );
+	          if( found ) return found;
+	        }
+	      }
+	      // in strict mode only leaf can be touched
+	      // if all children is don. will try it self
+	      param = state.regexp && state.decode(path);
+	      if(param){
+	        state.param = param;
+	        return state;
+	      }else{
+	        return false;
+	      }
+	    },
+	    // find the same branch;
+	    _findBase: function(now, before){
+
+	      if(!now || !before || now == this || before == this) return this;
+	      var np = now, bp = before, tmp;
+	      while(np && bp){
+	        tmp = bp;
+	        while(tmp){
+	          if(np === tmp) return tmp;
+	          tmp = tmp.parent;
+	        }
+	        np = np.parent;
+	      }
+	    },
+	    // check the query and Param
+	    _checkQueryAndParam: function(baseState, options){
+
+	      var from = baseState;
+	      while( from !== this ){
+	        from.update && from.update(options);
+	        from = from.parent;
+	      }
+
 	    }
-	  },
-	  // by default, all lifecycle is permitted
 
-	  async: function(){
-	    throw new Error( 'please use option.async instead')
-	  },
-
-	})
+	}, true)
 
 
-	module.exports = State;
+
+	module.exports = StateMan;
+
+
 
 /***/ },
 /* 9 */
@@ -3684,8 +3684,8 @@
 	 */
 
 	var base64 = __webpack_require__(14)
-	var ieee754 = __webpack_require__(12)
-	var isArray = __webpack_require__(13)
+	var ieee754 = __webpack_require__(13)
+	var isArray = __webpack_require__(12)
 
 	exports.Buffer = Buffer
 	exports.SlowBuffer = Buffer
@@ -4751,6 +4751,45 @@
 /* 12 */
 /***/ function(module, exports, __webpack_require__) {
 
+	
+	/**
+	 * isArray
+	 */
+
+	var isArray = Array.isArray;
+
+	/**
+	 * toString
+	 */
+
+	var str = Object.prototype.toString;
+
+	/**
+	 * Whether or not the given `val`
+	 * is an array.
+	 *
+	 * example:
+	 *
+	 *        isArray([]);
+	 *        // > true
+	 *        isArray(arguments);
+	 *        // > false
+	 *        isArray('');
+	 *        // > false
+	 *
+	 * @param {mixed} val
+	 * @return {bool}
+	 */
+
+	module.exports = isArray || function (val) {
+	  return !! val && '[object Array]' == str.call(val);
+	};
+
+
+/***/ },
+/* 13 */
+/***/ function(module, exports, __webpack_require__) {
+
 	exports.read = function(buffer, offset, isLE, mLen, nBytes) {
 	  var e, m,
 	      eLen = nBytes * 8 - mLen - 1,
@@ -4834,45 +4873,6 @@
 	  for (; eLen > 0; buffer[offset + i] = e & 0xff, i += d, e /= 256, eLen -= 8);
 
 	  buffer[offset + i - d] |= s * 128;
-	};
-
-
-/***/ },
-/* 13 */
-/***/ function(module, exports, __webpack_require__) {
-
-	
-	/**
-	 * isArray
-	 */
-
-	var isArray = Array.isArray;
-
-	/**
-	 * toString
-	 */
-
-	var str = Object.prototype.toString;
-
-	/**
-	 * Whether or not the given `val`
-	 * is an array.
-	 *
-	 * example:
-	 *
-	 *        isArray([]);
-	 *        // > true
-	 *        isArray(arguments);
-	 *        // > false
-	 *        isArray('');
-	 *        // > false
-	 *
-	 * @param {mixed} val
-	 * @return {bool}
-	 */
-
-	module.exports = isArray || function (val) {
-	  return !! val && '[object Array]' == str.call(val);
 	};
 
 
