@@ -1,6 +1,6 @@
 
 
-> a little apis in v0.2 have changed  
+>  "Long live my poor English", :P  
 
 
 ## Which is Improved in  v0.2.x 
@@ -51,13 +51,13 @@ stateman.state({
   "app.contact.detail.setting": config, 
   "app.contact.message": config,
   "app.user": cfg({
-    enter: function(){
-      var done = this.async();
+    enter: function( option ){
+      var done = option.async();
       console.log(this.name + "is pending, 1s later to enter next state")
       setTimeout(done, 1000)
     },
-    leave: function(){
-      var done = this.async();
+    leave: function( option ){
+      var done = option.async();
       console.log(this.name + "is pending, 1s later to leave out")
       setTimeout(done, 1000)
     }
@@ -223,7 +223,7 @@ There five lifecyle-related functions can be used for controlling the routing lo
 
 
 
-When using url routing together with nested states the default behavior is for child states to append their url to the urls of each of its parent states. for example. The routing url of `app.contact.detail` is the combination of  `app`,`app.contact` and `app.contact.detail`
+For nested states, every sub-states append their urls to their parent's url , then the __captured url__ is generated. for example. The captured url of `app.contact.detail` is the combination of  `app`,`app.contact` and `app.contact.detail`
 
 
 
@@ -686,10 +686,9 @@ __Example__:
 
 
 
-The current state is `app.contact.detail.setting`, when navigating to `app.contact.message`. the complete process is
+Imagine that the current state is `app.contact.detail.setting`, when navigating to `app.contact.message`. the complete process is
 
 
-//
 1. leave: app.contact.detail.setting
 2. leave: app.contact.detail
 3. update: app.contact
@@ -708,12 +707,53 @@ See `app.contact.detail.setting` that we defined in the 【[first example](http:
 
 
 
-#### ask for permission: canEnter canLeave
+#### permission: canEnter canLeave
 
-Some times, you 
+Some times, you want to stop the routing before `navigation` process. one solution is handling it in [`begin`](#event)'s listeners
+
+```js
+stateman.on('begin', function(option){
+  if( option.current.name === 'app.user' && !isUser){
+    option.stop()
+  }
+  
+})
+```
+
+But after version 0.2 , stateman provide an more reasonable choice that called __"ask for permission"__. The process is triggered before __navigation__.
+
+By implementing two optional method: `canEnter`, `canLeave`. you can stop the routing before navigation is starting.
+
+```js
+stateman.state('app.user',{
+  'canEnter': function(){
+    return !!isUser;
+  }
+})
+
+```
+
+In the example, if `false` was returned, the navigation will stop, __And url will back to old one__.
+
+__you can also use [Promise](#control) to control this process__
+
+Just like the example we mentioned in `navigation`, if we navigating from `app.contact.detail.setting` to `app.contact.message`, the complete process is: 
 
 
+1. __canLeave: app.contact.detail.setting__
+2. __canLeave: app.contact.detail__
+3. __canEnter: app.contact.message__
+4. leave: app.contact.detail.setting
+5. leave: app.contact.detail
+6. update: app.contact
+7. update: app
+8. enter: app.contact.message
 
+
+If any step is undefined, __It will be ignored__, they are all optional. 
+
+
+<a name="control"></a>
 ### Routing  Control 
 
 
@@ -726,7 +766,7 @@ You can find DEMO for this section in [lifecycle.html]();
 #### [__Promise__](#Promise)
 
 
-If Promise is supported in target runtime, I suggest you to use it to control routing.
+I suggest you to use Promise to control routing.
 
 
 __Example__
@@ -946,7 +986,7 @@ it matches the url `/contact/1?name=heloo&age=1`, and get the param `{id:'1', na
 
 
 
-
+<a name="event"></a>
 ### Routing  Event 
 
 #### begin

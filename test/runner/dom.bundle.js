@@ -2059,9 +2059,9 @@
 	    },
 	    _notfound: function(options){
 
-	      var $notfound = this.state("$notfound");
+	      // var $notfound = this.state("$notfound");
 
-	      if( $notfound ) this._go($notfound, options);
+	      // if( $notfound ) this._go($notfound, options);
 
 	      return this.emit("notfound", options);
 	    },

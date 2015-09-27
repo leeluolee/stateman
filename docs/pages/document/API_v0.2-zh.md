@@ -51,13 +51,13 @@ stateman.state({
   "app.contact.detail.setting": config, 
   "app.contact.message": config,
   "app.user": cfg({
-    enter: function(){
-      var done = this.async();
+    enter: function( option ){
+      var done = option.async();
       console.log(this.name + "is pending, 1s later to enter next state")
       setTimeout(done, 1000)
     },
-    leave: function(){
-      var done = this.async();
+    leave: function( option ){
+      var done = option.async();
       console.log(this.name + "is pending, 1s later to leave out")
       setTimeout(done, 1000)
     }
@@ -688,7 +688,6 @@ __Example__:
 假设当前状态为`app.contact.detail.setting`, 当我们跳转到 `app.contact.message`. 完整的动作是
 
 
-//
 1. leave: app.contact.detail.setting
 2. leave: app.contact.detail
 3. update: app.contact
@@ -706,12 +705,53 @@ __Example__:
 
 
 
-#### ask for permission: canEnter canLeave
+#### permission: canEnter canLeave
 
-Some times, you 
+Some times, you want to stop the routing before `navigation` process. one solution is handling it in [`begin`](#event)'s listeners
+
+```js
+stateman.on('begin', function(option){
+  if( option.current.name === 'app.user' && !isUser){
+    option.stop()
+  }
+  
+})
+```
+
+But after version 0.2 , stateman provide an more reasonable choice that called __"ask for permission"__. The process is triggered before __navigation__.
+
+By implementing two optional method: `canEnter`, `canLeave`. you can stop the routing before navigation is starting.
+
+```js
+stateman.state('app.user',{
+  'canEnter': function(){
+    return !!isUser;
+  }
+})
+
+```
+
+In the example, if `false` was returned, the navigation will stop, __And url will back to old one__.
+
+__you can also use [Promise](#control) to control this process__
+
+Just like the example we mentioned in `navigation`, if we navigating from `app.contact.detail.setting` to `app.contact.message`, the complete process is: 
 
 
+1. __canLeave: app.contact.detail.setting__
+2. __canLeave: app.contact.detail__
+3. __canEnter: app.contact.message__
+4. leave: app.contact.detail.setting
+5. leave: app.contact.detail
+6. update: app.contact
+7. update: app
+8. enter: app.contact.message
 
+
+If any step is undefined, __It will be ignored__, they are all optional. 
+
+
+<a name="control"></a>
 ### Routing  控制 
 
 
@@ -943,7 +983,7 @@ __Example__
 
 
 
-
+<a name="event"></a>
 ### Routing  事件
 
 #### begin
