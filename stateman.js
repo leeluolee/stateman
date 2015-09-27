@@ -281,7 +281,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        // option as transition object.
 
 	        option.phase = 'permission';
-	        this._walk(current, state, option, true ,function( notRejected ){
+	        this._walk(current, state, option, true , _.bind( function( notRejected ){
 
 	          if( notRejected===false ){
 	            // if reject in callForPermission, we will return to old 
@@ -301,7 +301,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	          this.param = option.param;
 	          this.previous = option.previous;
 	          option.phase = 'navigation';
-	          this._walk(current, state, option, false, function( notRejected ){
+	          this._walk(current, state, option, false, _.bind(function( notRejected ){
 
 	            if( notRejected === false ){
 	              this.current = this.active;
@@ -315,9 +315,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	            option.phase = 'completion';
 	            return done()
 
-	          }.bind(this) )
+	          }, this) )
 
-	        }.bind(this) )
+	        }, this) )
 
 	      }else{
 	        self._checkQueryAndParam(baseState, option);
@@ -348,7 +348,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	      option.basckward = true;
-	      this._transit( from, parent, option, callForPermit , function( notRejected ){
+	      this._transit( from, parent, option, callForPermit , _.bind( function( notRejected ){
 
 	        if( notRejected === false ) return callback( notRejected );
 
@@ -358,7 +358,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        option.basckward = false;
 	        this._transit( parent, to, option, callForPermit,  callback)
 
-	      }.bind(this) )
+	      }, this) )
 
 	    },
 
@@ -373,7 +373,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      // use canEnter to detect permission
 	      if( callForPermit) method = 'can' + method.replace(/^\w/, function(a){ return a.toUpperCase() });
 
-	      var loop = function( notRejected ){
+	      var loop = _.bind(function( notRejected ){
 
 
 	        // stop transition or touch the end
@@ -392,7 +392,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        this._moveOn( applied, method, option, loop );
 
-	      }.bind(this);
+	      }, this);
 
 	      loop();
 	    },
@@ -444,7 +444,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    _wrapPromise: function( promise, next ){
 
-	      return promise.then( next, next.bind(this, false) ) ;
+	      return promise.then( next, function(){next(false)}) ;
 
 	    },
 

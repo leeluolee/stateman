@@ -2124,7 +2124,7 @@
 	        // option as transition object.
 
 	        option.phase = 'permission';
-	        this._walk(current, state, option, true ,function( notRejected ){
+	        this._walk(current, state, option, true , _.bind( function( notRejected ){
 
 	          if( notRejected===false ){
 	            // if reject in callForPermission, we will return to old 
@@ -2144,7 +2144,7 @@
 	          this.param = option.param;
 	          this.previous = option.previous;
 	          option.phase = 'navigation';
-	          this._walk(current, state, option, false, function( notRejected ){
+	          this._walk(current, state, option, false, _.bind(function( notRejected ){
 
 	            if( notRejected === false ){
 	              this.current = this.active;
@@ -2158,9 +2158,9 @@
 	            option.phase = 'completion';
 	            return done()
 
-	          }.bind(this) )
+	          }, this) )
 
-	        }.bind(this) )
+	        }, this) )
 
 	      }else{
 	        self._checkQueryAndParam(baseState, option);
@@ -2191,7 +2191,7 @@
 
 
 	      option.basckward = true;
-	      this._transit( from, parent, option, callForPermit , function( notRejected ){
+	      this._transit( from, parent, option, callForPermit , _.bind( function( notRejected ){
 
 	        if( notRejected === false ) return callback( notRejected );
 
@@ -2201,7 +2201,7 @@
 	        option.basckward = false;
 	        this._transit( parent, to, option, callForPermit,  callback)
 
-	      }.bind(this) )
+	      }, this) )
 
 	    },
 
@@ -2216,7 +2216,7 @@
 	      // use canEnter to detect permission
 	      if( callForPermit) method = 'can' + method.replace(/^\w/, function(a){ return a.toUpperCase() });
 
-	      var loop = function( notRejected ){
+	      var loop = _.bind(function( notRejected ){
 
 
 	        // stop transition or touch the end
@@ -2235,7 +2235,7 @@
 
 	        this._moveOn( applied, method, option, loop );
 
-	      }.bind(this);
+	      }, this);
 
 	      loop();
 	    },
@@ -2287,7 +2287,7 @@
 
 	    _wrapPromise: function( promise, next ){
 
-	      return promise.then( next, next.bind(this, false) ) ;
+	      return promise.then( next, function(){next(false)}) ;
 
 	    },
 
@@ -3684,8 +3684,8 @@
 	 */
 
 	var base64 = __webpack_require__(14)
-	var ieee754 = __webpack_require__(13)
-	var isArray = __webpack_require__(12)
+	var ieee754 = __webpack_require__(12)
+	var isArray = __webpack_require__(13)
 
 	exports.Buffer = Buffer
 	exports.SlowBuffer = Buffer
@@ -4751,45 +4751,6 @@
 /* 12 */
 /***/ function(module, exports, __webpack_require__) {
 
-	
-	/**
-	 * isArray
-	 */
-
-	var isArray = Array.isArray;
-
-	/**
-	 * toString
-	 */
-
-	var str = Object.prototype.toString;
-
-	/**
-	 * Whether or not the given `val`
-	 * is an array.
-	 *
-	 * example:
-	 *
-	 *        isArray([]);
-	 *        // > true
-	 *        isArray(arguments);
-	 *        // > false
-	 *        isArray('');
-	 *        // > false
-	 *
-	 * @param {mixed} val
-	 * @return {bool}
-	 */
-
-	module.exports = isArray || function (val) {
-	  return !! val && '[object Array]' == str.call(val);
-	};
-
-
-/***/ },
-/* 13 */
-/***/ function(module, exports, __webpack_require__) {
-
 	exports.read = function(buffer, offset, isLE, mLen, nBytes) {
 	  var e, m,
 	      eLen = nBytes * 8 - mLen - 1,
@@ -4873,6 +4834,45 @@
 	  for (; eLen > 0; buffer[offset + i] = e & 0xff, i += d, e /= 256, eLen -= 8);
 
 	  buffer[offset + i - d] |= s * 128;
+	};
+
+
+/***/ },
+/* 13 */
+/***/ function(module, exports, __webpack_require__) {
+
+	
+	/**
+	 * isArray
+	 */
+
+	var isArray = Array.isArray;
+
+	/**
+	 * toString
+	 */
+
+	var str = Object.prototype.toString;
+
+	/**
+	 * Whether or not the given `val`
+	 * is an array.
+	 *
+	 * example:
+	 *
+	 *        isArray([]);
+	 *        // > true
+	 *        isArray(arguments);
+	 *        // > false
+	 *        isArray('');
+	 *        // > false
+	 *
+	 * @param {mixed} val
+	 * @return {bool}
+	 */
+
+	module.exports = isArray || function (val) {
+	  return !! val && '[object Array]' == str.call(val);
 	};
 
 

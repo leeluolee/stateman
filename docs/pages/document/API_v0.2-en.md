@@ -6,7 +6,7 @@
 ## Which is Improved in  v0.2.x 
 
 
-- add [__callForPermission__](#permission) step in Lifecyle to stop navigation. 
+- add [__askForPermission__](#permission) step in Lifecyle.
 - support __Promise__ in `enter`， `leave` and `canEnter`, `canLeave`( introduced in v0.2.0) to help us implement some asynchronous navigation. 
 - add [namespace support](#namespace) for builtin emitter
 - Warn: __remove [state.async]__,  you can use  `option.async` for asynchronous navigation. but I suggest you to use promise instead
