@@ -201,6 +201,10 @@ gulp.task('example', function(){
     .pipe(
       gulp.dest('docs/pages/example')
      );
+  gulp.src("./stateman.js")
+    .pipe(
+      gulp.dest('docs/pages')
+     );
 })
 gulp.task('gh-pages', ['example'], function () {
   gulp.src("docs/pages/**/*.*")

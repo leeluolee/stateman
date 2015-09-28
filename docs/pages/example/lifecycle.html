@@ -10,7 +10,7 @@
 <ul>
   <li><a href="#/app">/app"</a></li>
   <li><a href="#/app/blog">/app/blog"</a></li>
-  <li><a href="#/app/blog/detail">/app/blog/detail</a></li>
+  <li><a href="#/app/user">/app/user</a></li>
 </ul>
   
 <script>
@@ -59,20 +59,26 @@
     .state("app.blog", create({
       enter: function(option){
         blogDelay = true;
-        console.log('app.blog is blocked for 4s ')
-        return delay(4000).then(function(){
-          console.log('enter app.blog')
-          blogDelay = false
+        console.log('app.blog is blocked for 3s ')
+        return delay(3000).then(function(){
+          // because user stop this navigating before delay is done
+          if(!blogDelay) return;
+          blogDelay = false;
+          console.log('app.blog is done')
         })
-        // console.log('enter contact.list')
       },
       canLeave: function(option){
         if(blogDelay){
-          return confirmp('blog is pending, want to leave?')
+          var accpet = confirmp('blog is pending, want to leave?')
+
+          if( accpet ) {
+            blogDelay = false;
+          }
+          return accpet;
         }
       }
     }))
-    .state('app.blog.detail', config)
+    .state('app.user', config)
     .start({})
 
 

@@ -765,7 +765,9 @@ See `app.contact.detail.setting` that we defined in the 【[first example](./exa
 <a name="permission"></a>
 #### permission: canEnter canLeave
 
+
 Some times, you want to stop the routing before `navigation` process. one solution is handling it in [`begin`](#event)'s listeners
+
 
 ```js
 stateman.on('begin', function(option){
@@ -776,9 +778,11 @@ stateman.on('begin', function(option){
 })
 ```
 
+
 But after version 0.2 , stateman provide an more reasonable choice that called __"ask for permission"__. The process is triggered before __navigation__.
 
 By implementing two optional method: `canEnter`, `canLeave`. you can stop the routing before navigation is starting.
+
 
 ```js
 stateman.state('app.user',{
@@ -789,11 +793,13 @@ stateman.state('app.user',{
 
 ```
 
+
 In the example, if `false` was returned, the navigation will stop, __And url will back to old one__.
 
 __you can also use [Promise](#control) to control this process__
 
 Just like the example we mentioned in `navigation`, if we navigating from `app.contact.detail.setting` to `app.contact.message`, the complete process is: 
+
 
 
 1. __canLeave: app.contact.detail.setting__
@@ -806,7 +812,10 @@ Just like the example we mentioned in `navigation`, if we navigating from `app.c
 8. enter: app.contact.message
 
 
+
 If any step is undefined, __It will be ignored__, they are all optional. 
+
+
 
 
 <a name="control"></a>
@@ -848,12 +857,18 @@ stateman.state('app.blog',{
 
 ```
 
+
+
+
 __If promise is rejected or resolved by `false`, navigation will stop directly. (if phase is `permission`, also return to old url)  __.
+ 
 
 
-#### Returned Value
+#### Returned Value 
+
 
 You can return `false` (===) in `enter`, `leave`, `canEnter` and `canLeave` to end this navigation in paricular phase. 
+
 
 ```js
 stateman.state('app.blog',{
@@ -872,8 +887,10 @@ stateman.state('app.blog',{
 
 #### `option.async` 
 
+
 stateman wasn't bundle with any promise-polyfill, if you don't include polyfill in old browser by yourself,
 you may need `option.async` for asynchronous routing, see [option.async](#async) section.
+
 
 
 
@@ -915,11 +932,13 @@ __option__
 
 #### 0. option.phase
 
-represent which phase the navigation is, there are three phases.
 
+represent which phase the navigation is, there are three phases.
 - permission: still calling the permission
 - navigation: in navigating process
 - completion: navigating is done
+
+
 
 
 #### 1. option.async
@@ -947,7 +966,9 @@ A function used to resolve the pending state.
 
 ```
 
-The returned `done` is very similiar with the `resolve` function in promise, if __you pass `false` to it__, the navigation will be terminated.
+
+
+The returned `resolve` is very similiar with the `resolve` function in promise, if __you pass `false` to it__, the navigation will be terminated.
 
 
 
@@ -966,19 +987,23 @@ The returned `done` is very similiar with the `resolve` function in promise, if 
 
 
 
+
 #### 1. option.current
 
-The target state.
+ The target state.  
 
 #### 2. option.previous
 
-The prevous state.
+ The prevous state. 
 
 #### 3. option.param: see [Routing Params](#param)
 
 #### 4. option.stop
 
+
 manually stop this navigating. you may use it when event `begin` is emitted.
+
+
 
 
 <a name='param'></a>

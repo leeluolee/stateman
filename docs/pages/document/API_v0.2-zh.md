@@ -764,7 +764,9 @@ __Example__:
 <a name="permission"></a>
 #### permission: canEnter canLeave
 
-Some times, you want to stop the routing before `navigation` process. one solution is handling it in [`begin`](#event)'s listeners
+
+有时候， 我们需要在跳转真正开始前阻止它， 一种解决方案是使用[`begin`](#event)
+
 
 ```js
 stateman.on('begin', function(option){
@@ -775,9 +777,9 @@ stateman.on('begin', function(option){
 })
 ```
 
-But after version 0.2 , stateman provide an more reasonable choice that called __"ask for permission"__. The process is triggered before __navigation__.
 
-By implementing two optional method: `canEnter`, `canLeave`. you can stop the routing before navigation is starting.
+在版本0.2之后， stateman提供了一种额外的方法， 可供每个状态自己控制是否允许被跳入或跳出, 我们称之为 __"请求权限"__的过程，这个过程发生在跳转(`enter`, `leave`)之前
+
 
 ```js
 stateman.state('app.user',{
@@ -788,11 +790,13 @@ stateman.state('app.user',{
 
 ```
 
-In the example, if `false` was returned, the navigation will stop, __And url will back to old one__.
 
-__you can also use [Promise](#control) to control this process__
+在上面的例子中，如果`false`被返回了， 则此跳转会被，并恢复之前的url.
 
-Just like the example we mentioned in `navigation`, if we navigating from `app.contact.detail.setting` to `app.contact.message`, the complete process is: 
+__你当然也可以使用[Promise](#control) 来实现异步的流程控制__
+
+现在扩展在[navigation](#navigation)中提到的例子，当你从 `app.contact.detail.setting` 跳转到 `app.contact.message`. 现在完整的流程是
+
 
 
 1. __canLeave: app.contact.detail.setting__
@@ -805,7 +809,10 @@ Just like the example we mentioned in `navigation`, if we navigating from `app.c
 8. enter: app.contact.message
 
 
-If any step is undefined, __It will be ignored__, they are all optional. 
+
+如果任何一个过程没有被定义, 它会被忽略， 所以都是可选的， 我们只需要实现我们跳转逻辑中需要实现的方法.
+
+
 
 
 <a name="control"></a>
@@ -846,12 +853,18 @@ stateman.state('app.blog',{
 
 ```
 
-__If promise is rejected or resolved by `false`, navigation will stop directly. (if phase is `permission`, also return to old url)  __.
 
 
-#### Returned Value
+如果Promise对象被reject 或 resolve(false), 跳转会直接停止， 如果还在`askForPermission`阶段，url也会被恢复
 
-You can return `false` (===) in `enter`, `leave`, `canEnter` and `canLeave` to end this navigation in paricular phase. 
+ 
+
+
+####  返回值控制
+
+
+你可以在`enter`, `leave` 等函数中返回`false`来__同步的__阻止这次跳转
+
 
 ```js
 stateman.state('app.blog',{
@@ -870,8 +883,9 @@ stateman.state('app.blog',{
 
 #### `option.async` 
 
-stateman wasn't bundle with any promise-polyfill, if you don't include polyfill in old browser by yourself,
-you may need `option.async` for asynchronous routing, see [option.async](#async) section.
+
+stateman 没有与任何promise的polyfill 绑定， 如果你没有在旧版本浏览器主动引入Promise的垫片， 你也可以使用`option.async`来实现同样的功能
+
 
 
 
@@ -913,11 +927,15 @@ __option__
 
 #### 0. option.phase
 
-represent which phase the navigation is, there are three phases.
 
-- permission: still calling the permission
-- navigation: in navigating process
-- completion: navigating is done
+代表现在跳转进行到了什么阶段. 现在跳转分为三个阶段
+
+- permission: 请求跳转阶段
+- navigation: 跳转阶段
+- completion: 完成
+
+
+
 
 
 #### 1. option.async
@@ -945,7 +963,9 @@ __Return __
 
 ```
 
-The returned `done` is very similiar with the `resolve` function in promise, if __you pass `false` to it__, the navigation will be terminated.
+
+
+这个返回的`resolve`函数非常接近Promise中的`resolve`函数， 如果你传入false, 跳转会被终止
 
 
 
@@ -964,19 +984,23 @@ The returned `done` is very similiar with the `resolve` function in promise, if 
 
 
 
+
 #### 1. option.current
 
-The target state.
+ 目标state 
 
 #### 2. option.previous
 
-The prevous state.
+ 上任state
 
 #### 3. option.param: see [Routing Params](#param)
 
 #### 4. option.stop
 
-manually stop this navigating. you may use it when event `begin` is emitted.
+
+手动结束这次跳转， 一般你可能会在begin事件中使用它. 
+
+
 
 
 <a name='param'></a>
