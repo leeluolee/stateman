@@ -16,6 +16,13 @@ stateman is highly inspired by [ui-router](https://github.com/angular-ui/ui-rout
 But stateman is a __standalone library__ with an extremely tiny codebase (10kb minified). Feel free to integrate it with whatever framework you like! 
 
 
+
+## Reference
+
+- [English](http://leeluolee.github.io/stateman/)
+- [中文手册](http://leeluolee.github.io/stateman/?API-zh)
+
+
 ## Feature
 
 0. nested routing support.
@@ -89,15 +96,9 @@ just paste the code to your own `index.html`, and load it up in a browser.
 open the console to see the output when navigating.
 
 
-
-## Reference
-
-- [English](http://leeluolee.github.io/stateman/)
-- [中文手册](http://leeluolee.github.io/stateman/?API-zh)
-
 ## Demos
 
-###1.  [Simple Layout Demo:](http://leeluolee.github.io/stateman/layout.html) 
+###1.  [Simple Layout Demo:](http://leeluolee.github.io/stateman/example/layout.html) 
 
 The code in this demo is for demonstration only. In a production development, you will want a view layer to create nested views.
 
