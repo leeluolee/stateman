@@ -60,6 +60,7 @@
       enter: function(option){
         blogDelay = true;
         console.log('app.blog is blocked for 3s ')
+
         return delay(3000).then(function(){
           // because user stop this navigating before delay is done
           if(!blogDelay) return;
@@ -69,12 +70,13 @@
       },
       canLeave: function(option){
         if(blogDelay){
-          var accpet = confirmp('blog is pending, want to leave?')
+          var accept = confirmp('blog is pending, want to leave?')
 
-          if( accpet ) {
+          if( accept ) {
             blogDelay = false;
+            console.log('accept to leave from app.blog before done')
           }
-          return accpet;
+          return accept;
         }
       }
     }))

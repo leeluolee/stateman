@@ -206,7 +206,7 @@ gulp.task('example', function(){
       gulp.dest('docs/pages')
      );
 })
-gulp.task('gh-pages', ['example'], function () {
+gulp.task('gh-pages', ['example', 'doc'], function () {
   gulp.src("docs/pages/**/*.*")
     .pipe(deploy({
       remoteUrl: "git@github.com:leeluolee/stateman",
