@@ -6,12 +6,11 @@ module.exports = function (gulp) {
     var bump = require('gulp-bump');
     var fs = require('fs');
     var git = require('gulp-git');
-    // var runSequence = require('gulp-run-sequence');
+    var runSequence = require('gulp-run-sequence');
     var spawn = require('child_process').spawn;
     var tag_version = require('gulp-tag-version');
     var through = require('through2');
-    var _ = require('lodash');
-
+    
     var branch = argv.branch || 'master';
     var rootDir = require('path').resolve(argv.rootDir || './') + '/';
 
@@ -24,7 +23,7 @@ module.exports = function (gulp) {
     };
 
     var paths = {
-        versionsToBump: _.map(['package.json', 'bower.json', 'manifest.json', 'component.json'], function (fileName) {
+        versionsToBump: ['package.json', 'bower.json', 'manifest.json', 'component.json'].map(function (fileName) {
             return rootDir + fileName;
         })
     };
@@ -66,84 +65,3 @@ module.exports = function (gulp) {
     });
 
 };
-// module.exports = function(gulp){
-//   var argv, bump, fs, git, paths, prompt, tag_version, versioning;
-
-//   fs = require('fs');
-//   prompt = require('gulp-prompt');
-//   git = require('gulp-git');
-//   bump = require('gulp-bump');
-//   tag_version = require('gulp-tag-version');
-//   argv = require('yargs').argv;
-
-//   var versioningFiles = function(){
-//     var files = [];
-//     var pkg_exists = fs.existsSync('package.json');
-//     var bower_exists = fs.existsSync('bower.json');
-//     var component_exists = fs.existsSync('component.json');
-
-//     if(argv.npm && pkg_exists) files.push("./package.json");
-//     if(argv.bower && bower_exists) files.push("./bower.json")
-//     if(argv.component && component_exists) files.push("./component.json")
-
-//     if(!argv.npm || !argv.bower || !argv.component){
-//        pkg_exists && files.push("./package.json")
-//        bower_exists && files.push("./bower.json")
-//        component_exists && files.push("./component.json")
-//     }
-//     return files;
-//   };
-
-//   var bumpPreference = fs.existsSync('package.json')  ? 'package.json' : 'bower.json';
-//   var vFiles         = versioningFiles();
-
-//   paths = {
-//     versionsToBump: vFiles,
-//     version: bumpPreference,
-//     dest: '.'
-//   };
-
-//   gulp.task('tag', ['commit'], function() {
-//     return gulp.src(paths.versionsToBump).pipe(tag_version())  
-//     // .pipe(git.push('origin', 'master', {
-//     //       args: '--tags'
-//     //     })).on('error', function(err){
-//     //       console.log(err)
-//     //     });
-
-
-//   });
-
-//   gulp.task('add', ['bump'], function() {
-//     return gulp.src(paths.versionsToBump).pipe(git.add());
-//   });
-
-
-//   gulp.task('commit', ['add'], function() {
-//     return gulp.src(paths.version).pipe(prompt.prompt({
-//       type: 'input',
-//       name: 'commit',
-//       message: 'enter a commit msg, eg initial commit'
-//     }, function(res) {
-//       return gulp.src('.').pipe(git.commit(res.commit));
-//     }));
-//   });
-
-//   versioning = function() {
-//     if (argv.minor || argv.feature) {
-//       return 'minor';
-//     }
-//     if (argv.major) {
-//       return 'major';
-//     }
-//     return 'patch';
-//   };
-
-//   gulp.task('bump', function() {
-//     return gulp.src(paths.versionsToBump).pipe(bump({
-//       type: versioning()
-//     })).pipe(gulp.dest(paths.dest));
-//   });
-
-
-// };

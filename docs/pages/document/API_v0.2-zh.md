@@ -1,16 +1,3 @@
-<!--
-
-
-
-中文
-<!-- /t -->
-
-
-中文
-
-
--->
-
 
 
 >  微量的api在0.2版本有所修改
@@ -86,7 +73,7 @@ stateman.state({
 
 对象`config`用来输出navgating的相关信息, 你不需要立刻理解这个例子, 稍后文档会慢慢告诉你一切.
 
-你可以直接通过【[在线DEMO](http://leeluolee.github.io/stateman/api.html)】 访问到这个例子, 有时候试着在console中测试API可以帮助你更好的理解它们
+你可以直接通过【[在线DEMO](./example/api.html)】 访问到这个例子, 有时候试着在console中测试API可以帮助你更好的理解它们
 
 
 
@@ -103,13 +90,13 @@ __Arguments__
 
 |Param|Type|Detail|
 |--|--|--|
-|option.title|strict| Default: false . 是否只有叶子节点可以被访问到 |
+|option.strict|Boolean| Default: false . 是否只有叶子节点可以被访问到 |
 |option.title| String|  设置文档标题， 见  [config.title](#title)|
 
 
 __Return__
 
-- type [Stateman] :  StateMan的实例
+[Stateman] :  StateMan的实例
 
 __Example__
 
@@ -142,16 +129,12 @@ __Arguments__
 
 |Param|Type|Detail|
 |--|--|--|
-|stateName|String  Object| state名称，加入传入了一个对象，将成为一个多重设置|
+|stateName|String  Object| state名称，假如传入了一个对象，将成为一个多重设置|
 |config(optional)|Function Object| 如果config没有指定，将会返回指定的state, 假如传入的是一个函数，则相当于传入了`config.enter`, 如果指定的state已经存在，原设置会被覆盖 |
 
  __Return__ : 
 
- - type [StateMan]: this
-
-  if config is not passed
-
- - type [[State](#)]: the state.
+StateMan or State (if config is not passed) 
 
 
 __Example__
@@ -253,7 +236,7 @@ state.state("app", {})
 `app.contact.detail`的完整捕获路径就是`/app/users/:id`. 当然，如你所见, 我们可以在url中定义我们的[路径参数](#param)
 
 
-missing `/` or redundancy of `/` is all valid.
+
 
 
 
@@ -295,7 +278,7 @@ __空url__: 放弃当前这级的路径配置
 
 __Argument__
 
-- config.title [String or Function]: if title is a Function, document.title will use its returnValue
+- config.title [String or Function]: 如果是函数，document会设置成其返回值 
 
 __Example__
 
@@ -353,7 +336,7 @@ __option__
 
 |Param|Type|Detail|
 |--|--|--|
-|html5 |Boolean|(default false)  是否开启html5支持, 使用pushState, replaceState和popstate|
+|html5 |Boolean|(default false)  是否开启html5支持, 即使用pushState等API代替hash设置|
 |root |String|(default '/')  程序根路径，影响到你使用html5模式的表现|
 |prefix| String |  配置hashban, 例如你可以传入'!'来达到`#!/contact/100`的hash表现|
 |autolink| Boolean | (defualt true)  是否代理所有的`#`开始的链接来达到跳转, 只对html5下有用|
@@ -373,7 +356,8 @@ stateman.start({
 __Warning__
 
 
-如果你在不支持html5 pushState的浏览器开启了`html=true`, stateman会自动降级到hash的路由.
+如果你在不支持html5 pushState的浏览器开启了`html=true`, stateman会自动降级到hash的路由. 
+
 
 
 
@@ -408,7 +392,7 @@ __Argument__
 |Param|Type|Detail|
 |--|--|--|
 |url |String| 跳转url|
-|option(optional) |Object| 跳转option. url参数会作为option的param参数. |
+|option(optional) |Object| [路由option](#option). url参数会作为option的param参数. |
 |callback(optional)|Function| 跳转结束后，此函数会被调用|
 
 
@@ -428,9 +412,13 @@ __Example__
 
 
 
-最终传入到enter, leave与update的option参数会是`{param: {id: "1", name:"leeluolee"}, data: 1}`.
+最终传入到enter, leave与update的option参数会是 
+
+
 
 <!-- /t -->
+
+`{param: {id: "1", name:"leeluolee"}, data: 1}`.
 
 
 
@@ -453,20 +441,19 @@ __Arguments__
 
 - stateName [String]:  目标状态
 
-- option [Object] : 控制参数
+- option [Object]: [Routing Option](#option)
 
   - option.encode: 
 
    默认是true, 如果encode是false. 则地址栏的url将不会发生变化，仅仅只是触发了内部状态的跳转. 当encode为true时， stateman会使用[encode](#encode) 函数去反推出真实的url路径显示在location中.
   
-
   - option.param: 
 
      nav与go的最大区别就在于param参数 
 
       如果你的路径中带有参数，则需要传入param来帮助encode函数推算出url路径
 
-  you can use stateman.encode to test how stateman compute url from a state with specifed param
+  you can use [stateman.encode](#encode) to test how stateman compute url from a state with specifed param
 
   - option.replace:  见[stateman.nav](#nav)
 
@@ -640,7 +627,7 @@ __Usage__
 `stateman.on(event, handle)`
 
 
-StateMan内置了一个小型Emitter 来帮助实现事件驱动的开发, 在 [Routing Event](#built_event) 中查看内建事件
+StateMan内置了一个小型Emitter 来帮助实现事件驱动的开发, 在 [Routing Event](#event) 中查看内建事件
 
 
 
@@ -653,7 +640,8 @@ __Example__
 ```
 stateman
   .on('begin', beginListener)
-  .on({   // there will be a multiply binding
+  // there will be a multiply binding
+  .on({   
     'end': endListener,
     'custom': customListener,
     'custom:name1': customListenerWithNameSpace
@@ -681,10 +669,14 @@ __Example__
 
 
 ```js
-stateman.off('begin', beginListener ) // unbind listener with specified handle
-  .off('custom:name1')   // unbind all listener whose eventName is custom and namespace is name1
-  .off('custom')   // unbind listener whose name is 'custom' (ignore namespace)
-  .off()  // clear all event bindings of stateman
+// unbind listener with specified handle
+stateman.off('begin', beginListener ) 
+  // unbind all listener whose eventName is custom and namespace is name1
+  .off('custom:name1')   
+  // unbind listener whose name is 'custom' (ignore namespace)
+  .off('custom')   
+  // clear all event bindings of stateman
+  .off()  
 ```
 
 
@@ -711,9 +703,10 @@ __Usage__
 __Example__
 
 ```js
-
-stateman.emit('begin') // emit all listeners named `begin` (ignore namespace) 
-  .emit('custom:name1')   // emit all listeners named `begin`, and with namespace `name1`
+// emit all listeners named `begin` (ignore namespace) 
+stateman.emit('begin') 
+// emit all listeners named `begin`, and with namespace `name1`
+  .emit('custom:name1')   
 
 ```
 
@@ -727,7 +720,7 @@ stateman.emit('begin') // emit all listeners named `begin` (ignore namespace)
 
 > <img src="lifecycle.png" width="100%">
 
-There are three stages in one navigation
+There are three stages in one routing.
 
 - permission
 - navigation
@@ -759,11 +752,11 @@ __Example__:
 
 
 
-你可以直接在这里页面来查看完整过程： [api.html](http://leeluolee.github.io/stateman/api.html);
+你可以直接在这里页面来查看完整过程： [api.html](./example/api.html);
 
 基本上，这里没有难度去理解`enter` 和 `leave`方法，但是`update`何时被调用呢?
 
-先看下我们文章开始的[【例子】](http://leeluolee.github.io/stateman/api.html)中定义的`app.contact.detail.setting`. 当我们从 `/app/contact/3/setting`跳转到`app/contact/2/setting`时，实际上stateman的当前状态并没有变化， 都是`app.contact.detail.setting`, 但是参数id改变了，这时我们称之为update, 所有被当前状态包含的状态(但没被enter和leave)都会运行update方法.
+先看下我们文章开始的[【例子】](./example/api.html)中定义的`app.contact.detail.setting`. 当我们从 `/app/contact/3/setting`跳转到`app/contact/2/setting`时，实际上stateman的当前状态并没有变化， 都是`app.contact.detail.setting`, 但是参数id改变了，这时我们称之为update, 所有被当前状态包含的状态(但没被enter和leave)都会运行update方法.
 
 
 
@@ -819,7 +812,7 @@ If any step is undefined, __It will be ignored__, they are all optional.
 ### Routing  控制 
 
 
-Stateman 提供几种方式来帮助你实现 __异步或同步__ 的跳转控制. 你可以在[lifecyle.html]查找到当前的页面.
+Stateman 提供几种方式来帮助你实现 __异步或同步__ 的跳转控制. 你可以在[lifecyle.html](./example/lifecycle.html)查找到当前的页面.
 
 
 
@@ -877,8 +870,8 @@ stateman.state('app.blog',{
 
 #### `option.async` 
 
-stateman doesn't bundle with any promise-polyfill, if you don't include polyfill in old browser by yourself,
-you may need `option.async` for asynchronous routing, see [option.async](#async)
+stateman wasn't bundle with any promise-polyfill, if you don't include polyfill in old browser by yourself,
+you may need `option.async` for asynchronous routing, see [option.async](#async) section.
 
 
 
@@ -1045,6 +1038,31 @@ __Example__
 <!-- /t -->
 
 
+#### 5.  隐式 param
+
+
+
+就像使用POST HTTP 请求一样， 参数不会显示在url上. 同样的, 利用一些小技巧可以让你在stateman实现隐式的参数传递. 换句话说， 你也可以传递非字符串型的参数了。
+
+
+
+__Example__
+
+```js
+
+stateman.state('app.blog', {
+  enter: function(option){
+    console.log(option.blog.title) 
+  } 
+})
+
+stateman.go('app.blog', {
+  blog: {title: 'blog title', content: 'content blog'}
+})
+
+```
+
+Any properties kept in option except `param` won't be showed in url. 
 
 
 <a name="event"></a>
@@ -1076,7 +1094,7 @@ stateman.on("begin", function(evt){
 ```
 
 
-将上述代码复制到[http://leeluolee.github.io/stateman/api.html#/app/user](http://leeluolee.github.io/stateman/api.html#/app/user).并点击 `app.contact.message`. 你会发现跳转被终止了.
+将上述代码复制到[http://leeluolee.github.io/stateman/api.html#/app/user](./example/api.html#/app/user).并点击 `app.contact.message`. 你会发现跳转被终止了.
 
 
 
@@ -1163,7 +1181,6 @@ stateman.state({
 
 ```
 
-Open the 【[DEMO](http://leeluolee.github.io/stateman/active.html) 】, and check the console.log.
 
 <a name="param1"></a>
 
@@ -1173,13 +1190,11 @@ The current param captured from url or be passed to the method __stateman.go__.
 
 __Example__
 
-```
+```js
 
 stateman.nav("app.detail", {})
 
 ```
-
-
 
 
 

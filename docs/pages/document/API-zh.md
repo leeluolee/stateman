@@ -1,4 +1,7 @@
 
+
+
+
 # StateMan  文档
 
 
@@ -60,7 +63,7 @@ stateman.state({
 
 对象`config`用来输出navgating的相关信息, 你不需要立刻理解这个例子, 稍后文档会慢慢告诉你一切.
 
-你可以直接通过【[在线DEMO](http://leeluolee.github.io/stateman/example/api.html)】 访问到这个例子, 有时候试着在console中测试API可以帮助你更好的理解它们
+你可以直接通过【[在线DEMO](http://leeluolee.github.io/stateman/api.html)】 访问到这个例子, 有时候试着在console中测试API可以帮助你更好的理解它们
 
 
 
@@ -274,11 +277,11 @@ __Example__:
 4. enter: app.contact.message
 
 
-你可以直接在这里页面来查看完整过程： [api.html](http://leeluolee.github.io/stateman/example/api.html);
+你可以直接在这里页面来查看完整过程： [api.html](http://leeluolee.github.io/stateman/api.html);
 
 基本上，这里没有难度去理解`enter` 和 `leave`方法，但是`update`何时被调用呢?
 
-先看下我们文章开始的[【例子】](http://leeluolee.github.io/stateman/example/api.html)中定义的`app.contact.detail.setting`. 当我们从 `/app/contact/3/setting`跳转到`app/contact/2/setting`时，实际上stateman的当前状态并没有变化， 都是`app.contact.detail.setting`, 但是参数id改变了，这时我们称之为update, 所有被当前状态包含的状态(但没被enter和leave)都会运行update方法.
+先看下我们文章开始的[【例子】](http://leeluolee.github.io/stateman/api.html)中定义的`app.contact.detail.setting`. 当我们从 `/app/contact/3/setting`跳转到`app/contact/2/setting`时，实际上stateman的当前状态并没有变化， 都是`app.contact.detail.setting`, 但是参数id改变了，这时我们称之为update, 所有被当前状态包含的状态(但没被enter和leave)都会运行update方法.
 
 
 
@@ -775,7 +778,7 @@ stateman.on("begin", function(evt){
 ```
 
 
-将上述代码复制到[http://leeluolee.github.io/stateman/example/api.html#/app/user](http://leeluolee.github.io/stateman/example/api.html#/app/user).并点击 `app.contact.message`. 你会发现跳转被终止了.
+将上述代码复制到[http://leeluolee.github.io/stateman/api.html#/app/user](http://leeluolee.github.io/stateman/api.html#/app/user).并点击 `app.contact.message`. 你会发现跳转被终止了.
 
 
 
@@ -854,6 +857,7 @@ stateman.state({
 
 ```
 
+Open the 【[DEMO](http://leeluolee.github.io/stateman/active.html) 】, and check the console.log.
 
 <a name="param1"></a>
 

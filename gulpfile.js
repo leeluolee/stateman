@@ -14,7 +14,7 @@ var translate = require("./scripts/gulp-trans.js")
 var pkg = require("./package.json");  
 
 // release
-require("gulp-release-it")(gulp);
+require("./scripts/release.js")(gulp);
 
 
 var wpConfig = {
@@ -198,10 +198,6 @@ gulp.task('server', ['build'], shell.task([
 
 gulp.task('example', function(){
   gulp.src("example/*.html")
-    .pipe(wrap(function(file, enc, cb){
-      file.contents = new Buffer(file.contents.toString().replace('../stateman', 'https://rawgit.com/leeluolee/stateman/v'+pkg.version+'/stateman.js'), 'utf8')
-      cb(null, file)
-    }))
     .pipe(
       gulp.dest('docs/pages/example')
      );

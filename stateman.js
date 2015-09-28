@@ -7,7 +7,7 @@
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
 	else if(typeof define === 'function' && define.amd)
-		define(factory);
+		define([], factory);
 	else if(typeof exports === 'object')
 		exports["StateMan"] = factory();
 	else
@@ -16,41 +16,41 @@
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
-/******/
+
 /******/ 	// The require function
 /******/ 	function __webpack_require__(moduleId) {
-/******/
+
 /******/ 		// Check if module is in cache
 /******/ 		if(installedModules[moduleId])
 /******/ 			return installedModules[moduleId].exports;
-/******/
+
 /******/ 		// Create a new module (and put it into the cache)
 /******/ 		var module = installedModules[moduleId] = {
 /******/ 			exports: {},
 /******/ 			id: moduleId,
 /******/ 			loaded: false
 /******/ 		};
-/******/
+
 /******/ 		// Execute the module function
 /******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
-/******/
+
 /******/ 		// Flag the module as loaded
 /******/ 		module.loaded = true;
-/******/
+
 /******/ 		// Return the exports of the module
 /******/ 		return module.exports;
 /******/ 	}
-/******/
-/******/
+
+
 /******/ 	// expose the modules object (__webpack_modules__)
 /******/ 	__webpack_require__.m = modules;
-/******/
+
 /******/ 	// expose the module cache
 /******/ 	__webpack_require__.c = installedModules;
-/******/
+
 /******/ 	// __webpack_public_path__
 /******/ 	__webpack_require__.p = "";
-/******/
+
 /******/ 	// Load entry module and return exports
 /******/ 	return __webpack_require__(0);
 /******/ })
@@ -61,9 +61,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	
 	var StateMan = __webpack_require__(1);
-	StateMan.Histery = __webpack_require__(2);
+	StateMan.Histery = __webpack_require__(4);
 	StateMan.util = __webpack_require__(3);
-	StateMan.State = __webpack_require__(4);
+	StateMan.State = __webpack_require__(2);
 
 	module.exports = StateMan;
 
@@ -72,8 +72,8 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 1 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var State = __webpack_require__(4),
-	  Histery = __webpack_require__(2),
+	var State = __webpack_require__(2),
+	  Histery = __webpack_require__(4),
 	  brow = __webpack_require__(5),
 	  _ = __webpack_require__(3),
 	  baseTitle = document.title,
@@ -543,6 +543,353 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 2 */
 /***/ function(module, exports, __webpack_require__) {
 
+	var _ = __webpack_require__(3);
+
+
+
+	function State(option){
+	  this._states = {};
+	  this._pending = false;
+	  this.visited = false;
+	  if(option) this.config(option);
+	}
+
+
+	//regexp cache
+	State.rCache = {};
+
+	_.extend( _.emitable( State ), {
+	  
+	  state: function(stateName, config){
+	    if(_.typeOf(stateName) === "object"){
+	      for(var i in stateName){
+	        this.state(i, stateName[i])
+	      }
+	      return this;
+	    }
+	    var current, next, nextName, states = this._states, i=0;
+
+	    if( typeof stateName === "string" ) stateName = stateName.split(".");
+
+	    var slen = stateName.length, current = this;
+	    var stack = [];
+
+
+	    do{
+	      nextName = stateName[i];
+	      next = states[nextName];
+	      stack.push(nextName);
+	      if(!next){
+	        if(!config) return;
+	        next = states[nextName] = new State();
+	        _.extend(next, {
+	          parent: current,
+	          manager: current.manager || current,
+	          name: stack.join("."),
+	          currentName: nextName
+	        })
+	        current.hasNext = true;
+	        next.configUrl();
+	      }
+	      current = next;
+	      states = next._states;
+	    }while((++i) < slen )
+
+	    if(config){
+	       next.config(config);
+	       return this;
+	    } else {
+	      return current;
+	    }
+	  },
+
+	  config: function(configure){
+
+	    configure = this._getConfig(configure);
+
+	    for(var i in configure){
+	      var prop = configure[i];
+	      switch(i){
+	        case "url": 
+	          if(typeof prop === "string"){
+	            this.url = prop;
+	            this.configUrl();
+	          }
+	          break;
+	        case "events": 
+	          this.on(prop)
+	          break;
+	        default:
+	          this[i] = prop;
+	      }
+	    }
+	  },
+
+	  // children override
+	  _getConfig: function(configure){
+	    return typeof configure === "function"? {enter: configure} : configure;
+	  },
+
+	  //from url 
+
+	  configUrl: function(){
+	    var url = "" , base = this, currentUrl;
+	    var _watchedParam = [];
+
+	    while( base ){
+
+	      url = (typeof base.url === "string" ? base.url: (base.currentName || "")) + "/" + url;
+
+	      // means absolute;
+	      if(url.indexOf("^/") === 0) {
+	        url = url.slice(1);
+	        break;
+	      }
+	      base = base.parent;
+	    }
+	    this.pattern = _.cleanPath("/" + url);
+	    var pathAndQuery = this.pattern.split("?");
+	    this.pattern = pathAndQuery[0];
+	    // some Query we need watched
+
+	    _.extend(this, _.normalize(this.pattern), true);
+	  },
+	  encode: function(param){
+	    var state = this;
+	    param = param || {};
+	    
+	    var matched = "%";
+
+	    var url = state.matches.replace(/\(([\w-]+)\)/g, function(all, capture){
+	      var sec = param[capture] || "";
+	      matched+= capture + "%";
+	      return sec;
+	    }) + "?";
+
+	    // remained is the query, we need concat them after url as query
+	    for(var i in param) {
+	      if( matched.indexOf("%"+i+"%") === -1) url += i + "=" + param[i] + "&";
+	    }
+	    return _.cleanPath( url.replace(/(?:\?|&)$/,"") )
+	  },
+	  decode: function( path ){
+	    var matched = this.regexp.exec(path),
+	      keys = this.keys;
+
+	    if(matched){
+
+	      var param = {};
+	      for(var i =0,len=keys.length;i<len;i++){
+	        param[keys[i]] = matched[i+1] 
+	      }
+	      return param;
+	    }else{
+	      return false;
+	    }
+	  },
+	  // by default, all lifecycle is permitted
+
+	  async: function(){
+	    throw new Error( 'please use option.async instead')
+	  }
+
+	})
+
+
+	module.exports = State;
+
+/***/ },
+/* 3 */
+/***/ function(module, exports) {
+
+	var _ = module.exports = {};
+	var slice = [].slice, o2str = ({}).toString;
+
+
+	// merge o2's properties to Object o1. 
+	_.extend = function(o1, o2, override){
+	  for(var i in o2) if(override || o1[i] === undefined){
+	    o1[i] = o2[i]
+	  }
+	  return o1;
+	}
+
+
+
+	_.slice = function(arr, index){
+	  return slice.call(arr, index);
+	}
+
+	_.typeOf = function typeOf (o) {
+	  return o == null ? String(o) : o2str.call(o).slice(8, -1).toLowerCase();
+	}
+
+	//strict eql
+	_.eql = function(o1, o2){
+	  var t1 = _.typeOf(o1), t2 = _.typeOf(o2);
+	  if( t1 !== t2) return false;
+	  if(t1 === 'object'){
+	    var equal = true;
+	    // only check the first's propertie
+	    for(var i in o1){
+	      if( o1[i] !== o2[i] ) equal = false;
+	    }
+	    return equal;
+	  }
+	  return o1 === o2;
+	}
+
+
+	// small emitter 
+	_.emitable = (function(){
+	  function norm(ev){
+	    var eventAndNamespace = (ev||'').split(':');
+	    return {event: eventAndNamespace[0], namespace: eventAndNamespace[1]}
+	  }
+	  var API = {
+	    once: function(event, fn){
+	      var callback = function(){
+	        fn.apply(this, arguments)
+	        this.off(event, callback)
+	      }
+	      return this.on(event, callback)
+	    },
+	    on: function(event, fn) {
+	      if(typeof event === 'object'){
+	        for (var i in event) {
+	          this.on(i, event[i]);
+	        }
+	        return this;
+	      }
+	      var ne = norm(event);
+	      event=ne.event;
+	      if(event && typeof fn === 'function' ){
+	        var handles = this._handles || (this._handles = {}),
+	          calls = handles[event] || (handles[event] = []);
+	        fn._ns = ne.namespace;
+	        calls.push(fn);
+	      }
+	      return this;
+	    },
+	    off: function(event, fn) {
+	      var ne = norm(event); event = ne.event;
+	      if(!event || !this._handles) this._handles = {};
+
+	      var handles = this._handles , calls;
+
+	      if (calls = handles[event]) {
+	        if (!fn && !ne.namespace) {
+	          handles[event] = [];
+	        }else{
+	          for (var i = 0, len = calls.length; i < len; i++) {
+	            if ( (!fn || fn === calls[i]) && (!ne.namespace || calls[i]._ns === ne.namespace) ) {
+	              calls.splice(i, 1);
+	              return this;
+	            }
+	          }
+	        }
+	      }
+	      return this;
+	    },
+	    emit: function(event){
+	      var ne = norm(event); event = ne.event;
+
+	      var args = _.slice(arguments, 1),
+	        handles = this._handles, calls;
+
+	      if (!handles || !(calls = handles[event])) return this;
+	      for (var i = 0, len = calls.length; i < len; i++) {
+	        var fn = calls[i];
+	        if( !ne.namespace || fn._ns === ne.namespace ) fn.apply(this, args)
+	      }
+	      return this;
+	    }
+	  }
+	  return function(obj){
+	      obj = typeof obj == "function" ? obj.prototype : obj;
+	      return _.extend(obj, API)
+	  }
+	})();
+
+
+
+	_.bind = function(fn, context){
+	  return function(){
+	    return fn.apply(context, arguments);
+	  }
+	}
+
+	var rDbSlash = /\/+/g, // double slash
+	  rEndSlash = /\/$/;    // end slash
+
+	_.cleanPath = function (path){
+	  return ("/" + path).replace( rDbSlash,"/" ).replace( rEndSlash, "" ) || "/";
+	}
+
+	// normalize the path
+	function normalizePath(path) {
+	  // means is from 
+	  // (?:\:([\w-]+))?(?:\(([^\/]+?)\))|(\*{2,})|(\*(?!\*)))/g
+	  var preIndex = 0;
+	  var keys = [];
+	  var index = 0;
+	  var matches = "";
+
+	  path = _.cleanPath(path);
+
+	  var regStr = path
+	    //  :id(capture)? | (capture)   |  ** | * 
+	    .replace(/\:([\w-]+)(?:\(([^\/]+?)\))?|(?:\(([^\/]+)\))|(\*{2,})|(\*(?!\*))/g, 
+	      function(all, key, keyformat, capture, mwild, swild, startAt) {
+	        // move the uncaptured fragment in the path
+	        if(startAt > preIndex) matches += path.slice(preIndex, startAt);
+	        preIndex = startAt + all.length;
+	        if( key ){
+	          matches += "(" + key + ")";
+	          keys.push(key)
+	          return "("+( keyformat || "[\\w-]+")+")";
+	        }
+	        matches += "(" + index + ")";
+
+	        keys.push( index++ );
+
+	        if( capture ){
+	           // sub capture detect
+	          return "(" + capture +  ")";
+	        } 
+	        if(mwild) return "(.*)";
+	        if(swild) return "([^\\/]*)";
+	    })
+
+	  if(preIndex !== path.length) matches += path.slice(preIndex)
+
+	  return {
+	    regexp: new RegExp("^" + regStr +"/?$"),
+	    keys: keys,
+	    matches: matches || path
+	  }
+	}
+
+	_.log = function(msg, type){
+	  typeof console !== "undefined" && console[type || "log"](msg)
+	}
+
+	_.isPromise = function( obj ){
+
+	  return !!obj && (typeof obj === 'object' || typeof obj === 'function') && typeof obj.then === 'function';
+
+	}
+
+
+
+	_.normalize = normalizePath;
+
+
+
+/***/ },
+/* 4 */
+/***/ function(module, exports, __webpack_require__) {
+
 	
 	// MIT
 	// Thx Backbone.js 1.1.2  and https://github.com/cowboy/jquery-hashchange/blob/master/jquery.ba-hashchange.js
@@ -759,355 +1106,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = Histery;
 
 /***/ },
-/* 3 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var _ = module.exports = {};
-	var slice = [].slice, o2str = ({}).toString;
-
-
-	// merge o2's properties to Object o1. 
-	_.extend = function(o1, o2, override){
-	  for(var i in o2) if(override || o1[i] === undefined){
-	    o1[i] = o2[i]
-	  }
-	  return o1;
-	}
-
-
-
-	_.slice = function(arr, index){
-	  return slice.call(arr, index);
-	}
-
-	_.typeOf = function typeOf (o) {
-	  return o == null ? String(o) : o2str.call(o).slice(8, -1).toLowerCase();
-	}
-
-	//strict eql
-	_.eql = function(o1, o2){
-	  var t1 = _.typeOf(o1), t2 = _.typeOf(o2);
-	  if( t1 !== t2) return false;
-	  if(t1 === 'object'){
-	    var equal = true;
-	    // only check the first's propertie
-	    for(var i in o1){
-	      if( o1[i] !== o2[i] ) equal = false;
-	    }
-	    return equal;
-	  }
-	  return o1 === o2;
-	}
-
-
-	// small emitter 
-	_.emitable = (function(){
-	  function norm(ev){
-	    var eventAndNamespace = (ev||'').split(':');
-	    return {event: eventAndNamespace[0], namespace: eventAndNamespace[1]}
-	  }
-	  var API = {
-	    once: function(event, fn){
-	      var callback = function(){
-	        fn.apply(this, arguments)
-	        this.off(event, callback)
-	      }
-	      return this.on(event, callback)
-	    },
-	    on: function(event, fn) {
-	      if(typeof event === 'object'){
-	        for (var i in event) {
-	          this.on(i, event[i]);
-	        }
-	        return this;
-	      }
-	      var ne = norm(event);
-	      event=ne.event;
-	      if(event && typeof fn === 'function' ){
-	        var handles = this._handles || (this._handles = {}),
-	          calls = handles[event] || (handles[event] = []);
-	        fn._ns = ne.namespace;
-	        calls.push(fn);
-	      }
-	      return this;
-	    },
-	    off: function(event, fn) {
-	      var ne = norm(event); event = ne.event;
-	      if(!event || !this._handles) this._handles = {};
-
-	      var handles = this._handles , calls;
-
-	      if (calls = handles[event]) {
-	        if (!fn && !ne.namespace) {
-	          handles[event] = [];
-	        }else{
-	          for (var i = 0, len = calls.length; i < len; i++) {
-	            if ( (!fn || fn === calls[i]) && (!ne.namespace || calls[i]._ns === ne.namespace) ) {
-	              calls.splice(i, 1);
-	              return this;
-	            }
-	          }
-	        }
-	      }
-	      return this;
-	    },
-	    emit: function(event){
-	      var ne = norm(event); event = ne.event;
-
-	      var args = _.slice(arguments, 1),
-	        handles = this._handles, calls;
-
-	      if (!handles || !(calls = handles[event])) return this;
-	      for (var i = 0, len = calls.length; i < len; i++) {
-	        var fn = calls[i];
-	        if( !ne.namespace || fn._ns === ne.namespace ) fn.apply(this, args)
-	      }
-	      return this;
-	    }
-	  }
-	  return function(obj){
-	      obj = typeof obj == "function" ? obj.prototype : obj;
-	      return _.extend(obj, API)
-	  }
-	})();
-
-
-
-	_.bind = function(fn, context){
-	  return function(){
-	    return fn.apply(context, arguments);
-	  }
-	}
-
-	var rDbSlash = /\/+/g, // double slash
-	  rEndSlash = /\/$/;    // end slash
-
-	_.cleanPath = function (path){
-	  return ("/" + path).replace( rDbSlash,"/" ).replace( rEndSlash, "" ) || "/";
-	}
-
-	// normalize the path
-	function normalizePath(path) {
-	  // means is from 
-	  // (?:\:([\w-]+))?(?:\(([^\/]+?)\))|(\*{2,})|(\*(?!\*)))/g
-	  var preIndex = 0;
-	  var keys = [];
-	  var index = 0;
-	  var matches = "";
-
-	  path = _.cleanPath(path);
-
-	  var regStr = path
-	    //  :id(capture)? | (capture)   |  ** | * 
-	    .replace(/\:([\w-]+)(?:\(([^\/]+?)\))?|(?:\(([^\/]+)\))|(\*{2,})|(\*(?!\*))/g, 
-	      function(all, key, keyformat, capture, mwild, swild, startAt) {
-	        // move the uncaptured fragment in the path
-	        if(startAt > preIndex) matches += path.slice(preIndex, startAt);
-	        preIndex = startAt + all.length;
-	        if( key ){
-	          matches += "(" + key + ")";
-	          keys.push(key)
-	          return "("+( keyformat || "[\\w-]+")+")";
-	        }
-	        matches += "(" + index + ")";
-
-	        keys.push( index++ );
-
-	        if( capture ){
-	           // sub capture detect
-	          return "(" + capture +  ")";
-	        } 
-	        if(mwild) return "(.*)";
-	        if(swild) return "([^\\/]*)";
-	    })
-
-	  if(preIndex !== path.length) matches += path.slice(preIndex)
-
-	  return {
-	    regexp: new RegExp("^" + regStr +"/?$"),
-	    keys: keys,
-	    matches: matches || path
-	  }
-	}
-
-	_.log = function(msg, type){
-	  typeof console !== "undefined" && console[type || "log"](msg)
-	}
-
-	_.isPromise = function( obj ){
-
-	  return !!obj && (typeof obj === 'object' || typeof obj === 'function') && typeof obj.then === 'function';
-
-	}
-
-
-
-	_.normalize = normalizePath;
-
-
-
-/***/ },
-/* 4 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var _ = __webpack_require__(3);
-
-
-
-	function State(option){
-	  this._states = {};
-	  this._pending = false;
-	  this.visited = false;
-	  if(option) this.config(option);
-	}
-
-
-	//regexp cache
-	State.rCache = {};
-
-	_.extend( _.emitable( State ), {
-	  
-	  state: function(stateName, config){
-	    if(_.typeOf(stateName) === "object"){
-	      for(var i in stateName){
-	        this.state(i, stateName[i])
-	      }
-	      return this;
-	    }
-	    var current, next, nextName, states = this._states, i=0;
-
-	    if( typeof stateName === "string" ) stateName = stateName.split(".");
-
-	    var slen = stateName.length, current = this;
-	    var stack = [];
-
-
-	    do{
-	      nextName = stateName[i];
-	      next = states[nextName];
-	      stack.push(nextName);
-	      if(!next){
-	        if(!config) return;
-	        next = states[nextName] = new State();
-	        _.extend(next, {
-	          parent: current,
-	          manager: current.manager || current,
-	          name: stack.join("."),
-	          currentName: nextName
-	        })
-	        current.hasNext = true;
-	        next.configUrl();
-	      }
-	      current = next;
-	      states = next._states;
-	    }while((++i) < slen )
-
-	    if(config){
-	       next.config(config);
-	       return this;
-	    } else {
-	      return current;
-	    }
-	  },
-
-	  config: function(configure){
-
-	    configure = this._getConfig(configure);
-
-	    for(var i in configure){
-	      var prop = configure[i];
-	      switch(i){
-	        case "url": 
-	          if(typeof prop === "string"){
-	            this.url = prop;
-	            this.configUrl();
-	          }
-	          break;
-	        case "events": 
-	          this.on(prop)
-	          break;
-	        default:
-	          this[i] = prop;
-	      }
-	    }
-	  },
-
-	  // children override
-	  _getConfig: function(configure){
-	    return typeof configure === "function"? {enter: configure} : configure;
-	  },
-
-	  //from url 
-
-	  configUrl: function(){
-	    var url = "" , base = this, currentUrl;
-	    var _watchedParam = [];
-
-	    while( base ){
-
-	      url = (typeof base.url === "string" ? base.url: (base.currentName || "")) + "/" + url;
-
-	      // means absolute;
-	      if(url.indexOf("^/") === 0) {
-	        url = url.slice(1);
-	        break;
-	      }
-	      base = base.parent;
-	    }
-	    this.pattern = _.cleanPath("/" + url);
-	    var pathAndQuery = this.pattern.split("?");
-	    this.pattern = pathAndQuery[0];
-	    // some Query we need watched
-
-	    _.extend(this, _.normalize(this.pattern), true);
-	  },
-	  encode: function(param){
-	    var state = this;
-	    param = param || {};
-	    
-	    var matched = "%";
-
-	    var url = state.matches.replace(/\(([\w-]+)\)/g, function(all, capture){
-	      var sec = param[capture] || "";
-	      matched+= capture + "%";
-	      return sec;
-	    }) + "?";
-
-	    // remained is the query, we need concat them after url as query
-	    for(var i in param) {
-	      if( matched.indexOf("%"+i+"%") === -1) url += i + "=" + param[i] + "&";
-	    }
-	    return _.cleanPath( url.replace(/(?:\?|&)$/,"") )
-	  },
-	  decode: function( path ){
-	    var matched = this.regexp.exec(path),
-	      keys = this.keys;
-
-	    if(matched){
-
-	      var param = {};
-	      for(var i =0,len=keys.length;i<len;i++){
-	        param[keys[i]] = matched[i+1] 
-	      }
-	      return param;
-	    }else{
-	      return false;
-	    }
-	  },
-	  // by default, all lifecycle is permitted
-
-	  async: function(){
-	    throw new Error( 'please use option.async instead')
-	  }
-
-	})
-
-
-	module.exports = State;
-
-/***/ },
 /* 5 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ function(module, exports) {
 
 	
 	var win = window, 
@@ -1134,3 +1134,4 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ }
 /******/ ])
 });
+;
