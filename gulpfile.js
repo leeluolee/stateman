@@ -196,7 +196,17 @@ gulp.task('server', ['build'], shell.task([
 ]))
 
 
-gulp.task('gh-pages', function () {
+gulp.task('example', function(){
+  gulp.src("example/*.html")
+    .pipe(wrap(function(file, enc, cb){
+      file.contents = new Buffer(file.contents.toString().replace('../stateman', 'https://rawgit.com/leeluolee/stateman/v'+pkg.version+'/stateman.js'), 'utf8')
+      cb(null, file)
+    }))
+    .pipe(
+      gulp.dest('docs/pages/example')
+     );
+})
+gulp.task('gh-pages', ['example'], function () {
   gulp.src("docs/pages/**/*.*")
     .pipe(deploy({
       remoteUrl: "git@github.com:leeluolee/stateman",

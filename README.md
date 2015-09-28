@@ -27,8 +27,6 @@ But stateman is a __standalone library__ with an extremely tiny codebase (10kb m
 7. __well tested, born in large product.__
 
 
-
-
 ## Quick Start
 
 You may need a static server to run the demo. [puer](https://github.com/leeluolee/puer) is simple to get start.
@@ -95,8 +93,7 @@ open the console to see the output when navigating.
 ## Reference
 
 - [English](http://leeluolee.github.io/stateman/)
-- [中文](http://leeluolee.github.io/stateman/?API-zh)
-
+- [中文手册](http://leeluolee.github.io/stateman/?API-zh)
 
 ## Demos
 
@@ -107,7 +104,6 @@ The code in this demo is for demonstration only. In a production development, yo
 ###2. A simple SPA built upon [Regularjs (Living Template)](https://github.com/regularjs/regular) + requirejs + stateman: [Link](http://regularjs.github.io/regular-state/requirejs/index-min.html)
 
 I create a simple wrapping ([regular-state](https://github.com/regularjs/regular-state)) to integrate stateman with Regularjs, which makes it easy to build a single Page Application.  thanks to the concise API, [the code](https://github.com/regularjs/regular-state/blob/master/example/requirejs/index.js#L83) is very clean. You will find that integrating stateman with other libraries is also simple.
-
 
 
 
@@ -195,8 +191,9 @@ __run demo local__
 MIT.
 
 
-## TODO
+## ChangLog
 
-1. notify the state on the way to current 
-2. need a config can't directly visit the state at the branch
-3. 
+
+
+
+

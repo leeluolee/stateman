@@ -1,3 +1,20 @@
+<!--
+
+
+<!-- t -->
+English
+<!-- s -->
+中文
+<!-- /t -->
+
+{
+English
+%
+中文
+}
+
+-->
+
 
 
 > { "Long live my poor English", :P  % 微量的api在0.2版本有所修改}
@@ -6,14 +23,14 @@
 ## {Which is Improved in  v0.2.x %  0.2.x的改进 }
 
 {
-- add [__askForPermission__](#permission) step in Lifecyle.
+- add an [__askForPermission__](#permission) step in Lifecyle.
 - support __Promise__ in `enter`， `leave` and `canEnter`, `canLeave`( introduced in v0.2.0) to help us implement some asynchronous navigation. 
-- add [namespace support](#namespace) for builtin emitter
+- add [namespace support](#event) for builtin emitter
 - Warn: __remove [state.async]__,  you can use  `option.async` for asynchronous navigation. but I suggest you to use promise instead
 %
-- 增加了一个[callForPermission](), 来帮助我们阻止一次跳转(比如在离开时， 加个通知用户是否要保存）
+- 增加了一个[askForPermission](#permission), 来帮助我们阻止一次跳转(比如在离开时， 加个通知用户是否要保存）
 - 现在你可以在`enter`, `leave` 以及新增加的 `canLeave`, `canEnter` 方法中来返回Promise对象， 这对于一些异步的跳转非常有帮助
-- 事件现在支持[命名空间]()了
+- 事件现在支持[命名空间](#event)了
 - 移除了[state.async] 方法, 如果你的运行环境不支持Promise, 你仍然可以使用 `option.async` 来获得一样的效果
 }
 
@@ -731,6 +748,24 @@ StateMan内置了一个小型Emitter 来帮助实现事件驱动的开发, 在 [
 }
 
 
+{
+you can use format `[event]:[namespace]`  to create a event that have specified namespace.
+%
+you 可以使用 `[event]:[namespace]`的格式区创建一个带有namespace的事件
+}
+
+__Example__
+
+```
+stateman
+  .on('begin', beginListener)
+  .on({   // there will be a multiply binding
+    'end': endListener,
+    'custom': customListener,
+    'custom:name1': customListenerWithNameSpace
+  })
+```
+
 
 
 <a name="off"></a>
@@ -746,6 +781,24 @@ __Usage__
 `stateman.off(event, handle)`
 
 
+__Example__
+
+{
+There will be a variety of combinations of parameters.
+%
+这里有多种参数可能
+}
+
+
+```js
+stateman.off('begin', beginListener ) // unbind listener with specified handle
+  .off('custom:name1')   // unbind all listener whose eventName is custom and namespace is name1
+  .off('custom')   // unbind listener whose name is 'custom' (ignore namespace)
+  .off()  // clear all event bindings of stateman
+```
+
+
+
 <a name="emit"></a>
 ### stateman.emit
 
@@ -756,9 +809,28 @@ trigger a specified event with specified param
 }
 
 
+
 __Usage__
 
 `stateman.emit(event, param)`
+
+
+{
+__Similiar with `stateman.off`, namespace will affect its working.__
+%
+与stateman.off类似， namespace会影响函数的表现， 我们用例子来说明一下
+}
+
+
+__Example__
+
+```js
+
+stateman.emit('begin') // emit all listeners named `begin` (ignore namespace) 
+  .emit('custom:name1')   // emit all listeners named `begin`, and with namespace `name1`
+
+```
+
 
 ## { About Routing % 理解Routing }
 
@@ -778,6 +850,7 @@ There are three stages in one navigation
 let's talk about `navigation` first.
 
 
+<a name="navigation"></a>
 #### navigation: enter, leave , update: 
 
 {
@@ -822,6 +895,7 @@ See `app.contact.detail.setting` that we defined in the 【[first example](http:
 
 
 
+<a name="permission"></a>
 #### permission: canEnter canLeave
 
 Some times, you want to stop the routing before `navigation` process. one solution is handling it in [`begin`](#event)'s listeners
