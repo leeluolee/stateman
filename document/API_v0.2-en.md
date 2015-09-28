@@ -1,16 +1,3 @@
-<!--
-
-
-<!-- t -->
-English
-
-
-
-English
-
-
--->
-
 
 
 >  "Long live my poor English", :P  
@@ -20,8 +7,8 @@ English
 
 
 - add an [__askForPermission__](#permission) step in Lifecyle.
-- support __Promise__ in `enter`， `leave` and `canEnter`, `canLeave`( introduced in v0.2.0) to help us implement some asynchronous navigation. 
-- add [namespace support](#event) for builtin emitter
+- support return __Promise__ in `enter`， `leave` and `canEnter`, `canLeave`( introduced in v0.2.0) to help us implement some asynchronous navigation. 
+- add [namespace support](#event) for builtin emitter.
 - Warn: __remove [state.async]__,  you can use  `option.async` for asynchronous navigation. but I suggest you to use promise instead
 
 
@@ -86,7 +73,7 @@ stateman.state({
 
 Object `config` is used to help us record the navigating, you don't need to understand the example right now, document will explain later.
 
-You can find 【__The demo [here](http://leeluolee.github.io/stateman/example/api.html)__】. type something in console can help you to understand api more clearly.
+You can find 【__The demo [here](./example/api.html)__】. type something in console can help you to understand api more clearly.
 
 
 
@@ -102,13 +89,13 @@ __Arguments__
 
 |Param|Type|Detail|
 |--|--|--|
-|option.title|strict| Default: false . whether only the leaf state can be visited |
+|option.strict|Boolean| Default: false . whether only the leaf state can be visited |
 |option.title| String| document.title, See   [config.title](#title)|
 
 
 __Return__
 
-- type [Stateman] : The instance of StateMan 
+[Stateman] : The instance of StateMan 
 
 __Example__
 
@@ -148,11 +135,7 @@ __Arguments__
 
  __Return__ : 
 
- - type [StateMan]: this
-
-  if config is not passed
-
- - type [[State](#)]: the state.
+StateMan or State (if config is not passed) 
 
 
 __Example__
@@ -210,7 +193,7 @@ var state = stateman.state('demo.list');
 ### > detail of `config` 
 
 
-Everything you defined in `config` will merged to the target state which the stateName represent. But there are also some special properties you need to konw.
+Everything you defined in `config` will be merged to the target state which the stateName represent. But there are also some special properties you need to konw.
 
 
 
@@ -258,6 +241,8 @@ The captured url of `app.contact.detail` is equals to `/app/users/:id`. YES, obv
 missing `/` or redundancy of `/` is all valid.
 
 
+
+
 __Absolute url__: 
 
 if you dont need the url that defined in parents, use a prefix `^` to make it absolute . __all children__ of the state will also be affect
@@ -276,7 +261,7 @@ The captured url of `app.contact.detail` will be `/detail/:id`. and the captured
 
 __empty url__: abandon the current url.
 
-if you pass `url:""`, the captured_url will be the same as its parent.
+if you pass `url:""`, the captured_url will be the same as its parent. (but it have higher priority than parent)
 
 
 
@@ -294,7 +279,7 @@ when navigating is end. the document.title will replaced by particular title.
 
 __Argument__
 
-- config.title [String or Function]: if title is a Function, document.title will use its returnValue
+- config.title [String or Function]: if title is a Function, document.title will use its returnValue 
 
 __Example__
 
@@ -353,7 +338,7 @@ __option__
 |Param|Type|Detail|
 |--|--|--|
 |html5 |Boolean|(default false) whether to open the html5 history support |
-|root |String|(default '/') the root of the url , __only need when html5 is actived__. defualt is `/` |
+|root |String|(default '/') the root of the url , __only required when html5 is actived__. defualt is `/` |
 |prefix| String | for the hash prefix , default is '' (you can pass `!` to make the hash like `#!/contact/100`), works in hash mode.|
 |autolink| Boolean | (defualt true) whether to delegate all link(a[href])'s navigating, only need when __html5 is actived__, default is `true`.|
 
@@ -372,7 +357,7 @@ stateman.start({
 __Warning__
 
 
-If you open set `html5=true`, but browser doesn't support this feature. stateman will fallback to hash-based routing.
+If `html5=true` (need html5 pushState support), but browser doesn't support this feature. stateman will fallback to hash-based routing.
 
 
 
@@ -380,7 +365,7 @@ Just like the code above,
 
 1. If you visited `/blog/app`  in the browser that don't support html5. stateman will automately switch to hash-based routing and redirect to `/blog#/app` for you.
 
-2. If you visted `/blog#/app` in the browser that __support__ html5. stateman will also use the history-based routing, and fix the url to `/blog/app`__ for you.
+2. If you visted `/blog#/app` in the browser that __support__ html5. stateman will also use the history-based routing, and fix the url to __`/blog/app`__ for you.
 
 
 
@@ -408,7 +393,7 @@ __Argument__
 |Param|Type|Detail|
 |--|--|--|
 |url |String|target url |
-|option(optional) |Object|navigate option, option will merge the [param from url](#param) as its `param` property. |
+|option(optional) |Object|will become the [routing option](#option), option will merge the [param from url](#param) as its `param` property. |
 |callback(optional)|Function|function called after navigating is done|
 
 
@@ -428,9 +413,11 @@ __Example__
 
 <!-- t -->
 
-the final option passed to `enter`, `leave` and `update` is `{param: {id: "1", name:"leeluolee"}, data: 1}`.
+the final option passed to `enter`, `leave` and `update` is 
 
 
+
+`{param: {id: "1", name:"leeluolee"}, data: 1}`.
 
 
 
@@ -453,19 +440,18 @@ __Arguments__
 
 - stateName [String]: the name of target state. 
 
-- option [Object] : 控制参数
+- option [Object]: [Routing Option](#option)
 
   - option.encode: 
 
   default is true. if encode is false, url will not change at  location, only state is change (means will trigger the stateman's navigating process). stateman use the [__encode__](#encode) method to compute the real url. 
-
   - option.param: 
 
     the big different between __nav__ and __go__ is param: 
 
      __go__ may need param to compute the real url, and place it in location. 
 
-  you can use stateman.encode to test how stateman compute url from a state with specifed param
+  you can use [stateman.encode](#encode) to test how stateman compute url from a state with specifed param
 
   - option.replace: the same as  [stateman.nav](#nav)
 
@@ -641,7 +627,7 @@ __Usage__
 `stateman.on(event, handle)`
 
 
-StateMan have simple EventEmitter implementation for event driven development, see builtin events at [Routing Event](#built_event)
+StateMan have simple EventEmitter implementation for event driven development, see builtin events at [Routing Event](#event)
 
 
 
@@ -654,7 +640,8 @@ __Example__
 ```
 stateman
   .on('begin', beginListener)
-  .on({   // there will be a multiply binding
+  // there will be a multiply binding
+  .on({   
     'end': endListener,
     'custom': customListener,
     'custom:name1': customListenerWithNameSpace
@@ -682,10 +669,14 @@ There will be a variety of combinations of parameters.
 
 
 ```js
-stateman.off('begin', beginListener ) // unbind listener with specified handle
-  .off('custom:name1')   // unbind all listener whose eventName is custom and namespace is name1
-  .off('custom')   // unbind listener whose name is 'custom' (ignore namespace)
-  .off()  // clear all event bindings of stateman
+// unbind listener with specified handle
+stateman.off('begin', beginListener ) 
+  // unbind all listener whose eventName is custom and namespace is name1
+  .off('custom:name1')   
+  // unbind listener whose name is 'custom' (ignore namespace)
+  .off('custom')   
+  // clear all event bindings of stateman
+  .off()  
 ```
 
 
@@ -712,9 +703,10 @@ __Similiar with `stateman.off`, namespace will affect its working.__
 __Example__
 
 ```js
-
-stateman.emit('begin') // emit all listeners named `begin` (ignore namespace) 
-  .emit('custom:name1')   // emit all listeners named `begin`, and with namespace `name1`
+// emit all listeners named `begin` (ignore namespace) 
+stateman.emit('begin') 
+// emit all listeners named `begin`, and with namespace `name1`
+  .emit('custom:name1')   
 
 ```
 
@@ -728,7 +720,7 @@ stateman.emit('begin') // emit all listeners named `begin` (ignore namespace)
 
 > <img src="lifecycle.png" width="100%">
 
-There are three stages in one navigation
+There are three stages in one routing.
 
 - permission
 - navigation
@@ -760,11 +752,11 @@ Imagine that the current state is `app.contact.detail.setting`, when navigating 
 
 
 
-you can test it in [api.html](http://leeluolee.github.io/stateman/example/api.html);
+you can test it in [api.html](./example/api.html);
 
 There is no difficult to understand `enter` and `leave`, But what is the update used for?  
 
-See `app.contact.detail.setting` that we defined in the 【[first example](http://leeluolee.github.io/stateman/example/api.html#/app/contact/3/setting)】. if we nav from `/app/contact/3/setting` to `/app/contact/2/setting`, the current state doesn't change, only the param `id` changed. so stateman call the `state.update` method to notify state to process updating work. All states that  included in current state will update.
+See `app.contact.detail.setting` that we defined in the 【[first example](./example/api.html#/app/contact/3/setting)】. if we nav from `/app/contact/3/setting` to `/app/contact/2/setting`, the current state doesn't change, only the param `id` changed. so stateman call the `state.update` method to notify state to process updating work. All states that  included in current state will update.
 
 
 
@@ -773,7 +765,9 @@ See `app.contact.detail.setting` that we defined in the 【[first example](http:
 <a name="permission"></a>
 #### permission: canEnter canLeave
 
+
 Some times, you want to stop the routing before `navigation` process. one solution is handling it in [`begin`](#event)'s listeners
+
 
 ```js
 stateman.on('begin', function(option){
@@ -784,9 +778,11 @@ stateman.on('begin', function(option){
 })
 ```
 
+
 But after version 0.2 , stateman provide an more reasonable choice that called __"ask for permission"__. The process is triggered before __navigation__.
 
 By implementing two optional method: `canEnter`, `canLeave`. you can stop the routing before navigation is starting.
+
 
 ```js
 stateman.state('app.user',{
@@ -797,11 +793,13 @@ stateman.state('app.user',{
 
 ```
 
+
 In the example, if `false` was returned, the navigation will stop, __And url will back to old one__.
 
 __you can also use [Promise](#control) to control this process__
 
 Just like the example we mentioned in `navigation`, if we navigating from `app.contact.detail.setting` to `app.contact.message`, the complete process is: 
+
 
 
 1. __canLeave: app.contact.detail.setting__
@@ -814,7 +812,10 @@ Just like the example we mentioned in `navigation`, if we navigating from `app.c
 8. enter: app.contact.message
 
 
+
 If any step is undefined, __It will be ignored__, they are all optional. 
+
+
 
 
 <a name="control"></a>
@@ -822,7 +823,7 @@ If any step is undefined, __It will be ignored__, they are all optional.
 
 
 Stateman provide some ways to implement asynchronous navigation.
-You can find DEMO for this section in [lifecycle.html]();
+You can find DEMO for this section in [lifecycle.html](./example/lifecycle.html);
 
 
 
@@ -856,12 +857,18 @@ stateman.state('app.blog',{
 
 ```
 
+
+
+
 __If promise is rejected or resolved by `false`, navigation will stop directly. (if phase is `permission`, also return to old url)  __.
+ 
 
 
-#### Returned Value
+#### Returned Value 
+
 
 You can return `false` (===) in `enter`, `leave`, `canEnter` and `canLeave` to end this navigation in paricular phase. 
+
 
 ```js
 stateman.state('app.blog',{
@@ -880,8 +887,10 @@ stateman.state('app.blog',{
 
 #### `option.async` 
 
-stateman doesn't bundle with any promise-polyfill, if you don't include polyfill in old browser by yourself,
-you may need `option.async` for asynchronous routing, see [option.async](#async)
+
+stateman wasn't bundle with any promise-polyfill, if you don't include polyfill in old browser by yourself,
+you may need `option.async` for asynchronous routing, see [option.async](#async) section.
+
 
 
 
@@ -891,7 +900,7 @@ you may need `option.async` for asynchronous routing, see [option.async](#async)
 
 
 `enter`，`leave`,`update`, `canEnter` and `canLeave` accpet same param which called __Routing Option__. 
-And It will event `begin` and `end` .
+It will also passed as the param to event `begin` and `end`.
 
 It is just the same `option` that you passed to `stateman.go` or `stateman.nav` , but take a lot of import information for routing.
 
@@ -923,11 +932,13 @@ __option__
 
 #### 0. option.phase
 
-represent which phase the navigation is, there are three phases.
 
+represent which phase the navigation is, there are three phases.
 - permission: still calling the permission
 - navigation: in navigating process
 - completion: navigating is done
+
+
 
 
 #### 1. option.async
@@ -955,7 +966,9 @@ A function used to resolve the pending state.
 
 ```
 
-The returned `done` is very similiar with the `resolve` function in promise, if __you pass `false` to it__, the navigation will be terminated.
+
+
+The returned `resolve` is very similiar with the `resolve` function in promise, if __you pass `false` to it__, the navigation will be terminated.
 
 
 
@@ -974,19 +987,23 @@ The returned `done` is very similiar with the `resolve` function in promise, if 
 
 
 
+
 #### 1. option.current
 
-The target state.
+ The target state.  
 
 #### 2. option.previous
 
-The prevous state.
+ The prevous state. 
 
 #### 3. option.param: see [Routing Params](#param)
 
 #### 4. option.stop
 
+
 manually stop this navigating. you may use it when event `begin` is emitted.
+
+
 
 
 <a name='param'></a>
@@ -1048,6 +1065,31 @@ it matches the url `/contact/1?name=heloo&age=1`, and get the param `{id:'1', na
 
 
 
+#### 5. implicit  param
+
+
+Just like sending http request with method `POST`, the param won't be showed in url.  You can also create implicit param by  trick on [Routing Option](#option) in stateman.
+
+In other words, of course, that you can pass __non-string__ information during navigation.
+
+
+__Example__
+
+```js
+
+stateman.state('app.blog', {
+  enter: function(option){
+    console.log(option.blog.title) 
+  } 
+})
+
+stateman.go('app.blog', {
+  blog: {title: 'blog title', content: 'content blog'}
+})
+
+```
+
+Any properties kept in option except `param` won't be showed in url. 
 
 
 <a name="event"></a>
@@ -1080,7 +1122,7 @@ stateman.on("begin", function(evt){
 
 
 
-Paste code above to page [http://leeluolee.github.io/stateman/example/api.html#/app/user](http://leeluolee.github.io/stateman/example/api.html#/app/user), and click `app.contact.message` to see the log.
+Paste code above to page [http://leeluolee.github.io/stateman/api.html#/app/user](./example/api.html#/app/user), and click `app.contact.message` to see the log.
 
 
 
@@ -1167,7 +1209,6 @@ stateman.state({
 
 ```
 
-Open the 【[DEMO](http://leeluolee.github.io/stateman/example/active.html) 】, and check the console.log.
 
 <a name="param1"></a>
 
@@ -1177,13 +1218,11 @@ The current param captured from url or be passed to the method __stateman.go__.
 
 __Example__
 
-```
+```js
 
 stateman.nav("app.detail", {})
 
 ```
-
-
 
 
 
