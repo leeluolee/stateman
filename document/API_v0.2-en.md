@@ -1,14 +1,27 @@
+<!--
 
 
-> a little apis in v0.2 have changed  
+<!-- t -->
+English
+
+
+
+English
+
+
+-->
+
+
+
+>  "Long live my poor English", :P  
 
 
 ## Which is Improved in  v0.2.x 
 
 
-- add [__callForPermission__](#permission) step in Lifecyle to stop navigation. 
+- add an [__askForPermission__](#permission) step in Lifecyle.
 - support __Promise__ in `enter`， `leave` and `canEnter`, `canLeave`( introduced in v0.2.0) to help us implement some asynchronous navigation. 
-- add [namespace support](#namespace) for builtin emitter
+- add [namespace support](#event) for builtin emitter
 - Warn: __remove [state.async]__,  you can use  `option.async` for asynchronous navigation. but I suggest you to use promise instead
 
 
@@ -51,13 +64,13 @@ stateman.state({
   "app.contact.detail.setting": config, 
   "app.contact.message": config,
   "app.user": cfg({
-    enter: function(){
-      var done = this.async();
+    enter: function( option ){
+      var done = option.async();
       console.log(this.name + "is pending, 1s later to enter next state")
       setTimeout(done, 1000)
     },
-    leave: function(){
-      var done = this.async();
+    leave: function( option ){
+      var done = option.async();
       console.log(this.name + "is pending, 1s later to leave out")
       setTimeout(done, 1000)
     }
@@ -223,7 +236,7 @@ There five lifecyle-related functions can be used for controlling the routing lo
 
 
 
-When using url routing together with nested states the default behavior is for child states to append their url to the urls of each of its parent states. for example. The routing url of `app.contact.detail` is the combination of  `app`,`app.contact` and `app.contact.detail`
+For nested states, every sub-states append their urls to their parent's url , then the __captured url__ is generated. for example. The captured url of `app.contact.detail` is the combination of  `app`,`app.contact` and `app.contact.detail`
 
 
 
@@ -633,6 +646,22 @@ StateMan have simple EventEmitter implementation for event driven development, s
 
 
 
+you can use format `[event]:[namespace]`  to create a event that have specified namespace.
+
+
+__Example__
+
+```
+stateman
+  .on('begin', beginListener)
+  .on({   // there will be a multiply binding
+    'end': endListener,
+    'custom': customListener,
+    'custom:name1': customListenerWithNameSpace
+  })
+```
+
+
 
 <a name="off"></a>
 ### stateman.off
@@ -645,6 +674,22 @@ __Usage__
 `stateman.off(event, handle)`
 
 
+__Example__
+
+
+There will be a variety of combinations of parameters.
+
+
+
+```js
+stateman.off('begin', beginListener ) // unbind listener with specified handle
+  .off('custom:name1')   // unbind all listener whose eventName is custom and namespace is name1
+  .off('custom')   // unbind listener whose name is 'custom' (ignore namespace)
+  .off()  // clear all event bindings of stateman
+```
+
+
+
 <a name="emit"></a>
 ### stateman.emit
 
@@ -653,9 +698,26 @@ trigger a specified event with specified param
 
 
 
+
 __Usage__
 
 `stateman.emit(event, param)`
+
+
+
+__Similiar with `stateman.off`, namespace will affect its working.__
+
+
+
+__Example__
+
+```js
+
+stateman.emit('begin') // emit all listeners named `begin` (ignore namespace) 
+  .emit('custom:name1')   // emit all listeners named `begin`, and with namespace `name1`
+
+```
+
 
 ##  About Routing 
 
@@ -675,6 +737,7 @@ There are three stages in one navigation
 let's talk about `navigation` first.
 
 
+<a name="navigation"></a>
 #### navigation: enter, leave , update: 
 
 
@@ -686,10 +749,9 @@ __Example__:
 
 
 
-The current state is `app.contact.detail.setting`, when navigating to `app.contact.message`. the complete process is
+Imagine that the current state is `app.contact.detail.setting`, when navigating to `app.contact.message`. the complete process is
 
 
-//
 1. leave: app.contact.detail.setting
 2. leave: app.contact.detail
 3. update: app.contact
@@ -708,12 +770,54 @@ See `app.contact.detail.setting` that we defined in the 【[first example](http:
 
 
 
-#### ask for permission: canEnter canLeave
+<a name="permission"></a>
+#### permission: canEnter canLeave
 
-Some times, you 
+Some times, you want to stop the routing before `navigation` process. one solution is handling it in [`begin`](#event)'s listeners
+
+```js
+stateman.on('begin', function(option){
+  if( option.current.name === 'app.user' && !isUser){
+    option.stop()
+  }
+  
+})
+```
+
+But after version 0.2 , stateman provide an more reasonable choice that called __"ask for permission"__. The process is triggered before __navigation__.
+
+By implementing two optional method: `canEnter`, `canLeave`. you can stop the routing before navigation is starting.
+
+```js
+stateman.state('app.user',{
+  'canEnter': function(){
+    return !!isUser;
+  }
+})
+
+```
+
+In the example, if `false` was returned, the navigation will stop, __And url will back to old one__.
+
+__you can also use [Promise](#control) to control this process__
+
+Just like the example we mentioned in `navigation`, if we navigating from `app.contact.detail.setting` to `app.contact.message`, the complete process is: 
 
 
+1. __canLeave: app.contact.detail.setting__
+2. __canLeave: app.contact.detail__
+3. __canEnter: app.contact.message__
+4. leave: app.contact.detail.setting
+5. leave: app.contact.detail
+6. update: app.contact
+7. update: app
+8. enter: app.contact.message
 
+
+If any step is undefined, __It will be ignored__, they are all optional. 
+
+
+<a name="control"></a>
 ### Routing  Control 
 
 
@@ -726,7 +830,7 @@ You can find DEMO for this section in [lifecycle.html]();
 #### [__Promise__](#Promise)
 
 
-If Promise is supported in target runtime, I suggest you to use it to control routing.
+I suggest you to use Promise to control routing.
 
 
 __Example__
@@ -946,7 +1050,7 @@ it matches the url `/contact/1?name=heloo&age=1`, and get the param `{id:'1', na
 
 
 
-
+<a name="event"></a>
 ### Routing  Event 
 
 #### begin

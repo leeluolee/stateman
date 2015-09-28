@@ -1,3 +1,16 @@
+<!--
+
+
+
+中文
+<!-- /t -->
+
+
+中文
+
+
+-->
+
 
 
 >  微量的api在0.2版本有所修改
@@ -6,9 +19,9 @@
 ##   0.2.x的改进 
 
 
-- 增加了一个[callForPermission](), 来帮助我们阻止一次跳转(比如在离开时， 加个通知用户是否要保存）
+- 增加了一个[askForPermission](#permission), 来帮助我们阻止一次跳转(比如在离开时， 加个通知用户是否要保存）
 - 现在你可以在`enter`, `leave` 以及新增加的 `canLeave`, `canEnter` 方法中来返回Promise对象， 这对于一些异步的跳转非常有帮助
-- 事件现在支持[命名空间]()了
+- 事件现在支持[命名空间](#event)了
 - 移除了[state.async] 方法, 如果你的运行环境不支持Promise, 你仍然可以使用 `option.async` 来获得一样的效果
 
 
@@ -51,13 +64,13 @@ stateman.state({
   "app.contact.detail.setting": config, 
   "app.contact.message": config,
   "app.user": cfg({
-    enter: function(){
-      var done = this.async();
+    enter: function( option ){
+      var done = option.async();
       console.log(this.name + "is pending, 1s later to enter next state")
       setTimeout(done, 1000)
     },
-    leave: function(){
-      var done = this.async();
+    leave: function( option ){
+      var done = option.async();
       console.log(this.name + "is pending, 1s later to leave out")
       setTimeout(done, 1000)
     }
@@ -632,6 +645,22 @@ StateMan内置了一个小型Emitter 来帮助实现事件驱动的开发, 在 [
 
 
 
+you 可以使用 `[event]:[namespace]`的格式区创建一个带有namespace的事件
+
+
+__Example__
+
+```
+stateman
+  .on('begin', beginListener)
+  .on({   // there will be a multiply binding
+    'end': endListener,
+    'custom': customListener,
+    'custom:name1': customListenerWithNameSpace
+  })
+```
+
+
 
 <a name="off"></a>
 ### stateman.off
@@ -644,6 +673,22 @@ __Usage__
 `stateman.off(event, handle)`
 
 
+__Example__
+
+
+这里有多种参数可能
+
+
+
+```js
+stateman.off('begin', beginListener ) // unbind listener with specified handle
+  .off('custom:name1')   // unbind all listener whose eventName is custom and namespace is name1
+  .off('custom')   // unbind listener whose name is 'custom' (ignore namespace)
+  .off()  // clear all event bindings of stateman
+```
+
+
+
 <a name="emit"></a>
 ### stateman.emit
 
@@ -652,9 +697,26 @@ __Usage__
 
 
 
+
 __Usage__
 
 `stateman.emit(event, param)`
+
+
+
+与stateman.off类似， namespace会影响函数的表现， 我们用例子来说明一下
+
+
+
+__Example__
+
+```js
+
+stateman.emit('begin') // emit all listeners named `begin` (ignore namespace) 
+  .emit('custom:name1')   // emit all listeners named `begin`, and with namespace `name1`
+
+```
+
 
 ##  理解Routing 
 
@@ -674,6 +736,7 @@ There are three stages in one navigation
 let's talk about `navigation` first.
 
 
+<a name="navigation"></a>
 #### navigation: enter, leave , update: 
 
 
@@ -688,7 +751,6 @@ __Example__:
 假设当前状态为`app.contact.detail.setting`, 当我们跳转到 `app.contact.message`. 完整的动作是
 
 
-//
 1. leave: app.contact.detail.setting
 2. leave: app.contact.detail
 3. update: app.contact
@@ -706,12 +768,54 @@ __Example__:
 
 
 
-#### ask for permission: canEnter canLeave
+<a name="permission"></a>
+#### permission: canEnter canLeave
 
-Some times, you 
+Some times, you want to stop the routing before `navigation` process. one solution is handling it in [`begin`](#event)'s listeners
+
+```js
+stateman.on('begin', function(option){
+  if( option.current.name === 'app.user' && !isUser){
+    option.stop()
+  }
+  
+})
+```
+
+But after version 0.2 , stateman provide an more reasonable choice that called __"ask for permission"__. The process is triggered before __navigation__.
+
+By implementing two optional method: `canEnter`, `canLeave`. you can stop the routing before navigation is starting.
+
+```js
+stateman.state('app.user',{
+  'canEnter': function(){
+    return !!isUser;
+  }
+})
+
+```
+
+In the example, if `false` was returned, the navigation will stop, __And url will back to old one__.
+
+__you can also use [Promise](#control) to control this process__
+
+Just like the example we mentioned in `navigation`, if we navigating from `app.contact.detail.setting` to `app.contact.message`, the complete process is: 
 
 
+1. __canLeave: app.contact.detail.setting__
+2. __canLeave: app.contact.detail__
+3. __canEnter: app.contact.message__
+4. leave: app.contact.detail.setting
+5. leave: app.contact.detail
+6. update: app.contact
+7. update: app
+8. enter: app.contact.message
 
+
+If any step is undefined, __It will be ignored__, they are all optional. 
+
+
+<a name="control"></a>
 ### Routing  控制 
 
 
@@ -943,7 +1047,7 @@ __Example__
 
 
 
-
+<a name="event"></a>
 ### Routing  事件
 
 #### begin
