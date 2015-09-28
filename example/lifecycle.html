@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>StateMan Test</title>
+  <script src="https://rawgit.com/leeluolee/stateman/v0.2.0/stateman.js.js"></script>
+</head>
+<body>
+
+<ul>
+  <li><a href="#/app">/app"</a></li>
+  <li><a href="#/app/blog">/app/blog"</a></li>
+  <li><a href="#/app/blog/detail">/app/blog/detail</a></li>
+</ul>
+  
+<script>
+
+  var config = {
+    enter: function(){
+      console.log("enter: " + this.name)
+    },
+    leave: function(){
+      console.log("leave: " + this.name)
+    },
+    canEnter: function(){
+      console.log("canEnter: " + this.name)
+    },
+    canLeave: function(){
+      console.log("canLeave: " + this.name)
+    }
+  }
+
+  function create(o){
+    o = o || {};
+    o.enter= o.enter || config.enter;
+    o.leave = o.leave || config.leave;
+    return o;
+  }
+
+  var delay = function(time){
+    return new Promise(function(resolve){
+      setTimeout( resolve, time)
+    })
+  }
+
+  var confirmp = function(str){
+    return new Promise(function (resolve, reject){
+      if( confirm(str) ) return resolve()
+      reject();
+    })
+  }
+
+  var stateman = new StateMan();
+
+  var blogDelay = false;
+
+  stateman
+    .state("app", config)
+    .state("app.blog", create({
+      enter: function(option){
+        blogDelay = true;
+        console.log('app.blog is blocked for 4s ')
+        return delay(4000).then(function(){
+          console.log('enter app.blog')
+          blogDelay = false
+        })
+        // console.log('enter contact.list')
+      },
+      canLeave: function(option){
+        if(blogDelay){
+          return confirmp('blog is pending, want to leave?')
+        }
+      }
+    }))
+    .state('app.blog.detail', config)
+    .start({})
+
+
+</script>
+</body>
+</html>

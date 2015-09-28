@@ -1,29 +1,9 @@
-<!--
-
-
-<!-- t -->
-English
 
 
 
-English
-
-
--->
-
-
-
->  "Long live my poor English", :P  
-
-
-## Which is Improved in  v0.2.x 
-
-
-- add an [__askForPermission__](#permission) step in Lifecyle.
-- support __Promise__ in `enter`， `leave` and `canEnter`, `canLeave`( introduced in v0.2.0) to help us implement some asynchronous navigation. 
-- add [namespace support](#event) for builtin emitter
-- Warn: __remove [state.async]__,  you can use  `option.async` for asynchronous navigation. but I suggest you to use promise instead
-
+> Some people tell me there are __a lot of terrible lanuage errors__ in this page. I'm sorry for my poor english, I'll ask my colleague for help.
+ and if somebody want to help me, please contact me(oe.zheng@gmail.com);
+ 
 
 # StateMan API Reference 
 
@@ -48,9 +28,9 @@ var config = {
 }
 
 function cfg(o){
-  o.enter = o.enter || config.enter
-  o.leave = o.leave || config.leave
-  o.update = o.update || config.update
+  o.enter = o.enter || config.enter  
+  o.leave = o.leave || config.leave  
+  o.update = o.update || config.update  
   return o;
 }
 
@@ -64,13 +44,13 @@ stateman.state({
   "app.contact.detail.setting": config, 
   "app.contact.message": config,
   "app.user": cfg({
-    enter: function( option ){
-      var done = option.async();
+    enter: function(){
+      var done = this.async();
       console.log(this.name + "is pending, 1s later to enter next state")
       setTimeout(done, 1000)
     },
-    leave: function( option ){
-      var done = option.async();
+    leave: function(){
+      var done = this.async();
       console.log(this.name + "is pending, 1s later to leave out")
       setTimeout(done, 1000)
     }
@@ -86,7 +66,7 @@ stateman.state({
 
 Object `config` is used to help us record the navigating, you don't need to understand the example right now, document will explain later.
 
-You can find 【__The demo [here](http://leeluolee.github.io/stateman/example/api.html)__】. type something in console can help you to understand api more clearly.
+You can find 【__The demo [here](http://leeluolee.github.io/stateman/api.html)__】. type something in console can help you to understand api more clearly.
 
 
 
@@ -205,27 +185,16 @@ var state = stateman.state('demo.list');
 
 
 
+
+
+
+
 <a id='config'></a>
 
-### > detail of `config` 
+### * Detail of `config` 
 
 
-Everything you defined in `config` will merged to the target state which the stateName represent. But there are also some special properties you need to konw.
-
-
-
-#### lifecycle related 
-
-
-
-There five lifecyle-related functions can be used for controlling the routing logic. they are all optional, see [lifecycle](#lifecycle) for detail.
-
-* __config.enter(option)__: a function that will be called when the state be entered
-* __config.leave(option)__: a function that will be called when the state be leaved out.
-* __config.update(option)__: state contained by current state, but not be entered or leaved out will call `update`.
-* __config.canEnter(option)__: ask for permission to enter
-* __config.canLeave(option)__: ask for permission to leave
-
+Everything you defined in `config` will merged to the target state which the stateName represent. But there are also some special propertie you need to konw.
 
 
 
@@ -236,7 +205,7 @@ There five lifecyle-related functions can be used for controlling the routing lo
 
 
 
-For nested states, every sub-states append their urls to their parent's url , then the __captured url__ is generated. for example. The captured url of `app.contact.detail` is the combination of  `app`,`app.contact` and `app.contact.detail`
+When using url routing together with nested states the default behavior is for child states to append their url to the urls of each of its parent states. for example. The routing url of `app.contact.detail` is the combination of  `app`,`app.contact` and `app.contact.detail`
 
 
 
@@ -246,8 +215,8 @@ __Example__
 ```js
 
 state.state("app", {})
-  .state("app.contact", "users")
-  .state("app.contact.detail", "/:id")
+	.state("app.contact", "users")
+	.state("app.contact.detail", "/:id")
 
 ```
 
@@ -281,6 +250,49 @@ if you pass `url:""`, the captured_url will be the same as its parent.
 
 
 
+#### enter, leave , update: 
+
+
+* __config.enter(option)__: a function that will be called when the state be entered into.
+* __config.leave(option)__: a function that will be called when the state be leaved out.
+* __config.update(option)__: a function called by states that included by current state, but not be entered into or leave out. 
+
+`enter`, `update` and `leave` are the most important things you need to know in stateman. 
+
+
+
+
+
+
+__Example__: 
+
+
+
+The current state is `app.contact.detail.setting`, when navigating to `app.contact.message`. the complete process is
+
+
+
+1. leave: app.contact.detail.setting
+2. leave: app.contact.detail
+3. update: app.contact
+3. update: app
+4. enter: app.contact.message
+
+
+you can test it in [api.html](http://leeluolee.github.io/stateman/api.html);
+
+There is no difficult to understand `enter` and `leave`, But what is the update used for?  
+
+See `app.contact.detail.setting` that we defined in the 【[first example](http://leeluolee.github.io/stateman/api.html#/app/contact/3/setting)】. if we nav from `/app/contact/3/setting` to `/app/contact/2/setting`, the current state doesn't not change, only the param `id` changed. so stateman call the `state.update` method to notify state to process updating work. All states that  included in current state will update.
+
+
+
+
+
+
+`enter`, `leave` and `update` they all accepet an param named `option`. option contains a special property `option.param` represent the param from url [see param for detail](#param)
+
+other options that passed into [__stateman.go__](#go) or [__stateman.nav__](#nav), will also be passed to `enter`, `leave`, `update`
 
 
 <a href="#" name="title"></a>
@@ -334,11 +346,66 @@ Just as you have seen, if current.title isn't founded, stateman will search titl
 
 
 
+<a name='param'></a>
+
+### * Routing param
+
+
+####1. named param without pattern, the most usually usage .
+
+
+__Example__
+
+<!-- t -->
+
+captured url `/contact/:id` will  match the path `/contact/1`, and find the param `{id:1}`
+
+In fact, all named param have a default pattern `[-\$\w]+`. but you can change it use custom pattern.
+
+
+
+####2. named param with custom pattern 
+
+
+named param follow with `(regexp)` can restrict the pattern for current param (don't use sub capture it regexp). for example.
+
+
+
+now , only the number is valid to match the id param of  `/contact/:id(\\d+)`
+
+
+####3. unnamed param with pattern
+
+
+you can also define a plain pattern for route matching.
+
+
+
+__Example__
+
+```sh
+/contact/(friend|mate)/:id([0-9])/(message|option)
+```
+
+<!-- t -->
+
+It will match the path `/contact/friend/4/message` and get the param `{0: "friend", id: "4", 1: "message"}`
+
+unnamed param will be put one by one in `param` use autoincrement index. 
+
+
+#### 4. param in search
+
+
+you can also passing query search in the url. take `/contact/:id` for example.
+
+
+<!-- t -->
+it matches the url `/contact/1?name=heloo&age=1`, and get the param `{id:'1', name:'heloo', age: '1'}`
 
 
 
 <a name="start"></a>
-
 ### stateman.start
 
 start the state manager. 
@@ -388,7 +455,7 @@ Just like the code above,
 
 
 
-  
+	
 <a name="nav"></a>
 ### stateman.nav
 
@@ -424,12 +491,11 @@ __control option__
 
 __Example__
 
-`stateman.nav("/app/contact/1?name=leeluolee", {data: 1}); `
+  * ` stateman.nav("/app/contact/1?name=leeluolee", {data: 1});
+  `
 
 <!-- t -->
-
 the final option passed to `enter`, `leave` and `update` is `{param: {id: "1", name:"leeluolee"}, data: 1}`.
-
 
 
 
@@ -634,32 +700,23 @@ stop the stateman.
 
 bind handle to specified event.
 
-
-
 __Usage__
 
 `stateman.on(event, handle)`
 
 
-StateMan have simple EventEmitter implementation for event driven development, see builtin events at [Routing Event](#built_event)
+
+StateMan have simple EventEmitter implementation for event driven development, The Following Class have the Emitter Mixin .
 
 
 
 
-you can use format `[event]:[namespace]`  to create a event that have specified namespace.
+1. __StateMan__: The State Manager.
+2. __StateMan.State__: Every state in state mannager is StateMan.State's instance
+2. StateMan.Histery : for cross-platform 's location manipulation, generally speaking, you will nerver to use it.
 
 
-__Example__
-
-```
-stateman
-  .on('begin', beginListener)
-  .on({   // there will be a multiply binding
-    'end': endListener,
-    'custom': customListener,
-    'custom:name1': customListenerWithNameSpace
-  })
-```
+All Class that list above have same API below, take stateman for example:
 
 
 
@@ -674,22 +731,6 @@ __Usage__
 `stateman.off(event, handle)`
 
 
-__Example__
-
-
-There will be a variety of combinations of parameters.
-
-
-
-```js
-stateman.off('begin', beginListener ) // unbind listener with specified handle
-  .off('custom:name1')   // unbind all listener whose eventName is custom and namespace is name1
-  .off('custom')   // unbind listener whose name is 'custom' (ignore namespace)
-  .off()  // clear all event bindings of stateman
-```
-
-
-
 <a name="emit"></a>
 ### stateman.emit
 
@@ -698,368 +739,28 @@ trigger a specified event with specified param
 
 
 
-
 __Usage__
 
 `stateman.emit(event, param)`
 
 
+## Builtin Event 
 
-__Similiar with `stateman.off`, namespace will affect its working.__
-
-
-
-__Example__
-
-```js
-
-stateman.emit('begin') // emit all listeners named `begin` (ignore namespace) 
-  .emit('custom:name1')   // emit all listeners named `begin`, and with namespace `name1`
-
-```
-
-
-##  About Routing 
-
-<a name='lifecycle'></a>
-
-### Routing  LifeCycle 
-
-
-> <img src="lifecycle.png" width="100%">
-
-There are three stages in one navigation
-
-- permission
-- navigation
-- completion
-
-let's talk about `navigation` first.
-
-
-<a name="navigation"></a>
-#### navigation: enter, leave , update: 
-
-
-`enter`, `update` and `leave` are the most important things you need to know in stateman. 
-
-
-
-__Example__: 
-
-
-
-Imagine that the current state is `app.contact.detail.setting`, when navigating to `app.contact.message`. the complete process is
-
-
-1. leave: app.contact.detail.setting
-2. leave: app.contact.detail
-3. update: app.contact
-4. update: app
-5. enter: app.contact.message
-
-
-
-you can test it in [api.html](http://leeluolee.github.io/stateman/example/api.html);
-
-There is no difficult to understand `enter` and `leave`, But what is the update used for?  
-
-See `app.contact.detail.setting` that we defined in the 【[first example](http://leeluolee.github.io/stateman/example/api.html#/app/contact/3/setting)】. if we nav from `/app/contact/3/setting` to `/app/contact/2/setting`, the current state doesn't change, only the param `id` changed. so stateman call the `state.update` method to notify state to process updating work. All states that  included in current state will update.
-
-
-
-
-
-<a name="permission"></a>
-#### permission: canEnter canLeave
-
-Some times, you want to stop the routing before `navigation` process. one solution is handling it in [`begin`](#event)'s listeners
-
-```js
-stateman.on('begin', function(option){
-  if( option.current.name === 'app.user' && !isUser){
-    option.stop()
-  }
-  
-})
-```
-
-But after version 0.2 , stateman provide an more reasonable choice that called __"ask for permission"__. The process is triggered before __navigation__.
-
-By implementing two optional method: `canEnter`, `canLeave`. you can stop the routing before navigation is starting.
-
-```js
-stateman.state('app.user',{
-  'canEnter': function(){
-    return !!isUser;
-  }
-})
-
-```
-
-In the example, if `false` was returned, the navigation will stop, __And url will back to old one__.
-
-__you can also use [Promise](#control) to control this process__
-
-Just like the example we mentioned in `navigation`, if we navigating from `app.contact.detail.setting` to `app.contact.message`, the complete process is: 
-
-
-1. __canLeave: app.contact.detail.setting__
-2. __canLeave: app.contact.detail__
-3. __canEnter: app.contact.message__
-4. leave: app.contact.detail.setting
-5. leave: app.contact.detail
-6. update: app.contact
-7. update: app
-8. enter: app.contact.message
-
-
-If any step is undefined, __It will be ignored__, they are all optional. 
-
-
-<a name="control"></a>
-### Routing  Control 
-
-
-Stateman provide some ways to implement asynchronous navigation.
-You can find DEMO for this section in [lifecycle.html]();
-
-
-
-<a name="promise"></a>
-#### [__Promise__](#Promise)
-
-
-I suggest you to use Promise to control routing.
-
-
-__Example__
-
-```js
-
-var delayBlog = false;
-stateman.state('app.blog',{
-  // ...
-  'enter': function(option){
-    delayBlog = true;
-
-    return new Promise(function(resolve, reject){
-      console.log('get into app.blog after 3s')
-      setTimeout(function(){
-        delayBlog = false;
-        resolve();
-      }, 3000)
-    }) 
-  }
-  // ...
-})
-
-```
-
-__If promise is rejected or resolved by `false`, navigation will stop directly. (if phase is `permission`, also return to old url)  __.
-
-
-#### Returned Value
-
-You can return `false` (===) in `enter`, `leave`, `canEnter` and `canLeave` to end this navigation in paricular phase. 
-
-```js
-stateman.state('app.blog',{
-  // ...
-  'canLeave': function(){
-
-    if(delayBlog){
-      return confirm('blog is pending, want to leave?')
-    }
-    
-  }
-  // ...
-})
-```
-
-
-#### `option.async` 
-
-stateman doesn't bundle with any promise-polyfill, if you don't include polyfill in old browser by yourself,
-you may need `option.async` for asynchronous routing, see [option.async](#async)
-
-
-
-
-<a name='option'></a>
-### Routing Option
-
-
-`enter`，`leave`,`update`, `canEnter` and `canLeave` accpet same param which called __Routing Option__. 
-And It will event `begin` and `end` .
-
-It is just the same `option` that you passed to `stateman.go` or `stateman.nav` , but take a lot of import information for routing.
-
-
-
-```js
-
-stateman.state({
-  'app': {
-    enter: function( option ){
-      console.log(option)// routing option
-    }
-  }
-})
-
-```
-
-
-__option__
-
-|Property|Type|Detail|
-|--|--|--|
-|option.phase| String| represent which phase the navigation is |
-|option.param| Object| captured param |
-|option.previous| State| previous state |
-|option.current| State| target state |
-|option.async| Function| fallback for async navigating |
-|option.stop | Function| function used to stop the navigating |
-
-#### 0. option.phase
-
-represent which phase the navigation is, there are three phases.
-
-- permission: still calling the permission
-- navigation: in navigating process
-- completion: navigating is done
-
-
-#### 1. option.async
-
-
-If you must run application in the runtime that doesn't support Promise (old IE without Promise polyfill), you can use `option.async` for asynchronous navigation.
-
-
-
-__Return __
-
- 
-A function used to resolve the pending state. 
-
-
-
-```js
-
-"app.user": {
-  enter: function(option){
-    var resolve = option.async(); 
-    setTimeout(resolve, 3000);
-  }
-}
-
-```
-
-The returned `done` is very similiar with the `resolve` function in promise, if __you pass `false` to it__, the navigation will be terminated.
-
-
-
-```js
-
-"app.user": {
-  canEnter: function(option){
-    var resolve = option.async(); 
-    resolve(false);
-  }
-}
-
-```
-
-> `false` is a special signal used for rejecting a state throughout this guide. 
-
-
-
-#### 1. option.current
-
-The target state.
-
-#### 2. option.previous
-
-The prevous state.
-
-#### 3. option.param: see [Routing Params](#param)
-
-#### 4. option.stop
-
-manually stop this navigating. you may use it when event `begin` is emitted.
-
-
-<a name='param'></a>
-### Routing  Params 
-
-####1. named param without pattern, the most usually usage .
-
-
-__Example__
-
-<!-- t -->
-
-captured url `/contact/:id` will  match the path `/contact/1`, and find the param `{id:1}`
-
-In fact, all named param have a default pattern `[-\$\w]+`. but you can change it use custom pattern.
-
-
-
-####2. named param with custom pattern 
-
-
-
-named param follow with `(regexp)` can restrict the pattern for current param (don't use sub capture it regexp). for example.
-
-
-
-
-now , only the number is valid to match the id param of  `/contact/:id(\\d+)`
-
-
-####3. unnamed param with pattern
-
-
-you can also define a plain pattern for route matching.
-
-
-
-__Example__
-
-```sh
-/contact/(friend|mate)/:id([0-9])/(message|option)
-```
-
-<!-- t -->
-
-It will match the path `/contact/friend/4/message` and get the param `{0: "friend", id: "4", 1: "message"}`
-
-unnamed param will be put one by one in `param` use autoincrement index. 
-
-
-#### 4. param in search
-
-
-you can also passing query search in the url. take `/contact/:id` for example.
-
-
-<!-- t -->
-it matches the url `/contact/1?name=heloo&age=1`, and get the param `{id:'1', name:'heloo', age: '1'}`
-
-
-
-
-
-<a name="event"></a>
-### Routing  Event 
-
-#### begin
+### begin
 
 
 Emitted when a navigating is start. every listener got a special param : `evt`.
 
 
 
+__evt__
+
+|Property|Type|Detail|
+|--|--|--|
+|evt.stop | Function| function used to stop the navigating |
+|evt.previous| State| previous state |
+|evt.current| State| target state |
+|evt.param| Object| captured param |
 
 Because the navigating isn't really start, property like `previous`, `current` and `param` haven't been assigned to stateman.
 
@@ -1080,24 +781,16 @@ stateman.on("begin", function(evt){
 
 
 
-Paste code above to page [http://leeluolee.github.io/stateman/example/api.html#/app/user](http://leeluolee.github.io/stateman/example/api.html#/app/user), and click `app.contact.message` to see the log.
+Paste code above to page [http://leeluolee.github.io/stateman/api.html#/app/user](http://leeluolee.github.io/stateman/api.html#/app/user), and click `app.contact.message` to see the log.
 
 
 
-#### end
+### end
 
 Emitted when a navigating is end. 
 
-```
-stateman.on('end', function(option){
-  console.log(option.phase) // the phase, routing was end with  
-})
-```
 
-see [Option](#option) for other parameter on option.
-
-
-#### notfound: 
+### notfound: 
 
 Emitted when target state is not founded.
 
@@ -1118,17 +811,17 @@ stateman.on("notfound", function(){
 
 ## Properties 
 
-Some living properties. 
+Some living properties.
 
 <a name="current"></a>
 ### __stateman.current__: 
 
-The target state. the same as option.current
+The target state.
 
 <a name="previous"></a>
 ### __stateman.previous__: 
 
-The previous state. the same as option.previous
+The previous state.
   
 <a name="active"></a>
 ### __stateman.active__: 
@@ -1167,13 +860,13 @@ stateman.state({
 
 ```
 
-Open the 【[DEMO](http://leeluolee.github.io/stateman/example/active.html) 】, and check the console.log.
+Open the 【[DEMO](http://leeluolee.github.io/stateman/active.html) 】, and check the console.log.
 
 <a name="param1"></a>
 
 4. __stateman.param__:
 
-The current param captured from url or be passed to the method __stateman.go__.
+The current param captured from url or passed from the method __stateman.go__.
 
 __Example__
 
@@ -1182,6 +875,9 @@ __Example__
 stateman.nav("app.detail", {})
 
 ```
+
+
+
 
 
 
@@ -1201,14 +897,52 @@ state.name = "app.contact.detail"
 
 ```
 
-__ state's properties __
 
-1. <del>state.async </del> (REMOVED!) : use option.async instead
-2. state.name [String]: the state's stateName
-3. state.visited [Boolean]: whether the state have been entered.
-4. state.parent [State or StateMan]: state's parent state.for example, the parent of 'app.user.list' is 'app.user'.
-5. state.manager [StateMan]: represent the stateman instance;
+<a name="async"></a>
+
+### state.async
+
+___state.async__:
+
+you can pending a state until you want to continue. see the `app.user` config that we defined above.
+
+__Return __
+
+A function used to release the  current pending state. 
+
+```js
+
+"app.user": {
+  enter: function(){
+    var done = this.async();
+    console.log(this.name + "is pending, 1s later to enter next state")
+    setTimeout(done, 1000)
+  },
+  leave: function(){
+    var done = this.async();
+    console.log(this.name + "is pending, 1s later to leave out")
+    setTimeout(done, 1000)
+  }
+}
+
+
+```
+
+if enter into or leave out from the state `app.user`, pending it for 1s. then go to the next step. type `stateman.go('app.user.list')`, and see log at console.
+
+it is very useful if you have some asynchronous logic(xhr, animation...etc) to operate.
 
 
 
+### other state's properties
+
+
+1. state.name: the state's stateName
+2. state.visited: whether the state have been entered.
+2. state.parent: state's parent state.for example, the parent of 'app.user.list' is 'app.user'.
+2. state.manager: represent the stateman instance;
+
+
+
+## QA
 
