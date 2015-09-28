@@ -3,6 +3,8 @@
 *node_modules*
 *sublime*
 npm-debug.log
+docs/example/
+docs/document/
 */tmp*
 test/tmp/*
 test/coverage/*
