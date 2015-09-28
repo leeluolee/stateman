@@ -1098,7 +1098,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  async: function(){
 	    throw new Error( 'please use option.async instead')
-	  },
+	  }
 
 	})
 

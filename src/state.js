@@ -146,7 +146,7 @@ _.extend( _.emitable( State ), {
 
   async: function(){
     throw new Error( 'please use option.async instead')
-  },
+  }
 
 })
 
