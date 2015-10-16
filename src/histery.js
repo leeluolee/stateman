@@ -177,19 +177,16 @@ _.extend( _.emitable(Histery), {
   // or we use hash in html5supoort mode (when paste url in other url)
   // then , histery should repara it
   _fixInitState: function(){
-    var pathname = _.cleanPath(this.location.pathname), hash, hashInPathName;
-
-    // dont support history popstate but config the html5 mode
-    if( this.mode !== HISTORY && this.html5){
-
-      hashInPathName = pathname.replace(this.rRoot, "")
-      if(hashInPathName) this.location.replace(this.root + this.prefix + hashInPathName);
-
-    }else if( this.mode === HISTORY /* && pathname === this.root*/){
-
-      hash = this.location.hash.replace(this.prefix, "");
-      if(hash) history.replaceState({}, document.title, _.cleanPath(this.root + hash))
-
+    var hash = this.location.hash.replace(this.prefix, "");
+    if( this.mode === HISTORY && hash) {
+      history.replaceState({}, document.title, _.cleanPath(this.root + hash));
+    } else {
+      var hashInPathName = _.cleanPath(this.location.pathname.replace(this.rRoot, ""));
+      if(this.html5) {
+        this.location.replace(this.root + this.prefix + hashInPathName);
+      } else {
+        this.location.hash = this.prefix + hashInPathName;
+      }
     }
   },
   // Thanks for backbone.history and https://github.com/cowboy/jquery-hashchange/blob/master/jquery.ba-hashchange.js
