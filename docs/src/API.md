@@ -930,7 +930,7 @@ __you can also use [Promise](#control) to control this process__
 Just like the example we mentioned in `navigation`, if we navigating from `app.contact.detail.setting` to `app.contact.message`, the complete process is: 
 
 %
-在上面的例子中，如果`false`被返回了， 则此跳转会被，并恢复之前的url.
+在上面的例子中，如果`false`被返回了， 则此跳转会被终止，并恢复之前的url.
 
 __你当然也可以使用[Promise](#control) 来实现异步的流程控制__
 
