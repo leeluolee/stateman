@@ -63,9 +63,13 @@ _.extend( _.emitable( StateMan ), {
     // @TODO direct go the point state
     go: function(state, option, callback){
       option = option || {};
-      if(typeof state === "string") state = this.state(state);
+      var statename;
+      if(typeof state === "string") {
+         statename = state;
+         state = this.state(state);
+      }
 
-      if(!state) return;
+      if(!state) return this._notfound({state:statename});
 
       if(typeof option === "function"){
         callback = option;
