@@ -148,7 +148,8 @@ _.extend( _.emitable(Histery), {
 
       var target = ev.target || ev.srcElement;
       if( target.tagName.toLowerCase() !== "a" ) return;
-      var tmp = (browser.getHref(target)||"").match(self.rPrefix);
+      var tmp = browser.isSameDomain(target.href)&&(browser.getHref(target)||"").match(self.rPrefix);
+	  
       var hash = tmp && tmp[1]? tmp[1]: "";
 
       if(!hash) return;

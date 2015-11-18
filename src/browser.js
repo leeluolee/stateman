@@ -6,6 +6,13 @@ var b = module.exports = {
   hash: "onhashchange" in win && (!doc.documentMode || doc.documentMode > 7),
   history: win.history && "onpopstate" in win,
   location: win.location,
+  isSameDomain: function(url){
+	  var matched = url.match(/^.*?:\/\/([^/]*)/);
+	  if(matched){
+		  return matched[0] == this.location.origin;
+	  }
+	  return true;
+  },
   getHref: function(node){
     return "href" in node ? node.getAttribute("href", 2) : node.getAttribute("href");
   },
