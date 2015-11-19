@@ -1,10 +1,10 @@
+require("./browser.js");
+
 var State = require("./state.js"),
   Histery = require("./histery.js"),
-  brow = require("./browser.js"),
   _ = require("./util.js"),
   baseTitle = document.title,
   stateFn = State.prototype.state;
-
 
 function StateMan(options){
 
@@ -34,7 +34,7 @@ _.extend( _.emitable( StateMan ), {
     // keep blank
     name: '',
 
-    state: function(stateName, config){
+    state: function(stateName/*, config*/){
 
       var active = this.active;
       if(typeof stateName === "string" && active){
@@ -118,7 +118,7 @@ _.extend( _.emitable( StateMan ), {
     // check the active statename whether to match the passed condition (stateName and param)
     is: function(stateName, param, isStrict){
       if(!stateName) return false;
-      var stateName = (stateName.name || stateName);
+      stateName = (stateName.name || stateName);
       var current = this.current, currentName = current.name;
       var matchPath = isStrict? currentName === stateName : (currentName + ".").indexOf(stateName + ".")===0;
       return matchPath && (!param || _.eql(param, this.param)); 
@@ -277,7 +277,7 @@ _.extend( _.emitable( StateMan ), {
       var parent = this._findBase(from , to);
 
 
-      option.basckward = true;
+      option.backward = true;
       this._transit( from, parent, option, callForPermit , _.bind( function( notRejected ){
 
         if( notRejected === false ) return callback( notRejected );
@@ -285,7 +285,7 @@ _.extend( _.emitable( StateMan ), {
         // only actual transiton need update base state;
         if( !callForPermit )  this._checkQueryAndParam(parent, option)
 
-        option.basckward = false;
+        option.backward = false;
         this._transit( parent, to, option, callForPermit,  callback)
 
       }, this) )
@@ -407,7 +407,6 @@ _.extend( _.emitable( StateMan ), {
       var queries = querystr && querystr.split("&"), query= {};
       if(queries){
         var len = queries.length;
-        var query = {};
         for(var i =0; i< len; i++){
           var tmp = queries[i].split("=");
           query[tmp[0]] = tmp[1];
