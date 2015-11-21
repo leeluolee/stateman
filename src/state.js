@@ -17,16 +17,16 @@ _.extend( _.emitable( State ), {
   
   state: function(stateName, config){
     if(_.typeOf(stateName) === "object"){
-      for(var i in stateName){
-        this.state(i, stateName[i])
+      for(var j in stateName){
+        this.state(j, stateName[j])
       }
       return this;
     }
-    var current, next, nextName, states = this._states, i=0;
+    var current = this, next, nextName, states = this._states, i=0;
 
     if( typeof stateName === "string" ) stateName = stateName.split(".");
 
-    var slen = stateName.length, current = this;
+    var slen = stateName.length;
     var stack = [];
 
 
@@ -88,8 +88,7 @@ _.extend( _.emitable( State ), {
   //from url 
 
   configUrl: function(){
-    var url = "" , base = this, currentUrl;
-    var _watchedParam = [];
+    var url = "" , base = this;
 
     while( base ){
 

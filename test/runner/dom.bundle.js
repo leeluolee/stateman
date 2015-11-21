@@ -280,16 +280,16 @@
 	  
 	  state: function(stateName, config){
 	    if(_.typeOf(stateName) === "object"){
-	      for(var i in stateName){
-	        this.state(i, stateName[i])
+	      for(var j in stateName){
+	        this.state(j, stateName[j])
 	      }
 	      return this;
 	    }
-	    var current, next, nextName, states = this._states, i=0;
+	    var current = this, next, nextName, states = this._states, i=0;
 
 	    if( typeof stateName === "string" ) stateName = stateName.split(".");
 
-	    var slen = stateName.length, current = this;
+	    var slen = stateName.length;
 	    var stack = [];
 
 
@@ -351,8 +351,7 @@
 	  //from url 
 
 	  configUrl: function(){
-	    var url = "" , base = this, currentUrl;
-	    var _watchedParam = [];
+	    var url = "" , base = this;
 
 	    while( base ){
 
@@ -416,6 +415,7 @@
 
 	module.exports = State;
 
+
 /***/ },
 /* 3 */
 /***/ function(module, exports) {
@@ -447,12 +447,12 @@
 	  var t1 = _.typeOf(o1), t2 = _.typeOf(o2);
 	  if( t1 !== t2) return false;
 	  if(t1 === 'object'){
-	    var equal = true;
-	    // only check the first's propertie
+	    // only check the first's properties
 	    for(var i in o1){
-	      if( o1[i] !== o2[i] ) equal = false;
+	      // Immediately return if a mismatch is found.
+	      if( o1[i] !== o2[i] ) return false;
 	    }
-	    return equal;
+	    return true;
 	  }
 	  return o1 === o2;
 	}
@@ -1962,20 +1962,22 @@
 	 */
 	Buffer.TYPED_ARRAY_SUPPORT = global.TYPED_ARRAY_SUPPORT !== undefined
 	  ? global.TYPED_ARRAY_SUPPORT
-	  : (function () {
-	      function Bar () {}
-	      try {
-	        var arr = new Uint8Array(1)
-	        arr.foo = function () { return 42 }
-	        arr.constructor = Bar
-	        return arr.foo() === 42 && // typed array instances can be augmented
-	            arr.constructor === Bar && // constructor can be set
-	            typeof arr.subarray === 'function' && // chrome 9-10 lack `subarray`
-	            arr.subarray(1, 1).byteLength === 0 // ie10 has broken `subarray`
-	      } catch (e) {
-	        return false
-	      }
-	    })()
+	  : typedArraySupport()
+
+	function typedArraySupport () {
+	  function Bar () {}
+	  try {
+	    var arr = new Uint8Array(1)
+	    arr.foo = function () { return 42 }
+	    arr.constructor = Bar
+	    return arr.foo() === 42 && // typed array instances can be augmented
+	        arr.constructor === Bar && // constructor can be set
+	        typeof arr.subarray === 'function' && // chrome 9-10 lack `subarray`
+	        arr.subarray(1, 1).byteLength === 0 // ie10 has broken `subarray`
+	  } catch (e) {
+	    return false
+	  }
+	}
 
 	function kMaxLength () {
 	  return Buffer.TYPED_ARRAY_SUPPORT
@@ -2929,7 +2931,7 @@
 	  offset = offset | 0
 	  if (!noAssert) checkInt(this, value, offset, 1, 0xff, 0)
 	  if (!Buffer.TYPED_ARRAY_SUPPORT) value = Math.floor(value)
-	  this[offset] = value
+	  this[offset] = (value & 0xff)
 	  return offset + 1
 	}
 
@@ -2946,7 +2948,7 @@
 	  offset = offset | 0
 	  if (!noAssert) checkInt(this, value, offset, 2, 0xffff, 0)
 	  if (Buffer.TYPED_ARRAY_SUPPORT) {
-	    this[offset] = value
+	    this[offset] = (value & 0xff)
 	    this[offset + 1] = (value >>> 8)
 	  } else {
 	    objectWriteUInt16(this, value, offset, true)
@@ -2960,7 +2962,7 @@
 	  if (!noAssert) checkInt(this, value, offset, 2, 0xffff, 0)
 	  if (Buffer.TYPED_ARRAY_SUPPORT) {
 	    this[offset] = (value >>> 8)
-	    this[offset + 1] = value
+	    this[offset + 1] = (value & 0xff)
 	  } else {
 	    objectWriteUInt16(this, value, offset, false)
 	  }
@@ -2982,7 +2984,7 @@
 	    this[offset + 3] = (value >>> 24)
 	    this[offset + 2] = (value >>> 16)
 	    this[offset + 1] = (value >>> 8)
-	    this[offset] = value
+	    this[offset] = (value & 0xff)
 	  } else {
 	    objectWriteUInt32(this, value, offset, true)
 	  }
@@ -2997,7 +2999,7 @@
 	    this[offset] = (value >>> 24)
 	    this[offset + 1] = (value >>> 16)
 	    this[offset + 2] = (value >>> 8)
-	    this[offset + 3] = value
+	    this[offset + 3] = (value & 0xff)
 	  } else {
 	    objectWriteUInt32(this, value, offset, false)
 	  }
@@ -3050,7 +3052,7 @@
 	  if (!noAssert) checkInt(this, value, offset, 1, 0x7f, -0x80)
 	  if (!Buffer.TYPED_ARRAY_SUPPORT) value = Math.floor(value)
 	  if (value < 0) value = 0xff + value + 1
-	  this[offset] = value
+	  this[offset] = (value & 0xff)
 	  return offset + 1
 	}
 
@@ -3059,7 +3061,7 @@
 	  offset = offset | 0
 	  if (!noAssert) checkInt(this, value, offset, 2, 0x7fff, -0x8000)
 	  if (Buffer.TYPED_ARRAY_SUPPORT) {
-	    this[offset] = value
+	    this[offset] = (value & 0xff)
 	    this[offset + 1] = (value >>> 8)
 	  } else {
 	    objectWriteUInt16(this, value, offset, true)
@@ -3073,7 +3075,7 @@
 	  if (!noAssert) checkInt(this, value, offset, 2, 0x7fff, -0x8000)
 	  if (Buffer.TYPED_ARRAY_SUPPORT) {
 	    this[offset] = (value >>> 8)
-	    this[offset + 1] = value
+	    this[offset + 1] = (value & 0xff)
 	  } else {
 	    objectWriteUInt16(this, value, offset, false)
 	  }
@@ -3085,7 +3087,7 @@
 	  offset = offset | 0
 	  if (!noAssert) checkInt(this, value, offset, 4, 0x7fffffff, -0x80000000)
 	  if (Buffer.TYPED_ARRAY_SUPPORT) {
-	    this[offset] = value
+	    this[offset] = (value & 0xff)
 	    this[offset + 1] = (value >>> 8)
 	    this[offset + 2] = (value >>> 16)
 	    this[offset + 3] = (value >>> 24)
@@ -3104,7 +3106,7 @@
 	    this[offset] = (value >>> 24)
 	    this[offset + 1] = (value >>> 16)
 	    this[offset + 2] = (value >>> 8)
-	    this[offset + 3] = value
+	    this[offset + 3] = (value & 0xff)
 	  } else {
 	    objectWriteUInt32(this, value, offset, false)
 	  }
@@ -3379,7 +3381,7 @@
 	      }
 
 	      // valid surrogate pair
-	      codePoint = leadSurrogate - 0xD800 << 10 | codePoint - 0xDC00 | 0x10000
+	      codePoint = (leadSurrogate - 0xD800 << 10 | codePoint - 0xDC00) + 0x10000
 	    } else if (leadSurrogate) {
 	      // valid bmp char, but last char was a lead
 	      if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
@@ -3867,6 +3869,13 @@
 	  hash: "onhashchange" in win && (!doc.documentMode || doc.documentMode > 7),
 	  history: win.history && "onpopstate" in win,
 	  location: win.location,
+	  isSameDomain: function(url){
+		  var matched = url.match(/^.*?:\/\/([^/]*)/);
+		  if(matched){
+			  return matched[0] == this.location.origin;
+		  }
+		  return true;
+	  },
 	  getHref: function(node){
 	    return "href" in node ? node.getAttribute("href", 2) : node.getAttribute("href");
 	  },
@@ -4035,7 +4044,8 @@
 
 	      var target = ev.target || ev.srcElement;
 	      if( target.tagName.toLowerCase() !== "a" ) return;
-	      var tmp = (browser.getHref(target)||"").match(self.rPrefix);
+	      var tmp = browser.isSameDomain(target.href)&&(browser.getHref(target)||"").match(self.rPrefix);
+		  
 	      var hash = tmp && tmp[1]? tmp[1]: "";
 
 	      if(!hash) return;
@@ -4099,6 +4109,7 @@
 
 
 	module.exports = Histery;
+
 
 /***/ },
 /* 13 */
@@ -5029,13 +5040,13 @@
 /* 14 */
 /***/ function(module, exports, __webpack_require__) {
 
+	__webpack_require__(11);
+
 	var State = __webpack_require__(2),
 	  Histery = __webpack_require__(12),
-	  brow = __webpack_require__(11),
 	  _ = __webpack_require__(3),
 	  baseTitle = document.title,
 	  stateFn = State.prototype.state;
-
 
 	function StateMan(options){
 
@@ -5065,7 +5076,7 @@
 	    // keep blank
 	    name: '',
 
-	    state: function(stateName, config){
+	    state: function(stateName/*, config*/){
 
 	      var active = this.active;
 	      if(typeof stateName === "string" && active){
@@ -5094,9 +5105,13 @@
 	    // @TODO direct go the point state
 	    go: function(state, option, callback){
 	      option = option || {};
-	      if(typeof state === "string") state = this.state(state);
+	      var statename;
+	      if(typeof state === "string") {
+	         statename = state;
+	         state = this.state(state);
+	      }
 
-	      if(!state) return;
+	      if(!state) return this._notfound({state:statename});
 
 	      if(typeof option === "function"){
 	        callback = option;
@@ -5145,7 +5160,7 @@
 	    // check the active statename whether to match the passed condition (stateName and param)
 	    is: function(stateName, param, isStrict){
 	      if(!stateName) return false;
-	      var stateName = (stateName.name || stateName);
+	      stateName = (stateName.name || stateName);
 	      var current = this.current, currentName = current.name;
 	      var matchPath = isStrict? currentName === stateName : (currentName + ".").indexOf(stateName + ".")===0;
 	      return matchPath && (!param || _.eql(param, this.param)); 
@@ -5304,7 +5319,7 @@
 	      var parent = this._findBase(from , to);
 
 
-	      option.basckward = true;
+	      option.backward = true;
 	      this._transit( from, parent, option, callForPermit , _.bind( function( notRejected ){
 
 	        if( notRejected === false ) return callback( notRejected );
@@ -5312,7 +5327,7 @@
 	        // only actual transiton need update base state;
 	        if( !callForPermit )  this._checkQueryAndParam(parent, option)
 
-	        option.basckward = false;
+	        option.backward = false;
 	        this._transit( parent, to, option, callForPermit,  callback)
 
 	      }, this) )
@@ -5434,7 +5449,6 @@
 	      var queries = querystr && querystr.split("&"), query= {};
 	      if(queries){
 	        var len = queries.length;
-	        var query = {};
 	        for(var i =0; i< len; i++){
 	          var tmp = queries[i].split("=");
 	          query[tmp[0]] = tmp[1];
