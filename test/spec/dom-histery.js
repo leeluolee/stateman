@@ -11,7 +11,7 @@
 
 var _ = require("../../src/util.js");
 var browser = require("../../src/browser.js");
-var Histery = require("../../src/histery.js");
+var History = require("../../src/history.js");
 var expect = require("../runner/vendor/expect.js")
 
 
@@ -38,92 +38,92 @@ function loc(href){
 
 
 
-describe("Histery", function(){
+describe("History", function(){
 
 
-  var histery = new Histery({location: loc("http://leeluolee.github.io/")})
+  var history = new History({location: loc("http://leeluolee.github.io/")})
 
   var locals = {num:0}
   function num1(path){
     locals[path] = 1;
   }
 
-  histery.start(); 
+  history.start(); 
   it("works under basic usage ", function(){
-    histery.nav("home");
+    history.nav("home");
 
-    expect(histery.location.hash).to.equal("#/home");
-    histery.checkPath();
+    expect(history.location.hash).to.equal("#/home");
+    history.checkPath();
 
   })
   it("works under basic usage 2", function(){
 
-    histery.on("change", num1)
-    histery.location.replace("http://leeluolee.github.io/#/home/code");
-    histery.checkPath();
+    history.on("change", num1)
+    history.location.replace("http://leeluolee.github.io/#/home/code");
+    history.checkPath();
     expect(locals["/home/code"]).to.equal(1);
-    histery.off("change", num1);
+    history.off("change", num1);
   })
   it("works with location replace ", function(){
-    histery.on("change", num1)
-    histery.location.replace("http://leeluolee.github.io/#/home2");
-    histery.checkPath();
-    expect(histery.location.hash).to.equal("#/home2")
+    history.on("change", num1)
+    history.location.replace("http://leeluolee.github.io/#/home2");
+    history.checkPath();
+    expect(history.location.hash).to.equal("#/home2")
     expect(locals["/home2"]).to.equal(1);
-    histery.off("change", num1);
+    history.off("change", num1);
   })
 
   it("hashmode with prefix", function(){
-    var histery = new Histery({
-      location: loc("http://regularjs.github.io/app/histery"),
+    var history = new History({
+      location: loc("http://regularjs.github.io/app/history"),
       prefix: "!"
     })
-    histery.on("change", num1)
-    histery.location.replace("http://leeluolee.github.io/#!/prefix");
-    histery.checkPath();
+    history.on("change", num1)
+    history.location.replace("http://leeluolee.github.io/#!/prefix");
+    history.checkPath();
     expect(locals["/prefix"]).to.equal(1);
-    histery.off("change", num1);
+    history.off("change", num1);
   })
 
-  it("works in html5 histery mode", function(){
-    var histery = new Histery({
-      location: loc("http://regularjs.github.io/app/histery"),
+  it("works in html5 history mode", function(){
+    var history = new History({
+      location: loc("http://regularjs.github.io/app/history"),
       root: "/app",
       mode: 2
     })
 
-    histery.on("change", num1)
-    histery.checkPath();
-    expect(locals["/histery"]).to.equal(1);
+    history.on("change", num1)
+    history.checkPath();
+    expect(locals["/history"]).to.equal(1);
 
-    histery.location.replace("http://regularjs.github.io/app/histery/code");
-    histery.checkPath();
-    expect(locals["/histery/code"]).to.equal(1);
+    history.location.replace("http://regularjs.github.io/app/history/code");
+    history.checkPath();
+    expect(locals["/history/code"]).to.equal(1);
 
-    histery.off("change", num1);
+    history.off("change", num1);
   })
   it("with prefix", function(){
     // @TODO some hardcode '#' need remove
-    var histery = new Histery({
-      location: loc("http://regularjs.github.io/app/histery"),
+    var history = new History({
+      location: loc("http://regularjs.github.io/app/history"),
       prefix: '!'
     })
-    histery.location.replace("http://regularjs.github.io/app/histery/code#!/prefix");
-    histery.on("change", num1)
-    histery.checkPath();
+    history.location.replace("http://regularjs.github.io/app/history/code#!/prefix");
+    history.on("change", num1)
+    history.checkPath();
     expect(locals["/prefix"]).to.equal(1);
   })
   it("every nav, the curPath should be update", function(){
-    var histery = new Histery({
-      location: loc("http://regularjs.github.io/app/histery")
+    var history = new History({
+      location: loc("http://regularjs.github.io/app/history")
     })
-    histery.location.replace("http://regularjs.github.io/app/histery/code#/prefix");
-    histery.checkPath();
+    history.location.replace("http://regularjs.github.io/app/history/code#/prefix");
+    history.checkPath();
 
-    expect(histery.curPath).to.equal("/prefix")
-    histery.location.replace("http://regularjs.github.io/app/histery/code");
-    histery.checkPath();
-    expect(histery.curPath).to.equal("")
+    expect(history.curPath).to.equal("/prefix")
+    history.location.replace("http://regularjs.github.io/app/history/code");
+    history.checkPath();
+    expect(history.curPath).to.equal("")
   })
 
 })

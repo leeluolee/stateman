@@ -1,7 +1,7 @@
 require("./browser.js");
 
 var State = require("./state.js"),
-  Histery = require("./histery.js"),
+  History = require("./history.js"),
   _ = require("./util.js"),
   baseTitle = document.title,
   stateFn = State.prototype.state;
@@ -49,7 +49,7 @@ _.extend( _.emitable( StateMan ), {
     },
     start: function(options){
 
-      if( !this.history ) this.history = new Histery(options); 
+      if( !this.history ) this.history = new History(options); 
       if( !this.history.isStart ){
         this.history.on("change", _.bind(this._afterPathChange, this));
         this.history.start();

@@ -16,7 +16,7 @@ var QUIRK = 3,
 
 // extract History for test
 // resolve the conficlt with the Native History
-function Histery(options){
+function History(options){
   options = options || {};
 
   // Trick from backbone.history for anchor-faked testcase 
@@ -44,7 +44,7 @@ function Histery(options){
   this.curPath = undefined;
 }
 
-_.extend( _.emitable(Histery), {
+_.extend( _.emitable(History), {
   // check the 
   start: function(){
     var path = this.getPath();
@@ -176,7 +176,7 @@ _.extend( _.emitable(Histery), {
   },
   // if we use real url in hash env( browser no history popstate support)
   // or we use hash in html5supoort mode (when paste url in other url)
-  // then , histery should repara it
+  // then , history should repara it
   _fixInitState: function(){
     var pathname = _.cleanPath(this.location.pathname), hash, hashInPathName;
 
@@ -212,4 +212,4 @@ _.extend( _.emitable(Histery), {
 
 
 
-module.exports = Histery;
+module.exports = History;

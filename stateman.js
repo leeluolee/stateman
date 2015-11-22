@@ -61,7 +61,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	
 	var StateMan = __webpack_require__(1);
-	StateMan.Histery = __webpack_require__(5);
+	StateMan.History = __webpack_require__(5);
 	StateMan.util = __webpack_require__(4);
 	StateMan.State = __webpack_require__(3);
 
@@ -75,7 +75,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	__webpack_require__(2);
 
 	var State = __webpack_require__(3),
-	  Histery = __webpack_require__(5),
+	  History = __webpack_require__(5),
 	  _ = __webpack_require__(4),
 	  baseTitle = document.title,
 	  stateFn = State.prototype.state;
@@ -123,7 +123,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 	    start: function(options){
 
-	      if( !this.history ) this.history = new Histery(options); 
+	      if( !this.history ) this.history = new History(options); 
 	      if( !this.history.isStart ){
 	        this.history.on("change", _.bind(this._afterPathChange, this));
 	        this.history.start();
@@ -944,7 +944,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	// extract History for test
 	// resolve the conficlt with the Native History
-	function Histery(options){
+	function History(options){
 	  options = options || {};
 
 	  // Trick from backbone.history for anchor-faked testcase 
@@ -972,7 +972,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  this.curPath = undefined;
 	}
 
-	_.extend( _.emitable(Histery), {
+	_.extend( _.emitable(History), {
 	  // check the 
 	  start: function(){
 	    var path = this.getPath();
@@ -1104,7 +1104,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  },
 	  // if we use real url in hash env( browser no history popstate support)
 	  // or we use hash in html5supoort mode (when paste url in other url)
-	  // then , histery should repara it
+	  // then , history should repara it
 	  _fixInitState: function(){
 	    var pathname = _.cleanPath(this.location.pathname), hash, hashInPathName;
 
@@ -1140,7 +1140,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 
-	module.exports = Histery;
+	module.exports = History;
 
 
 /***/ }
