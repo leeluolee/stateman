@@ -137,9 +137,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	    // @TODO direct go the point state
 	    go: function(state, option, callback){
 	      option = option || {};
-	      if(typeof state === "string") state = this.state(state);
+	      var statename;
+	      if(typeof state === "string") {
+	         statename = state;
+	         state = this.state(state);
+	      }
 
-	      if(!state) return;
+	      if(!state) return this._notfound({state:statename});
 
 	      if(typeof option === "function"){
 	        callback = option;
@@ -729,12 +733,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	  var t1 = _.typeOf(o1), t2 = _.typeOf(o2);
 	  if( t1 !== t2) return false;
 	  if(t1 === 'object'){
-	    var equal = true;
-	    // only check the first's propertie
+	    // only check the first's properties
 	    for(var i in o1){
-	      if( o1[i] !== o2[i] ) equal = false;
+	      // Immediately return if a mismatch is found.
+	      if( o1[i] !== o2[i] ) return false;
 	    }
-	    return equal;
+	    return true;
 	  }
 	  return o1 === o2;
 	}
@@ -1040,7 +1044,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	      var target = ev.target || ev.srcElement;
 	      if( target.tagName.toLowerCase() !== "a" ) return;
-	      var tmp = (browser.getHref(target)||"").match(self.rPrefix);
+	      var tmp = browser.isSameDomain(target.href)&&(browser.getHref(target)||"").match(self.rPrefix);
+		  
 	      var hash = tmp && tmp[1]? tmp[1]: "";
 
 	      if(!hash) return;
@@ -1105,6 +1110,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	module.exports = Histery;
 
+
 /***/ },
 /* 5 */
 /***/ function(module, exports) {
@@ -1117,6 +1123,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	  hash: "onhashchange" in win && (!doc.documentMode || doc.documentMode > 7),
 	  history: win.history && "onpopstate" in win,
 	  location: win.location,
+	  isSameDomain: function(url){
+		  var matched = url.match(/^.*?:\/\/([^/]*)/);
+		  if(matched){
+			  return matched[0] == this.location.origin;
+		  }
+		  return true;
+	  },
 	  getHref: function(node){
 	    return "href" in node ? node.getAttribute("href", 2) : node.getAttribute("href");
 	  },
