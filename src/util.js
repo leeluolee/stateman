@@ -25,12 +25,12 @@ _.eql = function(o1, o2){
   var t1 = _.typeOf(o1), t2 = _.typeOf(o2);
   if( t1 !== t2) return false;
   if(t1 === 'object'){
-    var equal = true;
-    // only check the first's propertie
+    // only check the first's properties
     for(var i in o1){
-      if( o1[i] !== o2[i] ) equal = false;
+      // Immediately return if a mismatch is found.
+      if( o1[i] !== o2[i] ) return false;
     }
-    return equal;
+    return true;
   }
   return o1 === o2;
 }
