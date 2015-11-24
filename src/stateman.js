@@ -421,10 +421,16 @@ _.extend( _.emitable( StateMan ), {
 
       // leaf-state has the high priority upon branch-state
       if(state.hasNext){
-        for(var i in states) if(states.hasOwnProperty(i)){
-          found = this._findState( states[i], path );
+
+        var stateList = _.values( states ).sort( this._sortState );
+        var len = stateList.length;
+
+        for(var i = 0; i < len; i++){
+
+          found = this._findState( stateList[i], path );
           if( found ) return found;
         }
+
       }
       // in strict mode only leaf can be touched
       // if all children is don. will try it self
@@ -435,6 +441,9 @@ _.extend( _.emitable( StateMan ), {
       }else{
         return false;
       }
+    },
+    _sortState: function( a, b ){
+      return ( b.priority || 0 ) - ( a.priority || 0 );
     },
     // find the same branch;
     _findBase: function(now, before){

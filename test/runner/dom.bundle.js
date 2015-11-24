@@ -432,6 +432,14 @@
 	  return o1;
 	}
 
+	_.values = function( o){
+	  var keys = [];
+	  for(var i in o) if( o.hasOwnProperty(i) ){
+	    keys.push( o[i] );
+	  }
+	  return keys;
+	}
+
 
 
 	_.slice = function(arr, index){
@@ -447,12 +455,12 @@
 	  var t1 = _.typeOf(o1), t2 = _.typeOf(o2);
 	  if( t1 !== t2) return false;
 	  if(t1 === 'object'){
-	    var equal = true;
-	    // only check the first's propertie
+	    // only check the first's properties
 	    for(var i in o1){
-	      if( o1[i] !== o2[i] ) equal = false;
+	      // Immediately return if a mismatch is found.
+	      if( o1[i] !== o2[i] ) return false;
 	    }
-	    return equal;
+	    return true;
 	  }
 	  return o1 === o2;
 	}
@@ -3867,6 +3875,13 @@
 	  hash: "onhashchange" in win && (!doc.documentMode || doc.documentMode > 7),
 	  history: win.history && "onpopstate" in win,
 	  location: win.location,
+	  isSameDomain: function(url){
+		  var matched = url.match(/^.*?:\/\/([^/]*)/);
+		  if(matched){
+			  return matched[0] == this.location.origin;
+		  }
+		  return true;
+	  },
 	  getHref: function(node){
 	    return "href" in node ? node.getAttribute("href", 2) : node.getAttribute("href");
 	  },
@@ -4035,7 +4050,8 @@
 
 	      var target = ev.target || ev.srcElement;
 	      if( target.tagName.toLowerCase() !== "a" ) return;
-	      var tmp = (browser.getHref(target)||"").match(self.rPrefix);
+	      var tmp = browser.isSameDomain(target.href)&&(browser.getHref(target)||"").match(self.rPrefix);
+		  
 	      var hash = tmp && tmp[1]? tmp[1]: "";
 
 	      if(!hash) return;
@@ -4099,6 +4115,7 @@
 
 
 	module.exports = Histery;
+
 
 /***/ },
 /* 13 */
@@ -4691,6 +4708,7 @@
 
 	    var state = stateman.state("book.detail", {url: ":id"}).decode("/book/a?name=12")
 	    expect(state.param).to.eql({id:"a", name: "12"})
+
 	  })
 
 	  it("stateman.go should also assign the stateman.path", function(){
@@ -4704,6 +4722,16 @@
 	    expect(stateman.encode("contact.detail")).to.equal("/contact/detail")
 	    var state = stateman.state("encode.detail", {url: ':id'}).go("book.message")
 	    expect(stateman.encode("encode.detail", {id:1, name:2})).to.equal("/encode/1?name=2")
+
+	  })
+
+	  it( "ISSUE #22: url match should matching by state.priority", function(){
+	    var state = stateman
+	      .state( 'blog.detail', {url: ":id"})
+	      .state( 'blog.list', {priority: 10} )
+	      .decode("/blog/list")
+
+	    expect(state.name).to.equal('blog.list');
 
 	  })
 
@@ -5094,9 +5122,13 @@
 	    // @TODO direct go the point state
 	    go: function(state, option, callback){
 	      option = option || {};
-	      if(typeof state === "string") state = this.state(state);
+	      var statename;
+	      if(typeof state === "string") {
+	         statename = state;
+	         state = this.state(state);
+	      }
 
-	      if(!state) return;
+	      if(!state) return this._notfound({state:statename});
 
 	      if(typeof option === "function"){
 	        callback = option;
@@ -5448,10 +5480,16 @@
 
 	      // leaf-state has the high priority upon branch-state
 	      if(state.hasNext){
-	        for(var i in states) if(states.hasOwnProperty(i)){
-	          found = this._findState( states[i], path );
+
+	        var stateList = _.values( states ).sort( this._sortState );
+	        var len = stateList.length;
+
+	        for(var i = 0; i < len; i++){
+
+	          found = this._findState( stateList[i], path );
 	          if( found ) return found;
 	        }
+
 	      }
 	      // in strict mode only leaf can be touched
 	      // if all children is don. will try it self
@@ -5462,6 +5500,9 @@
 	      }else{
 	        return false;
 	      }
+	    },
+	    _sortState: function( a, b ){
+	      return ( b.priority || 0 ) - ( a.priority || 0 );
 	    },
 	    // find the same branch;
 	    _findBase: function(now, before){

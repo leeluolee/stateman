@@ -10,6 +10,14 @@ _.extend = function(o1, o2, override){
   return o1;
 }
 
+_.values = function( o){
+  var keys = [];
+  for(var i in o) if( o.hasOwnProperty(i) ){
+    keys.push( o[i] );
+  }
+  return keys;
+}
+
 
 
 _.slice = function(arr, index){

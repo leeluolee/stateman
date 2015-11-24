@@ -585,6 +585,7 @@ describe("stateman:other", function(){
 
     var state = stateman.state("book.detail", {url: ":id"}).decode("/book/a?name=12")
     expect(state.param).to.eql({id:"a", name: "12"})
+
   })
 
   it("stateman.go should also assign the stateman.path", function(){
@@ -598,6 +599,16 @@ describe("stateman:other", function(){
     expect(stateman.encode("contact.detail")).to.equal("/contact/detail")
     var state = stateman.state("encode.detail", {url: ':id'}).go("book.message")
     expect(stateman.encode("encode.detail", {id:1, name:2})).to.equal("/encode/1?name=2")
+
+  })
+
+  it( "ISSUE #22: url match should matching by state.priority", function(){
+    var state = stateman
+      .state( 'blog.detail', {url: ":id"})
+      .state( 'blog.list', {priority: 10} )
+      .decode("/blog/list")
+
+    expect(state.name).to.equal('blog.list');
 
   })
 

@@ -495,10 +495,16 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	      // leaf-state has the high priority upon branch-state
 	      if(state.hasNext){
-	        for(var i in states) if(states.hasOwnProperty(i)){
-	          found = this._findState( states[i], path );
+
+	        var stateList = _.values( states ).sort( this._sortState );
+	        var len = stateList.length;
+
+	        for(var i = 0; i < len; i++){
+
+	          found = this._findState( stateList[i], path );
 	          if( found ) return found;
 	        }
+
 	      }
 	      // in strict mode only leaf can be touched
 	      // if all children is don. will try it self
@@ -509,6 +515,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	      }else{
 	        return false;
 	      }
+	    },
+	    _sortState: function( a, b ){
+	      return ( b.priority || 0 ) - ( a.priority || 0 );
 	    },
 	    // find the same branch;
 	    _findBase: function(now, before){
@@ -716,6 +725,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	    o1[i] = o2[i]
 	  }
 	  return o1;
+	}
+
+	_.values = function( o){
+	  var keys = [];
+	  for(var i in o) if( o.hasOwnProperty(i) ){
+	    keys.push( o[i] );
+	  }
+	  return keys;
 	}
 
 
