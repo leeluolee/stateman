@@ -338,9 +338,9 @@ __option__
 |Param|Type|Detail|
 |--|--|--|
 |html5 |Boolean|(default false) whether to open the html5 history support |
-|root |String|(default '/') the root of the url , __only required when html5 is actived__. default is `/` |
+|root |String|(default '/') the root of the url , __only required when html5 is actived__. defualt is `/` |
 |prefix| String | for the hash prefix , default is '' (you can pass `!` to make the hash like `#!/contact/100`), works in hash mode.|
-|autolink| Boolean | (default true) whether to delegate all link(a[href])'s navigating, only need when __html5 is actived__, default is `true`.|
+|autolink| Boolean | (defualt true) whether to delegate all link(a[href])'s navigating, only need when __html5 is actived__, default is `true`.|
 
 
 __Example__
