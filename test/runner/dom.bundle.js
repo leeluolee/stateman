@@ -46,8 +46,8 @@
 
 	
 	__webpack_require__(1);
-	__webpack_require__(!(function webpackMissingModule() { var e = new Error("Cannot find module \"./dom-history.js\""); e.code = 'MODULE_NOT_FOUND'; throw e; }()));
 	__webpack_require__(10);
+	__webpack_require__(13);
 
 
 
@@ -424,6 +424,14 @@
 	    o1[i] = o2[i]
 	  }
 	  return o1;
+	}
+
+	_.values = function( o){
+	  var keys = [];
+	  for(var i in o) if( o.hasOwnProperty(i) ){
+	    keys.push( o[i] );
+	  }
+	  return keys;
 	}
 
 
@@ -3723,6 +3731,395 @@
 
 	
 	// THX for Backbone for some testcase from https://github.com/jashkenas/backbone/blob/master/test/router.js
+	// to help maze becoming robust soon.
+
+	//    Backbone.js 1.1.2
+	//    (c) 2010-2014 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+	//    Backbone may be freely distributed under the MIT license.
+	//    For all details and documentation:
+	//    http://backbonejs.org
+
+
+	var _ = __webpack_require__(3);
+	var browser = __webpack_require__(11);
+	var History = __webpack_require__(12);
+	var expect = __webpack_require__(4)
+
+
+	// Backbone.js Trick for mock the location service
+	var a = document.createElement('a');
+	function loc(href){
+	  return ({
+	    replace: function(href) {
+	      a.href = href;
+	      _.extend(this, {
+	        href: a.href,
+	        hash: a.hash,
+	        host: a.host,
+	        fragment: a.fragment,
+	        pathname: a.pathname,
+	        search: a.search
+	      }, true)
+	      if (!/^\//.test(this.pathname)) this.pathname = '/' + this.pathname;
+	      return this;
+	    }
+	  }).replace(href)
+	}
+
+
+
+
+	describe("History", function(){
+
+
+	  var history = new History({location: loc("http://leeluolee.github.io/")})
+
+	  var locals = {num:0}
+	  function num1(path){
+	    locals[path] = 1;
+	  }
+
+	  history.start(); 
+	  it("works under basic usage ", function(){
+	    history.nav("home");
+
+	    expect(history.location.hash).to.equal("#/home");
+	    history.checkPath();
+
+	  })
+	  it("works under basic usage 2", function(){
+
+	    history.on("change", num1)
+	    history.location.replace("http://leeluolee.github.io/#/home/code");
+	    history.checkPath();
+	    expect(locals["/home/code"]).to.equal(1);
+	    history.off("change", num1);
+	  })
+	  it("works with location replace ", function(){
+	    history.on("change", num1)
+	    history.location.replace("http://leeluolee.github.io/#/home2");
+	    history.checkPath();
+	    expect(history.location.hash).to.equal("#/home2")
+	    expect(locals["/home2"]).to.equal(1);
+	    history.off("change", num1);
+	  })
+
+	  it("hashmode with prefix", function(){
+	    var history = new History({
+	      location: loc("http://regularjs.github.io/app/history"),
+	      prefix: "!"
+	    })
+	    history.on("change", num1)
+	    history.location.replace("http://leeluolee.github.io/#!/prefix");
+	    history.checkPath();
+	    expect(locals["/prefix"]).to.equal(1);
+	    history.off("change", num1);
+	  })
+
+	  it("works in html5 history mode", function(){
+	    var history = new History({
+	      location: loc("http://regularjs.github.io/app/history"),
+	      root: "/app",
+	      mode: 2
+	    })
+
+	    history.on("change", num1)
+	    history.checkPath();
+	    expect(locals["/history"]).to.equal(1);
+
+	    history.location.replace("http://regularjs.github.io/app/history/code");
+	    history.checkPath();
+	    expect(locals["/history/code"]).to.equal(1);
+
+	    history.off("change", num1);
+	  })
+	  it("with prefix", function(){
+	    // @TODO some hardcode '#' need remove
+	    var history = new History({
+	      location: loc("http://regularjs.github.io/app/history"),
+	      prefix: '!'
+	    })
+	    history.location.replace("http://regularjs.github.io/app/history/code#!/prefix");
+	    history.on("change", num1)
+	    history.checkPath();
+	    expect(locals["/prefix"]).to.equal(1);
+	  })
+	  it("every nav, the curPath should be update", function(){
+	    var history = new History({
+	      location: loc("http://regularjs.github.io/app/history")
+	    })
+	    history.location.replace("http://regularjs.github.io/app/history/code#/prefix");
+	    history.checkPath();
+
+	    expect(history.curPath).to.equal("/prefix")
+	    history.location.replace("http://regularjs.github.io/app/history/code");
+	    history.checkPath();
+	    expect(history.curPath).to.equal("")
+	  })
+
+	})
+
+
+
+
+/***/ },
+/* 11 */
+/***/ function(module, exports) {
+
+	var win = window,
+	    doc = document;
+
+	module.exports = {
+	  hash: "onhashchange" in win && (!doc.documentMode || doc.documentMode > 7),
+	  history: win.history && "onpopstate" in win,
+	  location: win.location,
+	  isSameDomain: function(url){
+	    var matched = url.match(/^.*?:\/\/([^/]*)/);
+	    if(matched){
+	      return matched[0] == this.location.origin;
+	    }
+	    return true;
+	  },
+	  getHref: function(node){
+	    return "href" in node ? node.getAttribute("href", 2) : node.getAttribute("href");
+	  },
+	  on: "addEventListener" in win ?  // IE10 attachEvent is not working when binding the onpopstate, so we need check addEventLister first
+	      function(node,type,cb){return node.addEventListener( type, cb )}
+	    : function(node,type,cb){return node.attachEvent( "on" + type, cb )},
+
+	  off: "removeEventListener" in win ? 
+	      function(node,type,cb){return node.removeEventListener( type, cb )}
+	    : function(node,type,cb){return node.detachEvent( "on" + type, cb )}
+	}
+
+
+/***/ },
+/* 12 */
+/***/ function(module, exports, __webpack_require__) {
+
+	
+	// MIT
+	// Thx Backbone.js 1.1.2  and https://github.com/cowboy/jquery-hashchange/blob/master/jquery.ba-hashchange.js
+	// for iframe patches in old ie.
+
+	var browser = __webpack_require__(11);
+	var _ = __webpack_require__(3);
+
+
+	// the mode const
+	var QUIRK = 3,
+	  HASH = 1,
+	  HISTORY = 2;
+
+
+
+	// extract History for test
+	// resolve the conficlt with the Native History
+	function History(options){
+	  options = options || {};
+
+	  // Trick from backbone.history for anchor-faked testcase 
+	  this.location = options.location || browser.location;
+
+	  // mode config, you can pass absolute mode (just for test);
+	  this.html5 = options.html5;
+	  this.mode = options.html5 && browser.history ? HISTORY: HASH; 
+	  if( !browser.hash ) this.mode = QUIRK;
+	  if(options.mode) this.mode = options.mode;
+
+	  // hash prefix , used for hash or quirk mode
+	  this.prefix = "#" + (options.prefix || "") ;
+	  this.rPrefix = new RegExp(this.prefix + '(.*)$');
+	  this.interval = options.interval || 66;
+
+	  // the root regexp for remove the root for the path. used in History mode
+	  this.root = options.root ||  "/" ;
+	  this.rRoot = new RegExp("^" +  this.root);
+
+	  this._fixInitState();
+
+	  this.autolink = options.autolink!==false;
+
+	  this.curPath = undefined;
+	}
+
+	_.extend( _.emitable(History), {
+	  // check the 
+	  start: function(){
+	    var path = this.getPath();
+	    this._checkPath = _.bind(this.checkPath, this);
+
+	    if( this.isStart ) return;
+	    this.isStart = true;
+
+	    if(this.mode === QUIRK){
+	      this._fixHashProbelm(path); 
+	    }
+
+	    switch ( this.mode ){
+	      case HASH: 
+	        browser.on(window, "hashchange", this._checkPath); 
+	        break;
+	      case HISTORY:
+	        browser.on(window, "popstate", this._checkPath);
+	        break;
+	      case QUIRK:
+	        this._checkLoop();
+	    }
+	    // event delegate
+	    this.autolink && this._autolink();
+
+	    this.curPath = path;
+
+	    this.emit("change", path);
+	  },
+	  // the history teardown
+	  stop: function(){
+
+	    browser.off(window, 'hashchange', this._checkPath)  
+	    browser.off(window, 'popstate', this._checkPath)  
+	    clearTimeout(this.tid);
+	    this.isStart = false;
+	    this._checkPath = null;
+	  },
+	  // get the path modify
+	  checkPath: function(ev){
+
+	    var path = this.getPath(), curPath = this.curPath;
+
+	    //for oldIE hash history issue
+	    if(path === curPath && this.iframe){
+	      path = this.getPath(this.iframe.location);
+	    }
+
+	    if( path !== curPath ) {
+	      this.iframe && this.nav(path, {silent: true});
+	      this.curPath = path;
+	      this.emit('change', path);
+	    }
+	  },
+	  // get the current path
+	  getPath: function(location){
+	    var location = location || this.location, tmp;
+	    if( this.mode !== HISTORY ){
+	      tmp = location.href.match(this.rPrefix);
+	      return tmp && tmp[1]? tmp[1]: "";
+
+	    }else{
+	      return _.cleanPath(( location.pathname + location.search || "" ).replace( this.rRoot, "/" ))
+	    }
+	  },
+
+	  nav: function(to, options ){
+
+	    var iframe = this.iframe;
+
+	    options = options || {};
+
+	    to = _.cleanPath(to);
+
+	    if(this.curPath == to) return;
+
+	    // pushState wont trigger the checkPath
+	    // but hashchange will
+	    // so we need set curPath before to forbit the CheckPath
+	    this.curPath = to;
+
+	    // 3 or 1 is matched
+	    if( this.mode !== HISTORY ){
+	      this._setHash(this.location, to, options.replace)
+	      if( iframe && this.getPath(iframe.location) !== to ){
+	        if(!options.replace) iframe.document.open().close();
+	        this._setHash(this.iframe.location, to, options.replace)
+	      }
+	    }else{
+	      history[options.replace? 'replaceState': 'pushState']( {}, options.title || "" , _.cleanPath( this.root + to ) )
+	    }
+
+	    if( !options.silent ) this.emit('change', to);
+	  },
+	  _autolink: function(){
+	    if(this.mode!==HISTORY) return;
+	    // only in html5 mode, the autolink is works
+	    // if(this.mode !== 2) return;
+	    var prefix = this.prefix, self = this;
+	    browser.on( document.body, "click", function(ev){
+
+	      var target = ev.target || ev.srcElement;
+	      if( target.tagName.toLowerCase() !== "a" ) return;
+	      var tmp = browser.isSameDomain(target.href)&&(browser.getHref(target)||"").match(self.rPrefix);
+		  
+	      var hash = tmp && tmp[1]? tmp[1]: "";
+
+	      if(!hash) return;
+	      
+	      ev.preventDefault && ev.preventDefault();
+	      self.nav( hash )
+	      return (ev.returnValue = false);
+	    } )
+	  },
+	  _setHash: function(location, path, replace){
+	    var href = location.href.replace(/(javascript:|#).*$/, '');
+	    if (replace){
+	      location.replace(href + this.prefix+ path);
+	    }
+	    else location.hash = this.prefix+ path;
+	  },
+	  // for browser that not support onhashchange
+	  _checkLoop: function(){
+	    var self = this; 
+	    this.tid = setTimeout( function(){
+	      self._checkPath();
+	      self._checkLoop();
+	    }, this.interval );
+	  },
+	  // if we use real url in hash env( browser no history popstate support)
+	  // or we use hash in html5supoort mode (when paste url in other url)
+	  // then , history should repara it
+	  _fixInitState: function(){
+	    var pathname = _.cleanPath(this.location.pathname), hash, hashInPathName;
+
+	    // dont support history popstate but config the html5 mode
+	    if( this.mode !== HISTORY && this.html5){
+
+	      hashInPathName = pathname.replace(this.rRoot, "")
+	      if(hashInPathName) this.location.replace(this.root + this.prefix + hashInPathName);
+
+	    }else if( this.mode === HISTORY /* && pathname === this.root*/){
+
+	      hash = this.location.hash.replace(this.prefix, "");
+	      if(hash) history.replaceState({}, document.title, _.cleanPath(this.root + hash))
+
+	    }
+	  },
+	  // Thanks for backbone.history and https://github.com/cowboy/jquery-hashchange/blob/master/jquery.ba-hashchange.js
+	  // for helping stateman fixing the oldie hash history issues when with iframe hack
+	  _fixHashProbelm: function(path){
+	    var iframe = document.createElement('iframe'), body = document.body;
+	    iframe.src = 'javascript:;';
+	    iframe.style.display = 'none';
+	    iframe.tabIndex = -1;
+	    iframe.title = "";
+	    this.iframe = body.insertBefore(iframe, body.firstChild).contentWindow;
+	    this.iframe.document.open().close();
+	    this.iframe.location.hash = '#' + path;
+	  }
+	  
+	})
+
+
+
+
+
+	module.exports = History;
+
+
+/***/ },
+/* 13 */
+/***/ function(module, exports, __webpack_require__) {
+
+	
+	// THX for Backbone for some testcase from https://github.com/jashkenas/backbone/blob/master/test/router.js
 	// to help stateman becoming robust soon.
 
 	//    Backbone.js 1.1.2
@@ -3731,7 +4128,7 @@
 	//    For all details and documentation:
 	//    http://backbonejs.org
 
-	var StateMan = __webpack_require__(11);
+	var StateMan = __webpack_require__(14);
 	var expect = __webpack_require__(4)
 	var _ = __webpack_require__(3);
 	var doc = typeof document !== "undefined"? document: {};
@@ -4308,6 +4705,7 @@
 
 	    var state = stateman.state("book.detail", {url: ":id"}).decode("/book/a?name=12")
 	    expect(state.param).to.eql({id:"a", name: "12"})
+
 	  })
 
 	  it("stateman.go should also assign the stateman.path", function(){
@@ -4321,6 +4719,16 @@
 	    expect(stateman.encode("contact.detail")).to.equal("/contact/detail")
 	    var state = stateman.state("encode.detail", {url: ':id'}).go("book.message")
 	    expect(stateman.encode("encode.detail", {id:1, name:2})).to.equal("/encode/1?name=2")
+
+	  })
+
+	  it( "ISSUE #22: url match should matching by state.priority", function(){
+	    var state = stateman
+	      .state( 'blog.detail', {url: ":id"})
+	      .state( 'blog.list', {priority: 10} )
+	      .decode("/blog/list")
+
+	    expect(state.name).to.equal('blog.list');
 
 	  })
 
@@ -4643,13 +5051,13 @@
 
 
 /***/ },
-/* 11 */
+/* 14 */
 /***/ function(module, exports, __webpack_require__) {
 
-	__webpack_require__(12);
+	__webpack_require__(11);
 
 	var State = __webpack_require__(2),
-	  History = __webpack_require__(13),
+	  History = __webpack_require__(12),
 	  _ = __webpack_require__(3),
 	  baseTitle = document.title,
 	  stateFn = State.prototype.state;
@@ -5068,10 +5476,16 @@
 
 	      // leaf-state has the high priority upon branch-state
 	      if(state.hasNext){
-	        for(var i in states) if(states.hasOwnProperty(i)){
-	          found = this._findState( states[i], path );
+
+	        var stateList = _.values( states ).sort( this._sortState );
+	        var len = stateList.length;
+
+	        for(var i = 0; i < len; i++){
+
+	          found = this._findState( stateList[i], path );
 	          if( found ) return found;
 	        }
+
 	      }
 	      // in strict mode only leaf can be touched
 	      // if all children is don. will try it self
@@ -5082,6 +5496,9 @@
 	      }else{
 	        return false;
 	      }
+	    },
+	    _sortState: function( a, b ){
+	      return ( b.priority || 0 ) - ( a.priority || 0 );
 	    },
 	    // find the same branch;
 	    _findBase: function(now, before){
@@ -5114,258 +5531,6 @@
 
 	module.exports = StateMan;
 
-
-
-/***/ },
-/* 12 */
-/***/ function(module, exports) {
-
-	var win = window,
-	    doc = document;
-
-	module.exports = {
-	  hash: "onhashchange" in win && (!doc.documentMode || doc.documentMode > 7),
-	  history: win.history && "onpopstate" in win,
-	  location: win.location,
-	  isSameDomain: function(url){
-	    var matched = url.match(/^.*?:\/\/([^/]*)/);
-	    if(matched){
-	      return matched[0] == this.location.origin;
-	    }
-	    return true;
-	  },
-	  getHref: function(node){
-	    return "href" in node ? node.getAttribute("href", 2) : node.getAttribute("href");
-	  },
-	  on: "addEventListener" in win ?  // IE10 attachEvent is not working when binding the onpopstate, so we need check addEventLister first
-	      function(node,type,cb){return node.addEventListener( type, cb )}
-	    : function(node,type,cb){return node.attachEvent( "on" + type, cb )},
-
-	  off: "removeEventListener" in win ? 
-	      function(node,type,cb){return node.removeEventListener( type, cb )}
-	    : function(node,type,cb){return node.detachEvent( "on" + type, cb )}
-	}
-
-
-/***/ },
-/* 13 */
-/***/ function(module, exports, __webpack_require__) {
-
-	
-	// MIT
-	// Thx Backbone.js 1.1.2  and https://github.com/cowboy/jquery-hashchange/blob/master/jquery.ba-hashchange.js
-	// for iframe patches in old ie.
-
-	var browser = __webpack_require__(12);
-	var _ = __webpack_require__(3);
-
-
-	// the mode const
-	var QUIRK = 3,
-	  HASH = 1,
-	  HISTORY = 2;
-
-
-
-	// extract History for test
-	// resolve the conficlt with the Native History
-	function History(options){
-	  options = options || {};
-
-	  // Trick from backbone.history for anchor-faked testcase 
-	  this.location = options.location || browser.location;
-
-	  // mode config, you can pass absolute mode (just for test);
-	  this.html5 = options.html5;
-	  this.mode = options.html5 && browser.history ? HISTORY: HASH; 
-	  if( !browser.hash ) this.mode = QUIRK;
-	  if(options.mode) this.mode = options.mode;
-
-	  // hash prefix , used for hash or quirk mode
-	  this.prefix = "#" + (options.prefix || "") ;
-	  this.rPrefix = new RegExp(this.prefix + '(.*)$');
-	  this.interval = options.interval || 66;
-
-	  // the root regexp for remove the root for the path. used in History mode
-	  this.root = options.root ||  "/" ;
-	  this.rRoot = new RegExp("^" +  this.root);
-
-	  this._fixInitState();
-
-	  this.autolink = options.autolink!==false;
-
-	  this.curPath = undefined;
-	}
-
-	_.extend( _.emitable(History), {
-	  // check the 
-	  start: function(){
-	    var path = this.getPath();
-	    this._checkPath = _.bind(this.checkPath, this);
-
-	    if( this.isStart ) return;
-	    this.isStart = true;
-
-	    if(this.mode === QUIRK){
-	      this._fixHashProbelm(path); 
-	    }
-
-	    switch ( this.mode ){
-	      case HASH: 
-	        browser.on(window, "hashchange", this._checkPath); 
-	        break;
-	      case HISTORY:
-	        browser.on(window, "popstate", this._checkPath);
-	        break;
-	      case QUIRK:
-	        this._checkLoop();
-	    }
-	    // event delegate
-	    this.autolink && this._autolink();
-
-	    this.curPath = path;
-
-	    this.emit("change", path);
-	  },
-	  // the history teardown
-	  stop: function(){
-
-	    browser.off(window, 'hashchange', this._checkPath)  
-	    browser.off(window, 'popstate', this._checkPath)  
-	    clearTimeout(this.tid);
-	    this.isStart = false;
-	    this._checkPath = null;
-	  },
-	  // get the path modify
-	  checkPath: function(ev){
-
-	    var path = this.getPath(), curPath = this.curPath;
-
-	    //for oldIE hash history issue
-	    if(path === curPath && this.iframe){
-	      path = this.getPath(this.iframe.location);
-	    }
-
-	    if( path !== curPath ) {
-	      this.iframe && this.nav(path, {silent: true});
-	      this.curPath = path;
-	      this.emit('change', path);
-	    }
-	  },
-	  // get the current path
-	  getPath: function(location){
-	    var location = location || this.location, tmp;
-	    if( this.mode !== HISTORY ){
-	      tmp = location.href.match(this.rPrefix);
-	      return tmp && tmp[1]? tmp[1]: "";
-
-	    }else{
-	      return _.cleanPath(( location.pathname + location.search || "" ).replace( this.rRoot, "/" ))
-	    }
-	  },
-
-	  nav: function(to, options ){
-
-	    var iframe = this.iframe;
-
-	    options = options || {};
-
-	    to = _.cleanPath(to);
-
-	    if(this.curPath == to) return;
-
-	    // pushState wont trigger the checkPath
-	    // but hashchange will
-	    // so we need set curPath before to forbit the CheckPath
-	    this.curPath = to;
-
-	    // 3 or 1 is matched
-	    if( this.mode !== HISTORY ){
-	      this._setHash(this.location, to, options.replace)
-	      if( iframe && this.getPath(iframe.location) !== to ){
-	        if(!options.replace) iframe.document.open().close();
-	        this._setHash(this.iframe.location, to, options.replace)
-	      }
-	    }else{
-	      history[options.replace? 'replaceState': 'pushState']( {}, options.title || "" , _.cleanPath( this.root + to ) )
-	    }
-
-	    if( !options.silent ) this.emit('change', to);
-	  },
-	  _autolink: function(){
-	    if(this.mode!==HISTORY) return;
-	    // only in html5 mode, the autolink is works
-	    // if(this.mode !== 2) return;
-	    var prefix = this.prefix, self = this;
-	    browser.on( document.body, "click", function(ev){
-
-	      var target = ev.target || ev.srcElement;
-	      if( target.tagName.toLowerCase() !== "a" ) return;
-	      var tmp = browser.isSameDomain(target.href)&&(browser.getHref(target)||"").match(self.rPrefix);
-		  
-	      var hash = tmp && tmp[1]? tmp[1]: "";
-
-	      if(!hash) return;
-	      
-	      ev.preventDefault && ev.preventDefault();
-	      self.nav( hash )
-	      return (ev.returnValue = false);
-	    } )
-	  },
-	  _setHash: function(location, path, replace){
-	    var href = location.href.replace(/(javascript:|#).*$/, '');
-	    if (replace){
-	      location.replace(href + this.prefix+ path);
-	    }
-	    else location.hash = this.prefix+ path;
-	  },
-	  // for browser that not support onhashchange
-	  _checkLoop: function(){
-	    var self = this; 
-	    this.tid = setTimeout( function(){
-	      self._checkPath();
-	      self._checkLoop();
-	    }, this.interval );
-	  },
-	  // if we use real url in hash env( browser no history popstate support)
-	  // or we use hash in html5supoort mode (when paste url in other url)
-	  // then , history should repara it
-	  _fixInitState: function(){
-	    var pathname = _.cleanPath(this.location.pathname), hash, hashInPathName;
-
-	    // dont support history popstate but config the html5 mode
-	    if( this.mode !== HISTORY && this.html5){
-
-	      hashInPathName = pathname.replace(this.rRoot, "")
-	      if(hashInPathName) this.location.replace(this.root + this.prefix + hashInPathName);
-
-	    }else if( this.mode === HISTORY /* && pathname === this.root*/){
-
-	      hash = this.location.hash.replace(this.prefix, "");
-	      if(hash) history.replaceState({}, document.title, _.cleanPath(this.root + hash))
-
-	    }
-	  },
-	  // Thanks for backbone.history and https://github.com/cowboy/jquery-hashchange/blob/master/jquery.ba-hashchange.js
-	  // for helping stateman fixing the oldie hash history issues when with iframe hack
-	  _fixHashProbelm: function(path){
-	    var iframe = document.createElement('iframe'), body = document.body;
-	    iframe.src = 'javascript:;';
-	    iframe.style.display = 'none';
-	    iframe.tabIndex = -1;
-	    iframe.title = "";
-	    this.iframe = body.insertBefore(iframe, body.firstChild).contentWindow;
-	    this.iframe.document.open().close();
-	    this.iframe.location.hash = '#' + path;
-	  }
-	  
-	})
-
-
-
-
-
-	module.exports = History;
 
 
 /***/ }
