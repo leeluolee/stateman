@@ -805,7 +805,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	      var handles = this._handles , calls;
 
-	      if (calls = handles[event]) {
+	      var calls = handles[event];
+
+	      if (calls) {
 	        if (!fn && !ne.namespace) {
 	          handles[event] = [];
 	        }else{
@@ -817,6 +819,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	          }
 	        }
 	      }
+
 	      return this;
 	    },
 	    emit: function(event){
@@ -899,7 +902,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	_.log = function(msg, type){
-	  typeof console !== "undefined" && console[type || "log"](msg)
+	  typeof console !== "undefined" && console[type || "log"](msg); //eslint-disable-line no-console
 	}
 
 	_.isPromise = function( obj ){
