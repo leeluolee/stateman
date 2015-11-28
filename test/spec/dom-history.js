@@ -35,11 +35,7 @@ function loc(href){
   }).replace(href)
 }
 
-
-
-
 describe("History", function(){
-
 
   var history = new History({location: loc("http://leeluolee.github.io/")})
 
@@ -48,22 +44,23 @@ describe("History", function(){
     locals[path] = 1;
   }
 
-  history.start(); 
+  history.start();
+
   it("works under basic usage ", function(){
     history.nav("home");
 
     expect(history.location.hash).to.equal("#/home");
     history.checkPath();
-
   })
-  it("works under basic usage 2", function(){
 
+  it("works under basic usage 2", function(){
     history.on("change", num1)
     history.location.replace("http://leeluolee.github.io/#/home/code");
     history.checkPath();
     expect(locals["/home/code"]).to.equal(1);
     history.off("change", num1);
   })
+
   it("works with location replace ", function(){
     history.on("change", num1)
     history.location.replace("http://leeluolee.github.io/#/home2");
@@ -102,6 +99,7 @@ describe("History", function(){
 
     history.off("change", num1);
   })
+
   it("with prefix", function(){
     // @TODO some hardcode '#' need remove
     var history = new History({
@@ -113,6 +111,7 @@ describe("History", function(){
     history.checkPath();
     expect(locals["/prefix"]).to.equal(1);
   })
+
   it("every nav, the curPath should be update", function(){
     var history = new History({
       location: loc("http://regularjs.github.io/app/history")
@@ -125,7 +124,4 @@ describe("History", function(){
     history.checkPath();
     expect(history.curPath).to.equal("")
   })
-
 })
-
-
