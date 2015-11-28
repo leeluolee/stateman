@@ -44,13 +44,9 @@
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	
 	__webpack_require__(1);
 	__webpack_require__(10);
 	__webpack_require__(13);
-
-
-
 
 
 /***/ },
@@ -58,16 +54,14 @@
 /***/ function(module, exports, __webpack_require__) {
 
 	var State = __webpack_require__(2);
-	var expect = __webpack_require__(4)
-
-
+	var expect = __webpack_require__(4);
 
 	function expectUrl(url, option){
-	  return expect(new State({url: url}).encode(option))
+	  return expect(new State({url: url}).encode(option));
 	}
 
 	function expectMatch(url, path){
-	  return expect(new State({url: url}).decode(path))
+	  return expect(new State({url: url}).decode(path));
 	}
 
 	describe("State", function(){
@@ -78,68 +72,68 @@
 
 	      state.state('contact.detail.message', {});
 
-	      expect(state.state("contact").name).to.equal("contact")
-	      expect(state.state("contact.detail").name).to.equal("contact.detail")
-	      expect(state.state("contact.detail.message").name).to.equal("contact.detail.message")
-	    })
+	      expect(state.state("contact").name).to.equal("contact");
+	      expect(state.state("contact.detail").name).to.equal("contact.detail");
+	      expect(state.state("contact.detail.message").name).to.equal("contact.detail.message");
+	    });
+
 	    it("we can define absolute url when start with '^'", function(){
 	      var state = new State();
 	      state.state('contact.detail', {});
 	      state.state('contact.detail.app', {url: '^/home/code/:id'});
-	      expect(state.state("contact.detail.app").encode({id: 1})).to.equal("/home/code/1")
+	      expect(state.state("contact.detail.app").encode({id: 1})).to.equal("/home/code/1");
 
-	    })
+	    });
+
 	    it("state.async has been removed after v0.2.0", function(){
 	      var state = new State();
 	      expect(function(){
-	        state.async()
+	        state.async();
 	      }).to.throwError();
-	      
-	    })
 
-	  })
+	    });
 
+	  });
 
 	  describe("state.encode", function(){
 
-
 	    it("no param and query should work", function(){
 
-	      expectUrl("/home/code").to.equal("/home/code")
+	      expectUrl("/home/code").to.equal("/home/code");
 
 	      expectUrl("/home/code", {name: 'hello', age: 1} )
 	        .to.equal("/home/code?name=hello&age=1");
-	      
-	    })
+
+	    });
+
 	    it("with uncatched param should work", function(){
-	      
-	      expectUrl("/home/code/:id").to.equal("/home/code")
+
+	      expectUrl("/home/code/:id").to.equal("/home/code");
 
 	      expectUrl("/home/code/:id", {
 	        id: 100, name: 'hello', age: 1
 	      }).to.equal("/home/code/100?name=hello&age=1");
-	      
-	    })
+
+	    });
 
 	    it("with unnamed param should work", function(){
-	      
 	      expectUrl("/home/code/(\\d+)", {
 	        name: 'hello', age: 1, 0:100
 	      }).to.equal("/home/code/100?name=hello&age=1");
-	    })
+	    });
 
 	    it("with named and catched param should work", function(){
-	      
+
 	      expectUrl("/home/code/:id(\\d+)", {
-	        name: 'hello', 
-	        age: 1, 
+	        name: 'hello',
+	        age: 1,
 	        id: 100
 	      }).to.equal("/home/code/100?name=hello&age=1");
 
-	    })
+	    });
 
 	    it("with wildcard should work", function(){
-	      
+
 	      expectUrl("/home/**/code", {
 	        name: 'hello', age: 1, 0: "/name/100"
 	      }).to.equal("/home/name/100/code?name=hello&age=1");
@@ -148,7 +142,7 @@
 	        name: 'hello', age: 1, 0: "name"
 	      }).to.equal("/home/name/code?name=hello&age=1");
 
-	    })
+	    });
 
 	    it("complex testing should work as expect", function(){
 
@@ -156,64 +150,65 @@
 	        name: 'leeluolee', age: 1 ,id: 100,  0: 1, 1: "last"
 	      }).to.equal("/home/code/100/leeluolee/prefix1suffix/last?age=1");
 
-	    })
+	    });
 
 	    it("nested state testing", function(){
 	      var state = new State({url: "home"})
 	        .state("home", {})
 	        .state("home.list", {url: ""})
-	        .state("home.list.message", {url: "/:id/message"})
+	        .state("home.list.message", {url: "/:id/message"});
 
 	      var url =state.state("home.list.message").encode({
 	        id: 1000 ,name:1, age: "ten"
-	      })
+	      });
+
 	      expect(url).to.equal("/home/home/1000/message?name=1&age=ten");
-	    })
+	    });
 
 
-	  })
-
+	  });
 
 	  describe("state.match", function(){
 
 	    it("basic usage", function(){
 	      expectMatch("/home/code", "/home/code/").to.eql({});
 	      expectMatch("/home/code", "/home/code").to.eql({});
-	    })
+	    });
 
 	    it("simple named param", function(){
 	      expectMatch("/home/code/:id", "/home/code/100/").to.eql({id:"100"});
-	    })
+	    });
 
 	    it("simple catched param", function(){
 	      expectMatch("/home/code/(\\d+)", "/home/code/100/").to.eql({0:"100"});
-	    })
+	    });
 
 	    it("simple catched and named param", function(){
 	      expectMatch("/home/code/:id(\\d+)", "/home/code/100/").to.eql({id:"100"});
-	    })
+	    });
 
 	    it("simple wild param", function(){
 	      expectMatch("/home/code/:id(\\d+)", "/home/code/100/").to.eql({id:"100"});
-	    })
+	    });
 
 	    it("complex composite param", function(){
 
-	      expectMatch("/home/code/:id(\\d+)/([0-9])/(\\d{1,3})/home-:name/*/level", 
+	      expectMatch("/home/code/:id(\\d+)/([0-9])/(\\d{1,3})/home-:name/*/level",
 	        "/home/code/100/1/44/home-hello/wild/level").to .eql({id:"100", "0": 1, "1": 44, "2": "wild",  name: "hello"});
 
-	    })
+	    });
 
-	  })
+	  });
 
-	})
+	});
 
 
 	describe("state.event", function(){
 	  var state = new State();
+
 	  it("event base", function(){
 	    var locals = {on:0};
-	    function callback(num){locals.on+=num||1}
+	    function callback(num){locals.on+=num||1;}
 
 	    state.on("change", callback);
 	    state.emit("change", 2);
@@ -221,25 +216,27 @@
 	    state.off("change", callback);
 	    state.emit("change");
 	    expect(locals.on).to.equal(2);
-	  })
+	  });
+
 	  it("event once", function(){
 	    var locals = {once:0};
-	    function callback(num){locals.once+=num||1}
+	    function callback(num){locals.once+=num||1;}
 
 	    state.once("once", callback);
-	    state.emit("once")
+	    state.emit("once");
 	    expect(locals.once).to.equal(1);
-	    state.emit("once")
+	    state.emit("once");
 	    expect(locals.once).to.equal(1);
-	  })
+	  });
+
 	  it("batch operate", function(){
 	    var locals = {on:0};
-	    function callback(name1,name2){locals.on+=name2||1}
+	    function callback(name1,name2){locals.on+=name2||1;}
 
 	    state.on({
 	      "change": callback,
 	      "change2": callback
-	    })
+	    });
 
 	    state.emit("change", 1,2);
 	    expect(locals.on).to.equal(2);
@@ -252,9 +249,8 @@
 	    expect(locals.on).to.equal(3);
 	    state.emit("change2");
 	    expect(locals.on).to.equal(3);
-	  })
-	})
-
+	  });
+	});
 
 
 /***/ },
@@ -3741,10 +3737,9 @@
 
 
 	var _ = __webpack_require__(3);
-	var browser = __webpack_require__(11);
+	__webpack_require__(11);
 	var History = __webpack_require__(12);
-	var expect = __webpack_require__(4)
-
+	var expect = __webpack_require__(4);
 
 	// Backbone.js Trick for mock the location service
 	var a = document.createElement('a');
@@ -3759,18 +3754,20 @@
 	        fragment: a.fragment,
 	        pathname: a.pathname,
 	        search: a.search
-	      }, true)
+	      }, true);
+
 	      if (!/^\//.test(this.pathname)) this.pathname = '/' + this.pathname;
+
 	      return this;
 	    }
-	  }).replace(href)
+	  }).replace(href);
 	}
 
 	describe("History", function(){
 
-	  var history = new History({location: loc("http://leeluolee.github.io/")})
+	  var history = new History({location: loc("http://leeluolee.github.io/")});
 
-	  var locals = {num:0}
+	  var locals = {num:0};
 	  function num1(path){
 	    locals[path] = 1;
 	  }
@@ -3782,45 +3779,45 @@
 
 	    expect(history.location.hash).to.equal("#/home");
 	    history.checkPath();
-	  })
+	  });
 
 	  it("works under basic usage 2", function(){
-	    history.on("change", num1)
+	    history.on("change", num1);
 	    history.location.replace("http://leeluolee.github.io/#/home/code");
 	    history.checkPath();
 	    expect(locals["/home/code"]).to.equal(1);
 	    history.off("change", num1);
-	  })
+	  });
 
 	  it("works with location replace ", function(){
-	    history.on("change", num1)
+	    history.on("change", num1);
 	    history.location.replace("http://leeluolee.github.io/#/home2");
 	    history.checkPath();
-	    expect(history.location.hash).to.equal("#/home2")
+	    expect(history.location.hash).to.equal("#/home2");
 	    expect(locals["/home2"]).to.equal(1);
 	    history.off("change", num1);
-	  })
+	  });
 
 	  it("hashmode with prefix", function(){
 	    var history = new History({
 	      location: loc("http://regularjs.github.io/app/history"),
 	      prefix: "!"
-	    })
-	    history.on("change", num1)
+	    });
+	    history.on("change", num1);
 	    history.location.replace("http://leeluolee.github.io/#!/prefix");
 	    history.checkPath();
 	    expect(locals["/prefix"]).to.equal(1);
 	    history.off("change", num1);
-	  })
+	  });
 
 	  it("works in html5 history mode", function(){
 	    var history = new History({
 	      location: loc("http://regularjs.github.io/app/history"),
 	      root: "/app",
 	      mode: 2
-	    })
+	    });
 
-	    history.on("change", num1)
+	    history.on("change", num1);
 	    history.checkPath();
 	    expect(locals["/history"]).to.equal(1);
 
@@ -3829,33 +3826,33 @@
 	    expect(locals["/history/code"]).to.equal(1);
 
 	    history.off("change", num1);
-	  })
+	  });
 
 	  it("with prefix", function(){
 	    // @TODO some hardcode '#' need remove
 	    var history = new History({
 	      location: loc("http://regularjs.github.io/app/history"),
 	      prefix: '!'
-	    })
+	    });
 	    history.location.replace("http://regularjs.github.io/app/history/code#!/prefix");
-	    history.on("change", num1)
+	    history.on("change", num1);
 	    history.checkPath();
 	    expect(locals["/prefix"]).to.equal(1);
-	  })
+	  });
 
 	  it("every nav, the curPath should be update", function(){
 	    var history = new History({
 	      location: loc("http://regularjs.github.io/app/history")
-	    })
+	    });
 	    history.location.replace("http://regularjs.github.io/app/history/code#/prefix");
 	    history.checkPath();
 
-	    expect(history.curPath).to.equal("/prefix")
+	    expect(history.curPath).to.equal("/prefix");
 	    history.location.replace("http://regularjs.github.io/app/history/code");
 	    history.checkPath();
-	    expect(history.curPath).to.equal("")
-	  })
-	})
+	    expect(history.curPath).to.equal("");
+	  });
+	});
 
 
 /***/ },
