@@ -3904,19 +3904,17 @@
 	  HASH = 1,
 	  HISTORY = 2;
 
-
-
 	// extract History for test
 	// resolve the conficlt with the Native History
 	function History(options){
 	  options = options || {};
 
-	  // Trick from backbone.history for anchor-faked testcase 
+	  // Trick from backbone.history for anchor-faked testcase
 	  this.location = options.location || browser.location;
 
 	  // mode config, you can pass absolute mode (just for test);
 	  this.html5 = options.html5;
-	  this.mode = options.html5 && browser.history ? HISTORY: HASH; 
+	  this.mode = options.html5 && browser.history ? HISTORY: HASH;
 	  if( !browser.hash ) this.mode = QUIRK;
 	  if(options.mode) this.mode = options.mode;
 
@@ -3937,7 +3935,7 @@
 	}
 
 	_.extend( _.emitable(History), {
-	  // check the 
+	  // check the
 	  start: function(){
 	    var path = this.getPath();
 	    this._checkPath = _.bind(this.checkPath, this);
@@ -3946,12 +3944,12 @@
 	    this.isStart = true;
 
 	    if(this.mode === QUIRK){
-	      this._fixHashProbelm(path); 
+	      this._fixHashProbelm(path);
 	    }
 
 	    switch ( this.mode ){
-	      case HASH: 
-	        browser.on(window, "hashchange", this._checkPath); 
+	      case HASH:
+	        browser.on(window, "hashchange", this._checkPath);
 	        break;
 	      case HISTORY:
 	        browser.on(window, "popstate", this._checkPath);
@@ -3966,17 +3964,19 @@
 
 	    this.emit("change", path);
 	  },
+
 	  // the history teardown
 	  stop: function(){
 
-	    browser.off(window, 'hashchange', this._checkPath)  
-	    browser.off(window, 'popstate', this._checkPath)  
+	    browser.off(window, 'hashchange', this._checkPath);
+	    browser.off(window, 'popstate', this._checkPath);
 	    clearTimeout(this.tid);
 	    this.isStart = false;
 	    this._checkPath = null;
 	  },
+
 	  // get the path modify
-	  checkPath: function(ev){
+	  checkPath: function(/*ev*/){
 
 	    var path = this.getPath(), curPath = this.curPath;
 
@@ -3991,6 +3991,7 @@
 	      this.emit('change', path);
 	    }
 	  },
+
 	  // get the current path
 	  getPath: function(location){
 	    var location = location || this.location, tmp;
@@ -4041,11 +4042,11 @@
 	      var target = ev.target || ev.srcElement;
 	      if( target.tagName.toLowerCase() !== "a" ) return;
 	      var tmp = browser.isSameDomain(target.href)&&(browser.getHref(target)||"").match(self.rPrefix);
-		  
+
 	      var hash = tmp && tmp[1]? tmp[1]: "";
 
 	      if(!hash) return;
-	      
+
 	      ev.preventDefault && ev.preventDefault();
 	      self.nav( hash )
 	      return (ev.returnValue = false);
@@ -4060,7 +4061,7 @@
 	  },
 	  // for browser that not support onhashchange
 	  _checkLoop: function(){
-	    var self = this; 
+	    var self = this;
 	    this.tid = setTimeout( function(){
 	      self._checkPath();
 	      self._checkLoop();
@@ -4097,12 +4098,8 @@
 	    this.iframe.document.open().close();
 	    this.iframe.location.hash = '#' + path;
 	  }
-	  
+
 	})
-
-
-
-
 
 	module.exports = History;
 
