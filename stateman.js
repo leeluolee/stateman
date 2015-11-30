@@ -1042,13 +1042,15 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  // get the current path
 	  getPath: function(location){
-	    var location = location || this.location, tmp;
+	    location = location || this.location;
+	    var tmp;
+
 	    if( this.mode !== HISTORY ){
 	      tmp = location.href.match(this.rPrefix);
 	      return tmp && tmp[1]? tmp[1]: "";
 
 	    }else{
-	      return _.cleanPath(( location.pathname + location.search || "" ).replace( this.rRoot, "/" ))
+	      return _.cleanPath(( location.pathname + location.search || "" ).replace( this.rRoot, "/" ));
 	    }
 	  },
 
@@ -1069,13 +1071,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    // 3 or 1 is matched
 	    if( this.mode !== HISTORY ){
-	      this._setHash(this.location, to, options.replace)
+	      this._setHash(this.location, to, options.replace);
 	      if( iframe && this.getPath(iframe.location) !== to ){
 	        if(!options.replace) iframe.document.open().close();
-	        this._setHash(this.iframe.location, to, options.replace)
+	        this._setHash(this.iframe.location, to, options.replace);
 	      }
 	    }else{
-	      history[options.replace? 'replaceState': 'pushState']( {}, options.title || "" , _.cleanPath( this.root + to ) )
+	      history[options.replace? 'replaceState': 'pushState']( {}, options.title || "" , _.cleanPath( this.root + to ) );
 	    }
 
 	    if( !options.silent ) this.emit('change', to);
@@ -1084,7 +1086,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if(this.mode!==HISTORY) return;
 	    // only in html5 mode, the autolink is works
 	    // if(this.mode !== 2) return;
-	    var prefix = this.prefix, self = this;
+	    var self = this;
 	    browser.on( document.body, "click", function(ev){
 
 	      var target = ev.target || ev.srcElement;
@@ -1096,9 +1098,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	      if(!hash) return;
 
 	      ev.preventDefault && ev.preventDefault();
-	      self.nav( hash )
+	      self.nav( hash );
 	      return (ev.returnValue = false);
-	    } )
+	    } );
 	  },
 	  _setHash: function(location, path, replace){
 	    var href = location.href.replace(/(javascript:|#).*$/, '');
@@ -1124,13 +1126,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	    // dont support history popstate but config the html5 mode
 	    if( this.mode !== HISTORY && this.html5){
 
-	      hashInPathName = pathname.replace(this.rRoot, "")
+	      hashInPathName = pathname.replace(this.rRoot, "");
 	      if(hashInPathName) this.location.replace(this.root + this.prefix + hashInPathName);
 
 	    }else if( this.mode === HISTORY /* && pathname === this.root*/){
 
 	      hash = this.location.hash.replace(this.prefix, "");
-	      if(hash) history.replaceState({}, document.title, _.cleanPath(this.root + hash))
+	      if(hash) history.replaceState({}, document.title, _.cleanPath(this.root + hash));
 
 	    }
 	  },
@@ -1147,7 +1149,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    this.iframe.location.hash = '#' + path;
 	  }
 
-	})
+	});
 
 	module.exports = History;
 
