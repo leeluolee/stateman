@@ -59,8 +59,8 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	
 	var StateMan = __webpack_require__(1);
+
 	StateMan.History = __webpack_require__(5);
 	StateMan.util = __webpack_require__(4);
 	StateMan.State = __webpack_require__(3);
@@ -603,7 +603,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  state: function(stateName, config){
 	    if(_.typeOf(stateName) === "object"){
 	      for(var j in stateName){
-	        this.state(j, stateName[j])
+	        this.state(j, stateName[j]);
 	      }
 	      return this;
 	    }
@@ -626,7 +626,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	          manager: current.manager || current,
 	          name: stack.join("."),
 	          currentName: nextName
-	        })
+	        });
 	        current.hasNext = true;
 	        next.configUrl();
 	      }
@@ -656,7 +656,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	          }
 	          break;
 	        case "events":
-	          this.on(prop)
+	          this.on(prop);
 	          break;
 	        default:
 	          this[i] = prop;
@@ -707,7 +707,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    for(var i in param) {
 	      if( matched.indexOf("%"+i+"%") === -1) url += i + "=" + param[i] + "&";
 	    }
-	    return _.cleanPath( url.replace(/(?:\?|&)$/,"") )
+	    return _.cleanPath( url.replace(/(?:\?|&)$/,"") );
 	  },
 	  decode: function( path ){
 	    var matched = this.regexp.exec(path),
@@ -717,7 +717,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	      var param = {};
 	      for(var i =0,len=keys.length;i<len;i++){
-	        param[keys[i]] = matched[i+1]
+	        param[keys[i]] = matched[i+1];
 	      }
 	      return param;
 	    }else{
@@ -727,10 +727,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	  // by default, all lifecycle is permitted
 
 	  async: function(){
-	    throw new Error( 'please use option.async instead')
+	    throw new Error( 'please use option.async instead');
 	  }
 
-	})
+	});
 
 	module.exports = State;
 

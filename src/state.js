@@ -15,7 +15,7 @@ _.extend( _.emitable( State ), {
   state: function(stateName, config){
     if(_.typeOf(stateName) === "object"){
       for(var j in stateName){
-        this.state(j, stateName[j])
+        this.state(j, stateName[j]);
       }
       return this;
     }
@@ -38,7 +38,7 @@ _.extend( _.emitable( State ), {
           manager: current.manager || current,
           name: stack.join("."),
           currentName: nextName
-        })
+        });
         current.hasNext = true;
         next.configUrl();
       }
@@ -68,7 +68,7 @@ _.extend( _.emitable( State ), {
           }
           break;
         case "events":
-          this.on(prop)
+          this.on(prop);
           break;
         default:
           this[i] = prop;
@@ -119,7 +119,7 @@ _.extend( _.emitable( State ), {
     for(var i in param) {
       if( matched.indexOf("%"+i+"%") === -1) url += i + "=" + param[i] + "&";
     }
-    return _.cleanPath( url.replace(/(?:\?|&)$/,"") )
+    return _.cleanPath( url.replace(/(?:\?|&)$/,"") );
   },
   decode: function( path ){
     var matched = this.regexp.exec(path),
@@ -129,7 +129,7 @@ _.extend( _.emitable( State ), {
 
       var param = {};
       for(var i =0,len=keys.length;i<len;i++){
-        param[keys[i]] = matched[i+1]
+        param[keys[i]] = matched[i+1];
       }
       return param;
     }else{
@@ -139,9 +139,9 @@ _.extend( _.emitable( State ), {
   // by default, all lifecycle is permitted
 
   async: function(){
-    throw new Error( 'please use option.async instead')
+    throw new Error( 'please use option.async instead');
   }
 
-})
+});
 
 module.exports = State;
