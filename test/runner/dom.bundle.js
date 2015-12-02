@@ -5056,7 +5056,7 @@
 
 	function StateMan(options){
 
-	  if(this instanceof StateMan === false){ return new StateMan(options)}
+	  if(this instanceof StateMan === false){ return new StateMan(options); }
 	  options = options || {};
 	  // if(options.history) this.history = options.history;
 
@@ -5073,7 +5073,7 @@
 	      cur = cur.parent;
 	    }
 	    document.title = typeof title === "function"? cur.title(): String( title || baseTitle ) ;
-	  })
+	  });
 
 	}
 
@@ -5086,7 +5086,7 @@
 
 	      var active = this.active;
 	      if(typeof stateName === "string" && active){
-	         stateName = stateName.replace("~", active.name)
+	         stateName = stateName.replace("~", active.name);
 	         if(active.parent) stateName = stateName.replace("^", active.parent.name || "");
 	      }
 	      // ^ represent current.parent
@@ -5125,7 +5125,7 @@
 	      }
 
 	      if(option.encode !== false){
-	        var url = state.encode(option.param)
+	        var url = state.encode(option.param);
 	        option.path = url;
 	        this.nav(url, {silent: true, replace: option.replace});
 	      }
@@ -5144,7 +5144,7 @@
 	      options.path = url;
 
 	      this.history.nav( url, _.extend({silent: true}, options));
-	      if(!options.silent) this._afterPathChange( _.cleanPath(url) , options , callback)
+	      if(!options.silent) this._afterPathChange( _.cleanPath(url) , options , callback);
 
 	      return this;
 	    },
@@ -5248,7 +5248,7 @@
 	        option.stop = function(){
 	          done(false);
 	          self.nav( prepath? prepath: "/", {silent:true});
-	        }
+	        };
 	        self.emit("begin", option);
 
 	      }
@@ -5263,16 +5263,16 @@
 
 	          if( notRejected===false ){
 	            // if reject in callForPermission, we will return to old 
-	            prepath && this.nav( prepath, {silent: true})
+	            prepath && this.nav( prepath, {silent: true});
 
-	            done(false, 2)
+	            done(false, 2);
 
 	            return this.emit('abort', option);
 
 	          } 
 
 	          // stop previous pending.
-	          if(this.pending) this.pending.stop() 
+	          if(this.pending) this.pending.stop();
 	          this.pending = option;
 	          this.path = option.path;
 	          this.current = option.current;
@@ -5283,7 +5283,7 @@
 
 	            if( notRejected === false ){
 	              this.current = this.active;
-	              done(false)
+	              done(false);
 	              return this.emit('abort', option);
 	            }
 
@@ -5291,18 +5291,18 @@
 	            this.active = option.current;
 
 	            option.phase = 'completion';
-	            return done()
+	            return done();
 
-	          }, this) )
+	          }, this) );
 
-	        }, this) )
+	        }, this) );
 
 	      }else{
 	        self._checkQueryAndParam(baseState, option);
 	        this.pending = null;
 	        done();
 	      }
-	      
+
 	    },
 	    _popStash: function(option){
 
@@ -5313,7 +5313,7 @@
 	      if(!len) return;
 
 	      for(var i = 0; i < len; i++){
-	        stash[i].call(this, option)
+	        stash[i].call(this, option);
 	      }
 	    },
 
@@ -5331,12 +5331,12 @@
 	        if( notRejected === false ) return callback( notRejected );
 
 	        // only actual transiton need update base state;
-	        if( !callForPermit )  this._checkQueryAndParam(parent, option)
+	        if( !callForPermit )  this._checkQueryAndParam(parent, option);
 
 	        option.backward = false;
-	        this._transit( parent, to, option, callForPermit,  callback)
+	        this._transit( parent, to, option, callForPermit,  callback);
 
-	      }, this) )
+	      }, this) );
 
 	    },
 
@@ -5349,7 +5349,7 @@
 	      var applied;
 
 	      // use canEnter to detect permission
-	      if( callForPermit) method = 'can' + method.replace(/^\w/, function(a){ return a.toUpperCase() });
+	      if( callForPermit) method = 'can' + method.replace(/^\w/, function(a){ return a.toUpperCase(); });
 
 	      var loop = _.bind(function( notRejected ){
 
@@ -5366,7 +5366,7 @@
 	          applied = this._computeNext(applied, to);
 	        }
 
-	        if( (back && applied === to) || !applied )return callback( notRejected )
+	        if( (back && applied === to) || !applied )return callback( notRejected );
 
 	        this._moveOn( applied, method, option, loop );
 
@@ -5385,7 +5385,7 @@
 	        isPending = true;
 
 	        return done;
-	      }
+	      };
 
 	      function done( notRejected ){
 	        if( isDone ) return;
@@ -5394,11 +5394,9 @@
 	        callback( notRejected );
 	      }
 
-	      
-
 	      option.stop = function(){
 	        done( false );
-	      }
+	      };
 
 
 	      this.active = applied;
@@ -5415,14 +5413,14 @@
 	      }
 
 	      // if haven't call option.async yet
-	      if( !isPending ) done( retValue )
+	      if( !isPending ) done( retValue );
 
 	    },
 
 
 	    _wrapPromise: function( promise, next ){
 
-	      return promise.then( next, function(){next(false)}) ;
+	      return promise.then( next, function(){ next(false); }) ;
 
 	    },
 
@@ -5431,8 +5429,8 @@
 	      var fname = from.name;
 	      var tname = to.name;
 
-	      var tsplit = tname.split('.')
-	      var fsplit = fname.split('.')
+	      var tsplit = tname.split('.');
+	      var fsplit = fname.split('.');
 
 	      var tlen = tsplit.length;
 	      var flen = fsplit.length;
@@ -5446,7 +5444,7 @@
 	        fsplit.pop();
 	      }
 
-	      return this.state(fsplit.join('.'))
+	      return this.state(fsplit.join('.'));
 
 	    },
 
@@ -5517,12 +5515,9 @@
 
 	    }
 
-	}, true)
-
-
+	}, true);
 
 	module.exports = StateMan;
-
 
 
 /***/ }

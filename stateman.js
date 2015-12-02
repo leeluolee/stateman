@@ -82,7 +82,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	function StateMan(options){
 
-	  if(this instanceof StateMan === false){ return new StateMan(options)}
+	  if(this instanceof StateMan === false){ return new StateMan(options); }
 	  options = options || {};
 	  // if(options.history) this.history = options.history;
 
@@ -99,7 +99,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      cur = cur.parent;
 	    }
 	    document.title = typeof title === "function"? cur.title(): String( title || baseTitle ) ;
-	  })
+	  });
 
 	}
 
@@ -112,7 +112,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	      var active = this.active;
 	      if(typeof stateName === "string" && active){
-	         stateName = stateName.replace("~", active.name)
+	         stateName = stateName.replace("~", active.name);
 	         if(active.parent) stateName = stateName.replace("^", active.parent.name || "");
 	      }
 	      // ^ represent current.parent
@@ -151,7 +151,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      }
 
 	      if(option.encode !== false){
-	        var url = state.encode(option.param)
+	        var url = state.encode(option.param);
 	        option.path = url;
 	        this.nav(url, {silent: true, replace: option.replace});
 	      }
@@ -170,7 +170,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      options.path = url;
 
 	      this.history.nav( url, _.extend({silent: true}, options));
-	      if(!options.silent) this._afterPathChange( _.cleanPath(url) , options , callback)
+	      if(!options.silent) this._afterPathChange( _.cleanPath(url) , options , callback);
 
 	      return this;
 	    },
@@ -274,7 +274,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        option.stop = function(){
 	          done(false);
 	          self.nav( prepath? prepath: "/", {silent:true});
-	        }
+	        };
 	        self.emit("begin", option);
 
 	      }
@@ -289,16 +289,16 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	          if( notRejected===false ){
 	            // if reject in callForPermission, we will return to old 
-	            prepath && this.nav( prepath, {silent: true})
+	            prepath && this.nav( prepath, {silent: true});
 
-	            done(false, 2)
+	            done(false, 2);
 
 	            return this.emit('abort', option);
 
 	          } 
 
 	          // stop previous pending.
-	          if(this.pending) this.pending.stop() 
+	          if(this.pending) this.pending.stop();
 	          this.pending = option;
 	          this.path = option.path;
 	          this.current = option.current;
@@ -309,7 +309,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	            if( notRejected === false ){
 	              this.current = this.active;
-	              done(false)
+	              done(false);
 	              return this.emit('abort', option);
 	            }
 
@@ -317,18 +317,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	            this.active = option.current;
 
 	            option.phase = 'completion';
-	            return done()
+	            return done();
 
-	          }, this) )
+	          }, this) );
 
-	        }, this) )
+	        }, this) );
 
 	      }else{
 	        self._checkQueryAndParam(baseState, option);
 	        this.pending = null;
 	        done();
 	      }
-	      
+
 	    },
 	    _popStash: function(option){
 
@@ -339,7 +339,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      if(!len) return;
 
 	      for(var i = 0; i < len; i++){
-	        stash[i].call(this, option)
+	        stash[i].call(this, option);
 	      }
 	    },
 
@@ -357,12 +357,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if( notRejected === false ) return callback( notRejected );
 
 	        // only actual transiton need update base state;
-	        if( !callForPermit )  this._checkQueryAndParam(parent, option)
+	        if( !callForPermit )  this._checkQueryAndParam(parent, option);
 
 	        option.backward = false;
-	        this._transit( parent, to, option, callForPermit,  callback)
+	        this._transit( parent, to, option, callForPermit,  callback);
 
-	      }, this) )
+	      }, this) );
 
 	    },
 
@@ -375,7 +375,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      var applied;
 
 	      // use canEnter to detect permission
-	      if( callForPermit) method = 'can' + method.replace(/^\w/, function(a){ return a.toUpperCase() });
+	      if( callForPermit) method = 'can' + method.replace(/^\w/, function(a){ return a.toUpperCase(); });
 
 	      var loop = _.bind(function( notRejected ){
 
@@ -392,7 +392,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	          applied = this._computeNext(applied, to);
 	        }
 
-	        if( (back && applied === to) || !applied )return callback( notRejected )
+	        if( (back && applied === to) || !applied )return callback( notRejected );
 
 	        this._moveOn( applied, method, option, loop );
 
@@ -411,7 +411,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        isPending = true;
 
 	        return done;
-	      }
+	      };
 
 	      function done( notRejected ){
 	        if( isDone ) return;
@@ -420,11 +420,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        callback( notRejected );
 	      }
 
-	      
-
 	      option.stop = function(){
 	        done( false );
-	      }
+	      };
 
 
 	      this.active = applied;
@@ -441,14 +439,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	      }
 
 	      // if haven't call option.async yet
-	      if( !isPending ) done( retValue )
+	      if( !isPending ) done( retValue );
 
 	    },
 
 
 	    _wrapPromise: function( promise, next ){
 
-	      return promise.then( next, function(){next(false)}) ;
+	      return promise.then( next, function(){ next(false); }) ;
 
 	    },
 
@@ -457,8 +455,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	      var fname = from.name;
 	      var tname = to.name;
 
-	      var tsplit = tname.split('.')
-	      var fsplit = fname.split('.')
+	      var tsplit = tname.split('.');
+	      var fsplit = fname.split('.');
 
 	      var tlen = tsplit.length;
 	      var flen = fsplit.length;
@@ -472,7 +470,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        fsplit.pop();
 	      }
 
-	      return this.state(fsplit.join('.'))
+	      return this.state(fsplit.join('.'));
 
 	    },
 
@@ -543,12 +541,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    }
 
-	}, true)
-
-
+	}, true);
 
 	module.exports = StateMan;
-
 
 
 /***/ },
