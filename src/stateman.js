@@ -29,7 +29,6 @@ function StateMan(options){
 
 }
 
-
 _.extend( _.emitable( StateMan ), {
     // keep blank
     name: '',
