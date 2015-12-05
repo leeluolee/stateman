@@ -59,11 +59,11 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	
 	var StateMan = __webpack_require__(1);
-	StateMan.Histery = __webpack_require__(4);
-	StateMan.util = __webpack_require__(3);
-	StateMan.State = __webpack_require__(2);
+
+	StateMan.History = __webpack_require__(5);
+	StateMan.util = __webpack_require__(4);
+	StateMan.State = __webpack_require__(3);
 
 	module.exports = StateMan;
 
@@ -72,17 +72,17 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 1 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var State = __webpack_require__(2),
-	  Histery = __webpack_require__(4),
-	  brow = __webpack_require__(5),
-	  _ = __webpack_require__(3),
+	__webpack_require__(2);
+
+	var State = __webpack_require__(3),
+	  History = __webpack_require__(5),
+	  _ = __webpack_require__(4),
 	  baseTitle = document.title,
 	  stateFn = State.prototype.state;
 
-
 	function StateMan(options){
 
-	  if(this instanceof StateMan === false){ return new StateMan(options)}
+	  if(this instanceof StateMan === false){ return new StateMan(options); }
 	  options = options || {};
 	  // if(options.history) this.history = options.history;
 
@@ -99,20 +99,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	      cur = cur.parent;
 	    }
 	    document.title = typeof title === "function"? cur.title(): String( title || baseTitle ) ;
-	  })
+	  });
 
 	}
-
 
 	_.extend( _.emitable( StateMan ), {
 	    // keep blank
 	    name: '',
 
-	    state: function(stateName, config){
+	    state: function(stateName/*, config*/){
 
 	      var active = this.active;
 	      if(typeof stateName === "string" && active){
-	         stateName = stateName.replace("~", active.name)
+	         stateName = stateName.replace("~", active.name);
 	         if(active.parent) stateName = stateName.replace("^", active.parent.name || "");
 	      }
 	      // ^ represent current.parent
@@ -123,7 +122,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 	    start: function(options){
 
-	      if( !this.history ) this.history = new Histery(options); 
+	      if( !this.history ) this.history = new History(options); 
 	      if( !this.history.isStart ){
 	        this.history.on("change", _.bind(this._afterPathChange, this));
 	        this.history.start();
@@ -137,9 +136,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	    // @TODO direct go the point state
 	    go: function(state, option, callback){
 	      option = option || {};
-	      if(typeof state === "string") state = this.state(state);
+	      var statename;
+	      if(typeof state === "string") {
+	         statename = state;
+	         state = this.state(state);
+	      }
 
-	      if(!state) return;
+	      if(!state) return this._notfound({state:statename});
 
 	      if(typeof option === "function"){
 	        callback = option;
@@ -147,7 +150,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      }
 
 	      if(option.encode !== false){
-	        var url = state.encode(option.param)
+	        var url = state.encode(option.param);
 	        option.path = url;
 	        this.nav(url, {silent: true, replace: option.replace});
 	      }
@@ -166,7 +169,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      options.path = url;
 
 	      this.history.nav( url, _.extend({silent: true}, options));
-	      if(!options.silent) this._afterPathChange( _.cleanPath(url) , options , callback)
+	      if(!options.silent) this._afterPathChange( _.cleanPath(url) , options , callback);
 
 	      return this;
 	    },
@@ -188,7 +191,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    // check the active statename whether to match the passed condition (stateName and param)
 	    is: function(stateName, param, isStrict){
 	      if(!stateName) return false;
-	      var stateName = (stateName.name || stateName);
+	      stateName = (stateName.name || stateName);
 	      var current = this.current, currentName = current.name;
 	      var matchPath = isStrict? currentName === stateName : (currentName + ".").indexOf(stateName + ".")===0;
 	      return matchPath && (!param || _.eql(param, this.param)); 
@@ -270,7 +273,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        option.stop = function(){
 	          done(false);
 	          self.nav( prepath? prepath: "/", {silent:true});
-	        }
+	        };
 	        self.emit("begin", option);
 
 	      }
@@ -285,16 +288,16 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	          if( notRejected===false ){
 	            // if reject in callForPermission, we will return to old 
-	            prepath && this.nav( prepath, {silent: true})
+	            prepath && this.nav( prepath, {silent: true});
 
-	            done(false, 2)
+	            done(false, 2);
 
 	            return this.emit('abort', option);
 
 	          } 
 
 	          // stop previous pending.
-	          if(this.pending) this.pending.stop() 
+	          if(this.pending) this.pending.stop();
 	          this.pending = option;
 	          this.path = option.path;
 	          this.current = option.current;
@@ -305,7 +308,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	            if( notRejected === false ){
 	              this.current = this.active;
-	              done(false)
+	              done(false);
 	              return this.emit('abort', option);
 	            }
 
@@ -313,18 +316,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	            this.active = option.current;
 
 	            option.phase = 'completion';
-	            return done()
+	            return done();
 
-	          }, this) )
+	          }, this) );
 
-	        }, this) )
+	        }, this) );
 
 	      }else{
 	        self._checkQueryAndParam(baseState, option);
 	        this.pending = null;
 	        done();
 	      }
-	      
+
 	    },
 	    _popStash: function(option){
 
@@ -335,7 +338,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      if(!len) return;
 
 	      for(var i = 0; i < len; i++){
-	        stash[i].call(this, option)
+	        stash[i].call(this, option);
 	      }
 	    },
 
@@ -347,18 +350,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	      var parent = this._findBase(from , to);
 
 
-	      option.basckward = true;
+	      option.backward = true;
 	      this._transit( from, parent, option, callForPermit , _.bind( function( notRejected ){
 
 	        if( notRejected === false ) return callback( notRejected );
 
 	        // only actual transiton need update base state;
-	        if( !callForPermit )  this._checkQueryAndParam(parent, option)
+	        if( !callForPermit )  this._checkQueryAndParam(parent, option);
 
-	        option.basckward = false;
-	        this._transit( parent, to, option, callForPermit,  callback)
+	        option.backward = false;
+	        this._transit( parent, to, option, callForPermit,  callback);
 
-	      }, this) )
+	      }, this) );
 
 	    },
 
@@ -371,7 +374,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      var applied;
 
 	      // use canEnter to detect permission
-	      if( callForPermit) method = 'can' + method.replace(/^\w/, function(a){ return a.toUpperCase() });
+	      if( callForPermit) method = 'can' + method.replace(/^\w/, function(a){ return a.toUpperCase(); });
 
 	      var loop = _.bind(function( notRejected ){
 
@@ -388,7 +391,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	          applied = this._computeNext(applied, to);
 	        }
 
-	        if( (back && applied === to) || !applied )return callback( notRejected )
+	        if( (back && applied === to) || !applied )return callback( notRejected );
 
 	        this._moveOn( applied, method, option, loop );
 
@@ -407,7 +410,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        isPending = true;
 
 	        return done;
-	      }
+	      };
 
 	      function done( notRejected ){
 	        if( isDone ) return;
@@ -416,11 +419,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        callback( notRejected );
 	      }
 
-	      
-
 	      option.stop = function(){
 	        done( false );
-	      }
+	      };
 
 
 	      this.active = applied;
@@ -437,14 +438,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	      }
 
 	      // if haven't call option.async yet
-	      if( !isPending ) done( retValue )
+	      if( !isPending ) done( retValue );
 
 	    },
 
 
 	    _wrapPromise: function( promise, next ){
 
-	      return promise.then( next, function(){next(false)}) ;
+	      return promise.then( next, function(){ next(false); }) ;
 
 	    },
 
@@ -453,8 +454,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	      var fname = from.name;
 	      var tname = to.name;
 
-	      var tsplit = tname.split('.')
-	      var fsplit = fname.split('.')
+	      var tsplit = tname.split('.');
+	      var fsplit = fname.split('.');
 
 	      var tlen = tsplit.length;
 	      var flen = fsplit.length;
@@ -468,7 +469,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        fsplit.pop();
 	      }
 
-	      return this.state(fsplit.join('.'))
+	      return this.state(fsplit.join('.'));
 
 	    },
 
@@ -477,7 +478,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	      var queries = querystr && querystr.split("&"), query= {};
 	      if(queries){
 	        var len = queries.length;
-	        var query = {};
 	        for(var i =0; i< len; i++){
 	          var tmp = queries[i].split("=");
 	          query[tmp[0]] = tmp[1];
@@ -491,10 +491,16 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	      // leaf-state has the high priority upon branch-state
 	      if(state.hasNext){
-	        for(var i in states) if(states.hasOwnProperty(i)){
-	          found = this._findState( states[i], path );
+
+	        var stateList = _.values( states ).sort( this._sortState );
+	        var len = stateList.length;
+
+	        for(var i = 0; i < len; i++){
+
+	          found = this._findState( stateList[i], path );
 	          if( found ) return found;
 	        }
+
 	      }
 	      // in strict mode only leaf can be touched
 	      // if all children is don. will try it self
@@ -505,6 +511,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	      }else{
 	        return false;
 	      }
+	    },
+	    _sortState: function( a, b ){
+	      return ( b.priority || 0 ) - ( a.priority || 0 );
 	    },
 	    // find the same branch;
 	    _findBase: function(now, before){
@@ -531,21 +540,47 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    }
 
-	}, true)
-
-
+	}, true);
 
 	module.exports = StateMan;
 
 
-
 /***/ },
 /* 2 */
+/***/ function(module, exports) {
+
+	var win = window,
+	    doc = document;
+
+	module.exports = {
+	  hash: "onhashchange" in win && (!doc.documentMode || doc.documentMode > 7),
+	  history: win.history && "onpopstate" in win,
+	  location: win.location,
+	  isSameDomain: function(url){
+	    var matched = url.match(/^.*?:\/\/([^/]*)/);
+	    if(matched){
+	      return matched[0] == this.location.origin;
+	    }
+	    return true;
+	  },
+	  getHref: function(node){
+	    return "href" in node ? node.getAttribute("href", 2) : node.getAttribute("href");
+	  },
+	  on: "addEventListener" in win ?  // IE10 attachEvent is not working when binding the onpopstate, so we need check addEventLister first
+	      function(node,type,cb){return node.addEventListener( type, cb )}
+	    : function(node,type,cb){return node.attachEvent( "on" + type, cb )},
+
+	  off: "removeEventListener" in win ? 
+	      function(node,type,cb){return node.removeEventListener( type, cb )}
+	    : function(node,type,cb){return node.detachEvent( "on" + type, cb )}
+	}
+
+
+/***/ },
+/* 3 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var _ = __webpack_require__(3);
-
-
+	var _ = __webpack_require__(4);
 
 	function State(option){
 	  this._states = {};
@@ -554,26 +589,24 @@ return /******/ (function(modules) { // webpackBootstrap
 	  if(option) this.config(option);
 	}
 
-
 	//regexp cache
 	State.rCache = {};
 
 	_.extend( _.emitable( State ), {
-	  
+
 	  state: function(stateName, config){
 	    if(_.typeOf(stateName) === "object"){
-	      for(var i in stateName){
-	        this.state(i, stateName[i])
+	      for(var j in stateName){
+	        this.state(j, stateName[j]);
 	      }
 	      return this;
 	    }
-	    var current, next, nextName, states = this._states, i=0;
+	    var current = this, next, nextName, states = this._states, i=0;
 
 	    if( typeof stateName === "string" ) stateName = stateName.split(".");
 
-	    var slen = stateName.length, current = this;
+	    var slen = stateName.length;
 	    var stack = [];
-
 
 	    do{
 	      nextName = stateName[i];
@@ -587,7 +620,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	          manager: current.manager || current,
 	          name: stack.join("."),
 	          currentName: nextName
-	        })
+	        });
 	        current.hasNext = true;
 	        next.configUrl();
 	      }
@@ -610,14 +643,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	    for(var i in configure){
 	      var prop = configure[i];
 	      switch(i){
-	        case "url": 
+	        case "url":
 	          if(typeof prop === "string"){
 	            this.url = prop;
 	            this.configUrl();
 	          }
 	          break;
-	        case "events": 
-	          this.on(prop)
+	        case "events":
+	          this.on(prop);
 	          break;
 	        default:
 	          this[i] = prop;
@@ -630,11 +663,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return typeof configure === "function"? {enter: configure} : configure;
 	  },
 
-	  //from url 
-
+	  //from url
 	  configUrl: function(){
-	    var url = "" , base = this, currentUrl;
-	    var _watchedParam = [];
+	    var url = "" , base = this;
 
 	    while( base ){
 
@@ -657,7 +688,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  encode: function(param){
 	    var state = this;
 	    param = param || {};
-	    
+
 	    var matched = "%";
 
 	    var url = state.matches.replace(/\(([\w-]+)\)/g, function(all, capture){
@@ -670,7 +701,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    for(var i in param) {
 	      if( matched.indexOf("%"+i+"%") === -1) url += i + "=" + param[i] + "&";
 	    }
-	    return _.cleanPath( url.replace(/(?:\?|&)$/,"") )
+	    return _.cleanPath( url.replace(/(?:\?|&)$/,"") );
 	  },
 	  decode: function( path ){
 	    var matched = this.regexp.exec(path),
@@ -680,7 +711,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	      var param = {};
 	      for(var i =0,len=keys.length;i<len;i++){
-	        param[keys[i]] = matched[i+1] 
+	        param[keys[i]] = matched[i+1];
 	      }
 	      return param;
 	    }else{
@@ -690,69 +721,73 @@ return /******/ (function(modules) { // webpackBootstrap
 	  // by default, all lifecycle is permitted
 
 	  async: function(){
-	    throw new Error( 'please use option.async instead')
+	    throw new Error( 'please use option.async instead');
 	  }
 
-	})
-
+	});
 
 	module.exports = State;
 
+
 /***/ },
-/* 3 */
+/* 4 */
 /***/ function(module, exports) {
 
 	var _ = module.exports = {};
 	var slice = [].slice, o2str = ({}).toString;
 
-
 	// merge o2's properties to Object o1. 
 	_.extend = function(o1, o2, override){
 	  for(var i in o2) if(override || o1[i] === undefined){
-	    o1[i] = o2[i]
+	    o1[i] = o2[i];
 	  }
 	  return o1;
-	}
+	};
 
-
+	_.values = function( o){
+	  var keys = [];
+	  for(var i in o) if( o.hasOwnProperty(i) ){
+	    keys.push( o[i] );
+	  }
+	  return keys;
+	};
 
 	_.slice = function(arr, index){
 	  return slice.call(arr, index);
-	}
+	};
 
 	_.typeOf = function typeOf (o) {
 	  return o == null ? String(o) : o2str.call(o).slice(8, -1).toLowerCase();
-	}
+	};
 
 	//strict eql
 	_.eql = function(o1, o2){
 	  var t1 = _.typeOf(o1), t2 = _.typeOf(o2);
 	  if( t1 !== t2) return false;
 	  if(t1 === 'object'){
-	    var equal = true;
-	    // only check the first's propertie
+	    // only check the first's properties
 	    for(var i in o1){
-	      if( o1[i] !== o2[i] ) equal = false;
+	      // Immediately return if a mismatch is found.
+	      if( o1[i] !== o2[i] ) return false;
 	    }
-	    return equal;
+	    return true;
 	  }
 	  return o1 === o2;
-	}
-
+	};
 
 	// small emitter 
 	_.emitable = (function(){
 	  function norm(ev){
 	    var eventAndNamespace = (ev||'').split(':');
-	    return {event: eventAndNamespace[0], namespace: eventAndNamespace[1]}
+	    return {event: eventAndNamespace[0], namespace: eventAndNamespace[1]};
 	  }
 	  var API = {
 	    once: function(event, fn){
 	      var callback = function(){
-	        fn.apply(this, arguments)
-	        this.off(event, callback)
-	      }
-	      return this.on(event, callback)
+	        fn.apply(this, arguments);
+	        this.off(event, callback);
+	      };
+	      return this.on(event, callback);
 	    },
 	    on: function(event, fn) {
 	      if(typeof event === 'object'){
@@ -775,9 +810,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	      var ne = norm(event); event = ne.event;
 	      if(!event || !this._handles) this._handles = {};
 
-	      var handles = this._handles , calls;
+	      var handles = this._handles;
+	      var calls = handles[event];
 
-	      if (calls = handles[event]) {
+	      if (calls) {
 	        if (!fn && !ne.namespace) {
 	          handles[event] = [];
 	        }else{
@@ -789,6 +825,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	          }
 	        }
 	      }
+
 	      return this;
 	    },
 	    emit: function(event){
@@ -800,31 +837,29 @@ return /******/ (function(modules) { // webpackBootstrap
 	      if (!handles || !(calls = handles[event])) return this;
 	      for (var i = 0, len = calls.length; i < len; i++) {
 	        var fn = calls[i];
-	        if( !ne.namespace || fn._ns === ne.namespace ) fn.apply(this, args)
+	        if( !ne.namespace || fn._ns === ne.namespace ) fn.apply(this, args);
 	      }
 	      return this;
 	    }
-	  }
+	  };
 	  return function(obj){
 	      obj = typeof obj == "function" ? obj.prototype : obj;
-	      return _.extend(obj, API)
-	  }
+	      return _.extend(obj, API);
+	  };
 	})();
-
-
 
 	_.bind = function(fn, context){
 	  return function(){
 	    return fn.apply(context, arguments);
-	  }
-	}
+	  };
+	};
 
 	var rDbSlash = /\/+/g, // double slash
 	  rEndSlash = /\/$/;    // end slash
 
 	_.cleanPath = function (path){
 	  return ("/" + path).replace( rDbSlash,"/" ).replace( rEndSlash, "" ) || "/";
-	}
+	};
 
 	// normalize the path
 	function normalizePath(path) {
@@ -846,7 +881,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        preIndex = startAt + all.length;
 	        if( key ){
 	          matches += "(" + key + ")";
-	          keys.push(key)
+	          keys.push(key);
 	          return "("+( keyformat || "[\\w-]+")+")";
 	        }
 	        matches += "(" + index + ")";
@@ -859,35 +894,32 @@ return /******/ (function(modules) { // webpackBootstrap
 	        } 
 	        if(mwild) return "(.*)";
 	        if(swild) return "([^\\/]*)";
-	    })
+	    });
 
-	  if(preIndex !== path.length) matches += path.slice(preIndex)
+	  if(preIndex !== path.length) matches += path.slice(preIndex);
 
 	  return {
 	    regexp: new RegExp("^" + regStr +"/?$"),
 	    keys: keys,
 	    matches: matches || path
-	  }
+	  };
 	}
 
 	_.log = function(msg, type){
-	  typeof console !== "undefined" && console[type || "log"](msg)
-	}
+	  typeof console !== "undefined" && console[type || "log"](msg); //eslint-disable-line no-console
+	};
 
 	_.isPromise = function( obj ){
 
 	  return !!obj && (typeof obj === 'object' || typeof obj === 'function') && typeof obj.then === 'function';
 
-	}
-
-
+	};
 
 	_.normalize = normalizePath;
 
 
-
 /***/ },
-/* 4 */
+/* 5 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -895,8 +927,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	// Thx Backbone.js 1.1.2  and https://github.com/cowboy/jquery-hashchange/blob/master/jquery.ba-hashchange.js
 	// for iframe patches in old ie.
 
-	var browser = __webpack_require__(5);
-	var _ = __webpack_require__(3);
+	var browser = __webpack_require__(2);
+	var _ = __webpack_require__(4);
 
 
 	// the mode const
@@ -904,19 +936,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	  HASH = 1,
 	  HISTORY = 2;
 
-
-
 	// extract History for test
 	// resolve the conficlt with the Native History
-	function Histery(options){
+	function History(options){
 	  options = options || {};
 
-	  // Trick from backbone.history for anchor-faked testcase 
+	  // Trick from backbone.history for anchor-faked testcase
 	  this.location = options.location || browser.location;
 
 	  // mode config, you can pass absolute mode (just for test);
 	  this.html5 = options.html5;
-	  this.mode = options.html5 && browser.history ? HISTORY: HASH; 
+	  this.mode = options.html5 && browser.history ? HISTORY: HASH;
 	  if( !browser.hash ) this.mode = QUIRK;
 	  if(options.mode) this.mode = options.mode;
 
@@ -936,8 +966,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	  this.curPath = undefined;
 	}
 
-	_.extend( _.emitable(Histery), {
-	  // check the 
+	_.extend( _.emitable(History), {
+	  // check the
 	  start: function(){
 	    var path = this.getPath();
 	    this._checkPath = _.bind(this.checkPath, this);
@@ -946,12 +976,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    this.isStart = true;
 
 	    if(this.mode === QUIRK){
-	      this._fixHashProbelm(path); 
+	      this._fixHashProbelm(path);
 	    }
 
 	    switch ( this.mode ){
-	      case HASH: 
-	        browser.on(window, "hashchange", this._checkPath); 
+	      case HASH:
+	        browser.on(window, "hashchange", this._checkPath);
 	        break;
 	      case HISTORY:
 	        browser.on(window, "popstate", this._checkPath);
@@ -966,17 +996,19 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    this.emit("change", path);
 	  },
+
 	  // the history teardown
 	  stop: function(){
 
-	    browser.off(window, 'hashchange', this._checkPath)  
-	    browser.off(window, 'popstate', this._checkPath)  
+	    browser.off(window, 'hashchange', this._checkPath);
+	    browser.off(window, 'popstate', this._checkPath);
 	    clearTimeout(this.tid);
 	    this.isStart = false;
 	    this._checkPath = null;
 	  },
+
 	  // get the path modify
-	  checkPath: function(ev){
+	  checkPath: function(/*ev*/){
 
 	    var path = this.getPath(), curPath = this.curPath;
 
@@ -991,15 +1023,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	      this.emit('change', path);
 	    }
 	  },
+
 	  // get the current path
 	  getPath: function(location){
-	    var location = location || this.location, tmp;
+	    location = location || this.location;
+	    var tmp;
+
 	    if( this.mode !== HISTORY ){
 	      tmp = location.href.match(this.rPrefix);
 	      return tmp && tmp[1]? tmp[1]: "";
 
 	    }else{
-	      return _.cleanPath(( location.pathname + location.search || "" ).replace( this.rRoot, "/" ))
+	      return _.cleanPath(( location.pathname + location.search || "" ).replace( this.rRoot, "/" ));
 	    }
 	  },
 
@@ -1020,13 +1055,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    // 3 or 1 is matched
 	    if( this.mode !== HISTORY ){
-	      this._setHash(this.location, to, options.replace)
+	      this._setHash(this.location, to, options.replace);
 	      if( iframe && this.getPath(iframe.location) !== to ){
 	        if(!options.replace) iframe.document.open().close();
-	        this._setHash(this.iframe.location, to, options.replace)
+	        this._setHash(this.iframe.location, to, options.replace);
 	      }
 	    }else{
-	      history[options.replace? 'replaceState': 'pushState']( {}, options.title || "" , _.cleanPath( this.root + to ) )
+	      history[options.replace? 'replaceState': 'pushState']( {}, options.title || "" , _.cleanPath( this.root + to ) );
 	    }
 
 	    if( !options.silent ) this.emit('change', to);
@@ -1035,20 +1070,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if(this.mode!==HISTORY) return;
 	    // only in html5 mode, the autolink is works
 	    // if(this.mode !== 2) return;
-	    var prefix = this.prefix, self = this;
+	    var self = this;
 	    browser.on( document.body, "click", function(ev){
 
 	      var target = ev.target || ev.srcElement;
 	      if( target.tagName.toLowerCase() !== "a" ) return;
-	      var tmp = (browser.getHref(target)||"").match(self.rPrefix);
+	      var tmp = browser.isSameDomain(target.href)&&(browser.getHref(target)||"").match(self.rPrefix);
+
 	      var hash = tmp && tmp[1]? tmp[1]: "";
 
 	      if(!hash) return;
-	      
+
 	      ev.preventDefault && ev.preventDefault();
-	      self.nav( hash )
+	      self.nav( hash );
 	      return (ev.returnValue = false);
-	    } )
+	    } );
 	  },
 	  _setHash: function(location, path, replace){
 	    var href = location.href.replace(/(javascript:|#).*$/, '');
@@ -1059,7 +1095,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  },
 	  // for browser that not support onhashchange
 	  _checkLoop: function(){
-	    var self = this; 
+	    var self = this;
 	    this.tid = setTimeout( function(){
 	      self._checkPath();
 	      self._checkLoop();
@@ -1067,20 +1103,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	  },
 	  // if we use real url in hash env( browser no history popstate support)
 	  // or we use hash in html5supoort mode (when paste url in other url)
-	  // then , histery should repara it
+	  // then , history should repara it
 	  _fixInitState: function(){
 	    var pathname = _.cleanPath(this.location.pathname), hash, hashInPathName;
 
 	    // dont support history popstate but config the html5 mode
 	    if( this.mode !== HISTORY && this.html5){
 
-	      hashInPathName = pathname.replace(this.rRoot, "")
+	      hashInPathName = pathname.replace(this.rRoot, "");
 	      if(hashInPathName) this.location.replace(this.root + this.prefix + hashInPathName);
 
 	    }else if( this.mode === HISTORY /* && pathname === this.root*/){
 
 	      hash = this.location.hash.replace(this.prefix, "");
-	      if(hash) history.replaceState({}, document.title, _.cleanPath(this.root + hash))
+	      if(hash) history.replaceState({}, document.title, _.cleanPath(this.root + hash));
 
 	    }
 	  },
@@ -1096,39 +1132,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    this.iframe.document.open().close();
 	    this.iframe.location.hash = '#' + path;
 	  }
-	  
-	})
 
+	});
 
-
-
-
-	module.exports = Histery;
-
-/***/ },
-/* 5 */
-/***/ function(module, exports) {
-
-	
-	var win = window, 
-	  doc = document;
-
-	var b = module.exports = {
-	  hash: "onhashchange" in win && (!doc.documentMode || doc.documentMode > 7),
-	  history: win.history && "onpopstate" in win,
-	  location: win.location,
-	  getHref: function(node){
-	    return "href" in node ? node.getAttribute("href", 2) : node.getAttribute("href");
-	  },
-	  on: "addEventListener" in win ?  // IE10 attachEvent is not working when binding the onpopstate, so we need check addEventLister first
-	      function(node,type,cb){return node.addEventListener( type, cb )}
-	    : function(node,type,cb){return node.attachEvent( "on" + type, cb )},
-	    
-	  off: "removeEventListener" in win ? 
-	      function(node,type,cb){return node.removeEventListener( type, cb )}
-	    : function(node,type,cb){return node.detachEvent( "on" + type, cb )}
-	}
-
+	module.exports = History;
 
 
 /***/ }
