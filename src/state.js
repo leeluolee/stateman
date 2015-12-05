@@ -1,7 +1,5 @@
 var _ = require("./util.js");
 
-
-
 function State(option){
   this._states = {};
   this._pending = false;
@@ -9,26 +7,24 @@ function State(option){
   if(option) this.config(option);
 }
 
-
 //regexp cache
 State.rCache = {};
 
 _.extend( _.emitable( State ), {
-  
+
   state: function(stateName, config){
     if(_.typeOf(stateName) === "object"){
-      for(var i in stateName){
-        this.state(i, stateName[i])
+      for(var j in stateName){
+        this.state(j, stateName[j]);
       }
       return this;
     }
-    var current, next, nextName, states = this._states, i=0;
+    var current = this, next, nextName, states = this._states, i=0;
 
     if( typeof stateName === "string" ) stateName = stateName.split(".");
 
-    var slen = stateName.length, current = this;
+    var slen = stateName.length;
     var stack = [];
-
 
     do{
       nextName = stateName[i];
@@ -42,7 +38,7 @@ _.extend( _.emitable( State ), {
           manager: current.manager || current,
           name: stack.join("."),
           currentName: nextName
-        })
+        });
         current.hasNext = true;
         next.configUrl();
       }
@@ -65,14 +61,14 @@ _.extend( _.emitable( State ), {
     for(var i in configure){
       var prop = configure[i];
       switch(i){
-        case "url": 
+        case "url":
           if(typeof prop === "string"){
             this.url = prop;
             this.configUrl();
           }
           break;
-        case "events": 
-          this.on(prop)
+        case "events":
+          this.on(prop);
           break;
         default:
           this[i] = prop;
@@ -85,11 +81,9 @@ _.extend( _.emitable( State ), {
     return typeof configure === "function"? {enter: configure} : configure;
   },
 
-  //from url 
-
+  //from url
   configUrl: function(){
-    var url = "" , base = this, currentUrl;
-    var _watchedParam = [];
+    var url = "" , base = this;
 
     while( base ){
 
@@ -112,7 +106,7 @@ _.extend( _.emitable( State ), {
   encode: function(param){
     var state = this;
     param = param || {};
-    
+
     var matched = "%";
 
     var url = state.matches.replace(/\(([\w-]+)\)/g, function(all, capture){
@@ -125,7 +119,7 @@ _.extend( _.emitable( State ), {
     for(var i in param) {
       if( matched.indexOf("%"+i+"%") === -1) url += i + "=" + param[i] + "&";
     }
-    return _.cleanPath( url.replace(/(?:\?|&)$/,"") )
+    return _.cleanPath( url.replace(/(?:\?|&)$/,"") );
   },
   decode: function( path ){
     var matched = this.regexp.exec(path),
@@ -135,7 +129,7 @@ _.extend( _.emitable( State ), {
 
       var param = {};
       for(var i =0,len=keys.length;i<len;i++){
-        param[keys[i]] = matched[i+1] 
+        param[keys[i]] = matched[i+1];
       }
       return param;
     }else{
@@ -145,10 +139,9 @@ _.extend( _.emitable( State ), {
   // by default, all lifecycle is permitted
 
   async: function(){
-    throw new Error( 'please use option.async instead')
+    throw new Error( 'please use option.async instead');
   }
 
-})
-
+});
 
 module.exports = State;

@@ -1,0 +1,11 @@
+{
+    "rules": {
+        "quotes": 0,
+        "semi": 1
+    },
+    "env": {
+        "node": true,
+        "browser": true
+    },
+    "extends": "eslint:recommended"
+}
