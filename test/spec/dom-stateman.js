@@ -1,4 +1,5 @@
 
+'use strict';
 // THX for Backbone for some testcase from https://github.com/jashkenas/backbone/blob/master/test/router.js
 // to help stateman becoming robust soon.
 
@@ -76,7 +77,7 @@ describe("Util", function(){
   })
   it("util.emitable:namespace", function(){
     var emitter = _.emitable({}); 
-    obj = {enter_app: 0, enter_blog: 0}
+    var obj = {enter_app: 0, enter_blog: 0}
 
     emitter.on('enter:app', function(){
       obj.enter_app++

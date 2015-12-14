@@ -33,9 +33,11 @@ _.extend( _.emitable( StateMan ), {
     // keep blank
     name: '',
 
-    state: function(stateName/*, config*/){
+    state: function(stateName){
 
       var active = this.active;
+      var args = _.slice(arguments, 1);
+
       if(typeof stateName === "string" && active){
          stateName = stateName.replace("~", active.name);
          if(active.parent) stateName = stateName.replace("^", active.parent.name || "");
@@ -43,7 +45,8 @@ _.extend( _.emitable( StateMan ), {
       // ^ represent current.parent
       // ~ represent  current
       // only 
-      return stateFn.apply(this, arguments);
+      args.unshift(stateName);
+      return stateFn.apply(this, args);
 
     },
     start: function(options){
