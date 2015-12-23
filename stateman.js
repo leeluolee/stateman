@@ -324,6 +324,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }, this) )
 
 	      }else{
+	        this.param = option.param;
+	        this.path = option.path;
 	        self._checkQueryAndParam(baseState, option);
 	        this.pending = null;
 	        done();

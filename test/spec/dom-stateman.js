@@ -227,6 +227,15 @@ describe("stateman:basic", function(){
     expect(obj.book_detail_message_update).to.equal("4")
   })
 
+  it('update should  also update the stateman.param ', function(){
+
+    stateman.nav("/book/10/message");
+    stateman.nav("/book/4/message");
+    expect(obj.book_detail_update).to.equal("4")
+    expect(stateman.param.bid).to.equal("4");
+
+  })
+
 
   it("we can directly define the nested state", function(){
       stateman.state('directly.skip.parent.state', function(){
@@ -915,5 +924,6 @@ describe("Config", function(){
 
     expect(doc.title).to.equal("APP")
   })
+
 })
 })

@@ -447,12 +447,12 @@
 	  var t1 = _.typeOf(o1), t2 = _.typeOf(o2);
 	  if( t1 !== t2) return false;
 	  if(t1 === 'object'){
-	    var equal = true;
-	    // only check the first's propertie
+	    // only check the first's properties
 	    for(var i in o1){
-	      if( o1[i] !== o2[i] ) equal = false;
+	      // Immediately return if a mismatch is found.
+	      if( o1[i] !== o2[i] ) return false;
 	    }
-	    return equal;
+	    return true;
 	  }
 	  return o1 === o2;
 	}
@@ -3867,6 +3867,13 @@
 	  hash: "onhashchange" in win && (!doc.documentMode || doc.documentMode > 7),
 	  history: win.history && "onpopstate" in win,
 	  location: win.location,
+	  isSameDomain: function(url){
+		  var matched = url.match(/^.*?:\/\/([^/]*)/);
+		  if(matched){
+			  return matched[0] == this.location.origin;
+		  }
+		  return true;
+	  },
 	  getHref: function(node){
 	    return "href" in node ? node.getAttribute("href", 2) : node.getAttribute("href");
 	  },
@@ -4035,7 +4042,8 @@
 
 	      var target = ev.target || ev.srcElement;
 	      if( target.tagName.toLowerCase() !== "a" ) return;
-	      var tmp = (browser.getHref(target)||"").match(self.rPrefix);
+	      var tmp = browser.isSameDomain(target.href)&&(browser.getHref(target)||"").match(self.rPrefix);
+		  
 	      var hash = tmp && tmp[1]? tmp[1]: "";
 
 	      if(!hash) return;
@@ -4099,6 +4107,7 @@
 
 
 	module.exports = Histery;
+
 
 /***/ },
 /* 13 */
@@ -4331,6 +4340,15 @@
 	    stateman.nav("/book/5");
 	    expect(obj.book_detail_update).to.equal("5")
 	    expect(obj.book_detail_message_update).to.equal("4")
+	  })
+
+	  it('update should  also update the stateman.param ', function(){
+
+	    stateman.nav("/book/10/message");
+	    stateman.nav("/book/4/message");
+	    expect(obj.book_detail_update).to.equal("4")
+	    expect(stateman.param.bid).to.equal("4");
+
 	  })
 
 
@@ -5021,6 +5039,7 @@
 
 	    expect(doc.title).to.equal("APP")
 	  })
+
 	})
 	})
 
@@ -5094,9 +5113,13 @@
 	    // @TODO direct go the point state
 	    go: function(state, option, callback){
 	      option = option || {};
-	      if(typeof state === "string") state = this.state(state);
+	      var statename;
+	      if(typeof state === "string") {
+	         statename = state;
+	         state = this.state(state);
+	      }
 
-	      if(!state) return;
+	      if(!state) return this._notfound({state:statename});
 
 	      if(typeof option === "function"){
 	        callback = option;
@@ -5277,6 +5300,8 @@
 	        }, this) )
 
 	      }else{
+	        this.param = option.param;
+	        this.path = option.path;
 	        self._checkQueryAndParam(baseState, option);
 	        this.pending = null;
 	        done();

@@ -250,6 +250,8 @@ _.extend( _.emitable( StateMan ), {
         }, this) )
 
       }else{
+        this.param = option.param;
+        this.path = option.path;
         self._checkQueryAndParam(baseState, option);
         this.pending = null;
         done();
