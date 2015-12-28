@@ -1953,22 +1953,20 @@
 	 */
 	Buffer.TYPED_ARRAY_SUPPORT = global.TYPED_ARRAY_SUPPORT !== undefined
 	  ? global.TYPED_ARRAY_SUPPORT
-	  : typedArraySupport()
-
-	function typedArraySupport () {
-	  function Bar () {}
-	  try {
-	    var arr = new Uint8Array(1)
-	    arr.foo = function () { return 42 }
-	    arr.constructor = Bar
-	    return arr.foo() === 42 && // typed array instances can be augmented
-	        arr.constructor === Bar && // constructor can be set
-	        typeof arr.subarray === 'function' && // chrome 9-10 lack `subarray`
-	        arr.subarray(1, 1).byteLength === 0 // ie10 has broken `subarray`
-	  } catch (e) {
-	    return false
-	  }
-	}
+	  : (function () {
+	      function Bar () {}
+	      try {
+	        var arr = new Uint8Array(1)
+	        arr.foo = function () { return 42 }
+	        arr.constructor = Bar
+	        return arr.foo() === 42 && // typed array instances can be augmented
+	            arr.constructor === Bar && // constructor can be set
+	            typeof arr.subarray === 'function' && // chrome 9-10 lack `subarray`
+	            arr.subarray(1, 1).byteLength === 0 // ie10 has broken `subarray`
+	      } catch (e) {
+	        return false
+	      }
+	    })()
 
 	function kMaxLength () {
 	  return Buffer.TYPED_ARRAY_SUPPORT
@@ -2922,7 +2920,7 @@
 	  offset = offset | 0
 	  if (!noAssert) checkInt(this, value, offset, 1, 0xff, 0)
 	  if (!Buffer.TYPED_ARRAY_SUPPORT) value = Math.floor(value)
-	  this[offset] = (value & 0xff)
+	  this[offset] = value
 	  return offset + 1
 	}
 
@@ -2939,7 +2937,7 @@
 	  offset = offset | 0
 	  if (!noAssert) checkInt(this, value, offset, 2, 0xffff, 0)
 	  if (Buffer.TYPED_ARRAY_SUPPORT) {
-	    this[offset] = (value & 0xff)
+	    this[offset] = value
 	    this[offset + 1] = (value >>> 8)
 	  } else {
 	    objectWriteUInt16(this, value, offset, true)
@@ -2953,7 +2951,7 @@
 	  if (!noAssert) checkInt(this, value, offset, 2, 0xffff, 0)
 	  if (Buffer.TYPED_ARRAY_SUPPORT) {
 	    this[offset] = (value >>> 8)
-	    this[offset + 1] = (value & 0xff)
+	    this[offset + 1] = value
 	  } else {
 	    objectWriteUInt16(this, value, offset, false)
 	  }
@@ -2975,7 +2973,7 @@
 	    this[offset + 3] = (value >>> 24)
 	    this[offset + 2] = (value >>> 16)
 	    this[offset + 1] = (value >>> 8)
-	    this[offset] = (value & 0xff)
+	    this[offset] = value
 	  } else {
 	    objectWriteUInt32(this, value, offset, true)
 	  }
@@ -2990,7 +2988,7 @@
 	    this[offset] = (value >>> 24)
 	    this[offset + 1] = (value >>> 16)
 	    this[offset + 2] = (value >>> 8)
-	    this[offset + 3] = (value & 0xff)
+	    this[offset + 3] = value
 	  } else {
 	    objectWriteUInt32(this, value, offset, false)
 	  }
@@ -3043,7 +3041,7 @@
 	  if (!noAssert) checkInt(this, value, offset, 1, 0x7f, -0x80)
 	  if (!Buffer.TYPED_ARRAY_SUPPORT) value = Math.floor(value)
 	  if (value < 0) value = 0xff + value + 1
-	  this[offset] = (value & 0xff)
+	  this[offset] = value
 	  return offset + 1
 	}
 
@@ -3052,7 +3050,7 @@
 	  offset = offset | 0
 	  if (!noAssert) checkInt(this, value, offset, 2, 0x7fff, -0x8000)
 	  if (Buffer.TYPED_ARRAY_SUPPORT) {
-	    this[offset] = (value & 0xff)
+	    this[offset] = value
 	    this[offset + 1] = (value >>> 8)
 	  } else {
 	    objectWriteUInt16(this, value, offset, true)
@@ -3066,7 +3064,7 @@
 	  if (!noAssert) checkInt(this, value, offset, 2, 0x7fff, -0x8000)
 	  if (Buffer.TYPED_ARRAY_SUPPORT) {
 	    this[offset] = (value >>> 8)
-	    this[offset + 1] = (value & 0xff)
+	    this[offset + 1] = value
 	  } else {
 	    objectWriteUInt16(this, value, offset, false)
 	  }
@@ -3078,7 +3076,7 @@
 	  offset = offset | 0
 	  if (!noAssert) checkInt(this, value, offset, 4, 0x7fffffff, -0x80000000)
 	  if (Buffer.TYPED_ARRAY_SUPPORT) {
-	    this[offset] = (value & 0xff)
+	    this[offset] = value
 	    this[offset + 1] = (value >>> 8)
 	    this[offset + 2] = (value >>> 16)
 	    this[offset + 3] = (value >>> 24)
@@ -3097,7 +3095,7 @@
 	    this[offset] = (value >>> 24)
 	    this[offset + 1] = (value >>> 16)
 	    this[offset + 2] = (value >>> 8)
-	    this[offset + 3] = (value & 0xff)
+	    this[offset + 3] = value
 	  } else {
 	    objectWriteUInt32(this, value, offset, false)
 	  }
@@ -3372,7 +3370,7 @@
 	      }
 
 	      // valid surrogate pair
-	      codePoint = (leadSurrogate - 0xD800 << 10 | codePoint - 0xDC00) + 0x10000
+	      codePoint = leadSurrogate - 0xD800 << 10 | codePoint - 0xDC00 | 0x10000
 	    } else if (leadSurrogate) {
 	      // valid bmp char, but last char was a lead
 	      if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
@@ -4101,6 +4099,7 @@
 /***/ function(module, exports, __webpack_require__) {
 
 	
+	'use strict';
 	// THX for Backbone for some testcase from https://github.com/jashkenas/backbone/blob/master/test/router.js
 	// to help stateman becoming robust soon.
 
@@ -4178,7 +4177,7 @@
 	  })
 	  it("util.emitable:namespace", function(){
 	    var emitter = _.emitable({}); 
-	    obj = {enter_app: 0, enter_blog: 0}
+	    var obj = {enter_app: 0, enter_blog: 0}
 
 	    emitter.on('enter:app', function(){
 	      obj.enter_app++
@@ -4327,6 +4326,15 @@
 	    stateman.nav("/book/5");
 	    expect(obj.book_detail_update).to.equal("5")
 	    expect(obj.book_detail_message_update).to.equal("4")
+	  })
+
+	  it('update should  also update the stateman.param ', function(){
+
+	    stateman.nav("/book/10/message");
+	    stateman.nav("/book/4/message");
+	    expect(obj.book_detail_update).to.equal("4")
+	    expect(stateman.param.bid).to.equal("4");
+
 	  })
 
 
@@ -4887,10 +4895,192 @@
 	      })
 	      expect(pstateman['promise.chat']).to.equal(undefined)
 	    })
+
 	    it("if you resolve promise with `false`, it is same as reject", function(){
 
 	    })
 	  }
+
+
+	  it("canUpdate should work as expect", function( done ){
+	    var stateman = new StateMan();
+	    var user = {};
+
+	    stateman.state({
+	      "can_update": { 
+	        canUpdate: function(){
+	          if(!user.isLogin)  return false;
+	        }},
+	      "can_update.base": { },
+	      "can_update.return": {
+	        url: "return/:id"
+	      }
+	    }).start({'location':loc("http://leeluolee.github.io/")} );
+
+	    stateman.go('can_update.base', function(){
+	      expect(stateman.current.name).to.equal('can_update.base'); 
+	      stateman.go('can_update.return', {
+	        param: {id: "4"}
+	      }, function(){
+
+	        expect(stateman.current.name).to.not.equal('can_update.return'); 
+	        user.isLogin = true
+
+	        stateman.go('can_update.return', { param: {id: "4"}}, function(){
+
+	          expect(stateman.current.name).to.equal('can_update.return'); 
+	          expect(stateman.path).to.equal('/can_update/return/4'); 
+
+	          done();
+	        })
+
+	      });
+	    });
+	    
+
+
+	  })
+
+	  if(typeof Promise !== 'undefined'){
+	    it("canUpdate should work under Promise", function(done){
+	      var stateman = new StateMan();
+	      var user = {};
+	      stateman.state({
+	        'can_update': { 
+	          canUpdate: function(){
+	            return new Promise(function(resolve, reject){
+	              setTimeout(function(){
+	                if(user.isLogin) resolve()
+	                else reject()
+	              }, 100);
+	            })
+	          }
+	        },
+	        'can_update.base': {
+	        },
+	        'can_update.return': { 
+	          url: "return/:id",
+	          canUpdate: function(){
+	            return new Promise(function(resolve, reject){
+	              setTimeout(function(){
+	                if(user.isEditing) reject()
+	                else resolve()
+	              }, 100);
+	            })
+	          },
+	          enter: function(){
+	            user.isEditing = true;
+	          }
+	        },
+	      }).start({'location':loc("http://leeluolee.github.io")} )
+
+	      stateman.go('can_update.base', function(){
+	        expect(stateman.current.name).to.equal('can_update.base'); 
+	        stateman.go('can_update.return', {
+	          param: {id: "4"}
+	        }, function(){
+
+	          expect(stateman.current.name).to.not.equal('can_update.return'); 
+	          user.isLogin = true
+
+	          stateman.go('can_update.return', { param: {id: "4"}}, function(){
+
+	            expect(stateman.current.name).to.equal('can_update.return'); 
+	            expect(stateman.path).to.equal('/can_update/return/4'); 
+
+	            stateman.go('can_update.return', { param: {id: "3"}}, function(){
+
+	              expect(stateman.path).to.equal('/can_update/return/4'); 
+
+	              user.isEditing = false;
+
+	              stateman.go('can_update.return', { param: {id: "3"}}, function(){
+
+	                expect(stateman.path).to.equal('/can_update/return/3'); 
+	                done();
+
+	              })
+
+	              
+	            })
+
+	          })
+
+	        });
+	      });
+
+	    })
+	  }
+
+	  it("canUpdate should work under option.async", function(done){
+	    
+	    var stateman = new StateMan();
+	    var user = {};
+	    stateman.state({
+	      'can_update': { 
+
+	        canUpdate: function(option){
+
+	          var ok = option.async();
+	          setTimeout(function(){
+
+	            if(user.isLogin) ok()
+	            else ok(false)
+	          }, 100);
+	        }
+	      },
+	      'can_update.base': { },
+	      'can_update.return': { 
+	        url: "return/:id",
+	        canUpdate: function(option){
+	          var ok = option.async();
+	          setTimeout(function(){
+	            if(user.isEditing) ok(false)
+	            else ok()
+	          }, 100);
+	        },
+	        enter: function(){
+	          user.isEditing = true;
+	        }
+	      },
+	    }).start({'location':loc("http://leeluolee.github.io")} )
+
+	    stateman.go('can_update.base', function(){
+	      expect(stateman.current.name).to.equal('can_update.base'); 
+	      stateman.go('can_update.return', {
+	        param: {id: "4"}
+	      }, function(){
+
+	        expect(stateman.current.name).to.not.equal('can_update.return'); 
+	        user.isLogin = true
+
+	        stateman.go('can_update.return', { param: {id: "4"}}, function(){
+
+	          expect(stateman.current.name).to.equal('can_update.return'); 
+	          expect(stateman.path).to.equal('/can_update/return/4'); 
+
+	          stateman.go('can_update.return', { param: {id: "3"}}, function(){
+
+	            expect(stateman.path).to.equal('/can_update/return/4'); 
+
+	            user.isEditing = false;
+
+	            stateman.go('can_update.return', { param: {id: "3"}}, function(){
+
+	              expect(stateman.path).to.equal('/can_update/return/3'); 
+	              done();
+
+	            })
+
+	            
+	          })
+
+	        })
+
+	      });
+	    });
+	})
+
 
 	})
 
@@ -5028,6 +5218,7 @@
 
 	    expect(doc.title).to.equal("APP")
 	  })
+
 	})
 	})
 
@@ -5071,9 +5262,11 @@
 	    // keep blank
 	    name: '',
 
-	    state: function(stateName/*, config*/){
+	    state: function(stateName){
 
 	      var active = this.active;
+	      var args = _.slice(arguments, 1);
+
 	      if(typeof stateName === "string" && active){
 	         stateName = stateName.replace("~", active.name);
 	         if(active.parent) stateName = stateName.replace("^", active.parent.name || "");
@@ -5081,7 +5274,8 @@
 	      // ^ represent current.parent
 	      // ~ represent  current
 	      // only 
-	      return stateFn.apply(this, arguments);
+	      args.unshift(stateName);
+	      return stateFn.apply(this, args);
 
 	    },
 	    start: function(options){
@@ -5244,53 +5438,53 @@
 	      // if we stop it in 'begin' listener
 	      if(over === true) return;
 
-	      if(current !== state){
-	        // option as transition object.
+	      option.phase = 'permission';
+	      this._walk(current, state, option, true , _.bind( function( notRejected ){
 
-	        option.phase = 'permission';
-	        this._walk(current, state, option, true , _.bind( function( notRejected ){
+	        if( notRejected===false ){
+	          // if reject in callForPermission, we will return to old 
+	          prepath && this.nav( prepath, {silent: true});
 
-	          if( notRejected===false ){
-	            // if reject in callForPermission, we will return to old 
-	            prepath && this.nav( prepath, {silent: true});
+	          done(false, 2);
 
-	            done(false, 2);
+	          return this.emit('abort', option);
 
+	        } 
+
+	        // stop previous pending.
+	        if(this.pending) this.pending.stop();
+	        this.pending = option;
+	        this.path = option.path;
+	        this.current = option.current;
+	        this.param = option.param;
+	        this.previous = option.previous;
+	        option.phase = 'navigation';
+	        this._walk(current, state, option, false, _.bind(function( notRejected ){
+
+	          if( notRejected === false ){
+	            this.current = this.active;
+	            done(false);
 	            return this.emit('abort', option);
-
-	          } 
-
-	          // stop previous pending.
-	          if(this.pending) this.pending.stop();
-	          this.pending = option;
-	          this.path = option.path;
-	          this.current = option.current;
-	          this.param = option.param;
-	          this.previous = option.previous;
-	          option.phase = 'navigation';
-	          this._walk(current, state, option, false, _.bind(function( notRejected ){
-
-	            if( notRejected === false ){
-	              this.current = this.active;
-	              done(false);
-	              return this.emit('abort', option);
-	            }
+	          }
 
 
-	            this.active = option.current;
+	          this.active = option.current;
 
-	            option.phase = 'completion';
-	            return done();
-
-	          }, this) );
+	          option.phase = 'completion';
+	          return done();
 
 	        }, this) );
 
-	      }else{
-	        self._checkQueryAndParam(baseState, option);
-	        this.pending = null;
-	        done();
-	      }
+	      }, this) );
+
+	      // }
+	      // else{
+	      //   this.param = option.param;
+	      //   this.path = option.path;
+	      //   self._walkUpdate(baseState, option);
+	      //   this.pending = null;
+	      //   done();
+	      // }
 
 	    },
 	    _popStash: function(option){
@@ -5309,23 +5503,29 @@
 	    // the transition logic  Used in Both canLeave canEnter && leave enter LifeCycle
 
 	    _walk: function(from, to, option, callForPermit , callback){
+	      // if(from === to) return callback();
 
 	      // nothing -> app.state
 	      var parent = this._findBase(from , to);
+	      var self = this;
 
 
 	      option.backward = true;
-	      this._transit( from, parent, option, callForPermit , _.bind( function( notRejected ){
+	      this._transit( from, parent, option, callForPermit , function( notRejected ){
 
 	        if( notRejected === false ) return callback( notRejected );
 
 	        // only actual transiton need update base state;
-	        if( !callForPermit )  this._checkQueryAndParam(parent, option);
-
 	        option.backward = false;
-	        this._transit( parent, to, option, callForPermit,  callback);
+	        self._walkUpdate(parent, option, callForPermit, function(notRejected){
+	          if(notRejected === false) return callback(notRejected);
 
-	      }, this) );
+	          self._transit( parent, to, option, callForPermit,  callback);
+
+	        });
+
+
+	      });
 
 	    },
 
@@ -5494,14 +5694,22 @@
 	      }
 	    },
 	    // check the query and Param
-	    _checkQueryAndParam: function(baseState, options){
+	    _walkUpdate: function(baseState, options, callForPermit,  done){
 
+	      var method = callForPermit? 'canUpdate': 'update';
 	      var from = baseState;
-	      while( from !== this ){
-	        from.update && from.update(options);
+	      var self = this;
+
+	      if(from === this) return done();
+
+	      var loop = function(notRejected){
+	        if(notRejected === false) return done(false);
 	        from = from.parent;
+	        if(from === self) return done();
+	        self._moveOn(from, method, options, loop)
 	      }
 
+	      self._moveOn(from, method, options, loop)
 	    }
 
 	}, true);

@@ -228,6 +228,15 @@ describe("stateman:basic", function(){
     expect(obj.book_detail_message_update).to.equal("4")
   })
 
+  it('update should  also update the stateman.param ', function(){
+
+    stateman.nav("/book/10/message");
+    stateman.nav("/book/4/message");
+    expect(obj.book_detail_update).to.equal("4")
+    expect(stateman.param.bid).to.equal("4");
+
+  })
+
 
   it("we can directly define the nested state", function(){
       stateman.state('directly.skip.parent.state', function(){
@@ -786,10 +795,192 @@ describe("LifeCycle: callForPermission", function(){
       })
       expect(pstateman['promise.chat']).to.equal(undefined)
     })
+
     it("if you resolve promise with `false`, it is same as reject", function(){
 
     })
   }
+
+
+  it("canUpdate should work as expect", function( done ){
+    var stateman = new StateMan();
+    var user = {};
+
+    stateman.state({
+      "can_update": { 
+        canUpdate: function(){
+          if(!user.isLogin)  return false;
+        }},
+      "can_update.base": { },
+      "can_update.return": {
+        url: "return/:id"
+      }
+    }).start({'location':loc("http://leeluolee.github.io/")} );
+
+    stateman.go('can_update.base', function(){
+      expect(stateman.current.name).to.equal('can_update.base'); 
+      stateman.go('can_update.return', {
+        param: {id: "4"}
+      }, function(){
+
+        expect(stateman.current.name).to.not.equal('can_update.return'); 
+        user.isLogin = true
+
+        stateman.go('can_update.return', { param: {id: "4"}}, function(){
+
+          expect(stateman.current.name).to.equal('can_update.return'); 
+          expect(stateman.path).to.equal('/can_update/return/4'); 
+
+          done();
+        })
+
+      });
+    });
+    
+
+
+  })
+
+  if(typeof Promise !== 'undefined'){
+    it("canUpdate should work under Promise", function(done){
+      var stateman = new StateMan();
+      var user = {};
+      stateman.state({
+        'can_update': { 
+          canUpdate: function(){
+            return new Promise(function(resolve, reject){
+              setTimeout(function(){
+                if(user.isLogin) resolve()
+                else reject()
+              }, 100);
+            })
+          }
+        },
+        'can_update.base': {
+        },
+        'can_update.return': { 
+          url: "return/:id",
+          canUpdate: function(){
+            return new Promise(function(resolve, reject){
+              setTimeout(function(){
+                if(user.isEditing) reject()
+                else resolve()
+              }, 100);
+            })
+          },
+          enter: function(){
+            user.isEditing = true;
+          }
+        },
+      }).start({'location':loc("http://leeluolee.github.io")} )
+
+      stateman.go('can_update.base', function(){
+        expect(stateman.current.name).to.equal('can_update.base'); 
+        stateman.go('can_update.return', {
+          param: {id: "4"}
+        }, function(){
+
+          expect(stateman.current.name).to.not.equal('can_update.return'); 
+          user.isLogin = true
+
+          stateman.go('can_update.return', { param: {id: "4"}}, function(){
+
+            expect(stateman.current.name).to.equal('can_update.return'); 
+            expect(stateman.path).to.equal('/can_update/return/4'); 
+
+            stateman.go('can_update.return', { param: {id: "3"}}, function(){
+
+              expect(stateman.path).to.equal('/can_update/return/4'); 
+
+              user.isEditing = false;
+
+              stateman.go('can_update.return', { param: {id: "3"}}, function(){
+
+                expect(stateman.path).to.equal('/can_update/return/3'); 
+                done();
+
+              })
+
+              
+            })
+
+          })
+
+        });
+      });
+
+    })
+  }
+
+  it("canUpdate should work under option.async", function(done){
+    
+    var stateman = new StateMan();
+    var user = {};
+    stateman.state({
+      'can_update': { 
+
+        canUpdate: function(option){
+
+          var ok = option.async();
+          setTimeout(function(){
+
+            if(user.isLogin) ok()
+            else ok(false)
+          }, 100);
+        }
+      },
+      'can_update.base': { },
+      'can_update.return': { 
+        url: "return/:id",
+        canUpdate: function(option){
+          var ok = option.async();
+          setTimeout(function(){
+            if(user.isEditing) ok(false)
+            else ok()
+          }, 100);
+        },
+        enter: function(){
+          user.isEditing = true;
+        }
+      },
+    }).start({'location':loc("http://leeluolee.github.io")} )
+
+    stateman.go('can_update.base', function(){
+      expect(stateman.current.name).to.equal('can_update.base'); 
+      stateman.go('can_update.return', {
+        param: {id: "4"}
+      }, function(){
+
+        expect(stateman.current.name).to.not.equal('can_update.return'); 
+        user.isLogin = true
+
+        stateman.go('can_update.return', { param: {id: "4"}}, function(){
+
+          expect(stateman.current.name).to.equal('can_update.return'); 
+          expect(stateman.path).to.equal('/can_update/return/4'); 
+
+          stateman.go('can_update.return', { param: {id: "3"}}, function(){
+
+            expect(stateman.path).to.equal('/can_update/return/4'); 
+
+            user.isEditing = false;
+
+            stateman.go('can_update.return', { param: {id: "3"}}, function(){
+
+              expect(stateman.path).to.equal('/can_update/return/3'); 
+              done();
+
+            })
+
+            
+          })
+
+        })
+
+      });
+    });
+})
+
 
 })
 
@@ -927,5 +1118,6 @@ describe("Config", function(){
 
     expect(doc.title).to.equal("APP")
   })
+
 })
 })

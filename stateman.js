@@ -283,53 +283,53 @@ return /******/ (function(modules) { // webpackBootstrap
 	      // if we stop it in 'begin' listener
 	      if(over === true) return;
 
-	      if(current !== state){
-	        // option as transition object.
+	      option.phase = 'permission';
+	      this._walk(current, state, option, true , _.bind( function( notRejected ){
 
-	        option.phase = 'permission';
-	        this._walk(current, state, option, true , _.bind( function( notRejected ){
+	        if( notRejected===false ){
+	          // if reject in callForPermission, we will return to old 
+	          prepath && this.nav( prepath, {silent: true});
 
-	          if( notRejected===false ){
-	            // if reject in callForPermission, we will return to old 
-	            prepath && this.nav( prepath, {silent: true});
+	          done(false, 2);
 
-	            done(false, 2);
+	          return this.emit('abort', option);
 
+	        } 
+
+	        // stop previous pending.
+	        if(this.pending) this.pending.stop();
+	        this.pending = option;
+	        this.path = option.path;
+	        this.current = option.current;
+	        this.param = option.param;
+	        this.previous = option.previous;
+	        option.phase = 'navigation';
+	        this._walk(current, state, option, false, _.bind(function( notRejected ){
+
+	          if( notRejected === false ){
+	            this.current = this.active;
+	            done(false);
 	            return this.emit('abort', option);
-
-	          } 
-
-	          // stop previous pending.
-	          if(this.pending) this.pending.stop();
-	          this.pending = option;
-	          this.path = option.path;
-	          this.current = option.current;
-	          this.param = option.param;
-	          this.previous = option.previous;
-	          option.phase = 'navigation';
-	          this._walk(current, state, option, false, _.bind(function( notRejected ){
-
-	            if( notRejected === false ){
-	              this.current = this.active;
-	              done(false);
-	              return this.emit('abort', option);
-	            }
+	          }
 
 
-	            this.active = option.current;
+	          this.active = option.current;
 
-	            option.phase = 'completion';
-	            return done();
-
-	          }, this) );
+	          option.phase = 'completion';
+	          return done();
 
 	        }, this) );
 
-	      }else{
-	        self._checkQueryAndParam(baseState, option);
-	        this.pending = null;
-	        done();
-	      }
+	      }, this) );
+
+	      // }
+	      // else{
+	      //   this.param = option.param;
+	      //   this.path = option.path;
+	      //   self._walkUpdate(baseState, option);
+	      //   this.pending = null;
+	      //   done();
+	      // }
 
 	    },
 	    _popStash: function(option){
@@ -348,23 +348,29 @@ return /******/ (function(modules) { // webpackBootstrap
 	    // the transition logic  Used in Both canLeave canEnter && leave enter LifeCycle
 
 	    _walk: function(from, to, option, callForPermit , callback){
+	      // if(from === to) return callback();
 
 	      // nothing -> app.state
 	      var parent = this._findBase(from , to);
+	      var self = this;
 
 
 	      option.backward = true;
-	      this._transit( from, parent, option, callForPermit , _.bind( function( notRejected ){
+	      this._transit( from, parent, option, callForPermit , function( notRejected ){
 
 	        if( notRejected === false ) return callback( notRejected );
 
 	        // only actual transiton need update base state;
-	        if( !callForPermit )  this._checkQueryAndParam(parent, option);
-
 	        option.backward = false;
-	        this._transit( parent, to, option, callForPermit,  callback);
+	        self._walkUpdate(parent, option, callForPermit, function(notRejected){
+	          if(notRejected === false) return callback(notRejected);
 
-	      }, this) );
+	          self._transit( parent, to, option, callForPermit,  callback);
+
+	        });
+
+
+	      });
 
 	    },
 
@@ -533,14 +539,22 @@ return /******/ (function(modules) { // webpackBootstrap
 	      }
 	    },
 	    // check the query and Param
-	    _checkQueryAndParam: function(baseState, options){
+	    _walkUpdate: function(baseState, options, callForPermit,  done){
 
+	      var method = callForPermit? 'canUpdate': 'update';
 	      var from = baseState;
-	      while( from !== this ){
-	        from.update && from.update(options);
+	      var self = this;
+
+	      if(from === this) return done();
+
+	      var loop = function(notRejected){
+	        if(notRejected === false) return done(false);
 	        from = from.parent;
+	        if(from === self) return done();
+	        self._moveOn(from, method, options, loop)
 	      }
 
+	      self._moveOn(from, method, options, loop)
 	    }
 
 	}, true);
