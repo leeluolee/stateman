@@ -7,7 +7,7 @@
 
 
 - 增加了一个[askForPermission](#permission), 来帮助我们阻止一次跳转(比如在离开时， 加个通知用户是否要保存）
-- 现在你可以在`enter`, `leave` 以及新增加的 `canLeave`, `canEnter` 方法中来返回Promise对象， 这对于一些异步的跳转非常有帮助
+- 现在你可以在`enter`, `leave` ,`update` 以及新增加的 `canLeave`, `canEnter`, `canUpdate` 方法中来返回Promise对象， 这对于一些异步的跳转非常有帮助
 - 事件现在支持[命名空间](#event)了
 - 移除了[state.async] 方法, 如果你的运行环境不支持Promise, 你仍然可以使用 `option.async` 来获得一样的效果
 
@@ -134,7 +134,7 @@ __Arguments__
 
  __Return__ : 
 
-StateMan or State (if config is not passed) 
+this or State (if config is not passed) 
 
 
 __Example__
@@ -199,13 +199,14 @@ var state = stateman.state('demo.list');
 
 
 
-这里有五个生命周期相关的方法可供你用来控制 路由的逻辑, 它们都是可选择实现的 , 查看[生命周期](#lifecycle)了解更多
+这里有五个生命周期相关的方法可供你用来控制 路由的逻辑, 它们的实现都是可选的(取决于你是否需要应用这些生命周期) , 查看[生命周期](#lifecycle)了解更多
 
 * __config.enter(option)__: 一个函数，当状态被__进入时__会被调用
 * __config.leave(option)__: 一个函数，当状态被__离开时__会被调用
 * __config.update(option)__: 一个函数，当状态__更新时__会被调用, 更新的意思是，路径有变化，但是此状态仍未被退出.
 * __config.canEnter(option)__: 请求是否可进入
 * __config.canLeave(option)__: 请求是否可退出
+* __config.canUpdate(option)__: 请求是否可进行更新
 
 
 
@@ -762,7 +763,7 @@ __Example__:
 
 
 <a name="permission"></a>
-#### permission: canEnter canLeave
+#### permission: canEnter canLeave canUpdate
 
 
 有时候， 我们需要在跳转真正开始前阻止它， 一种解决方案是使用[`begin`](#event)
@@ -801,6 +802,8 @@ __你当然也可以使用[Promise](#control) 来实现异步的流程控制__
 
 1. __canLeave: app.contact.detail.setting__
 2. __canLeave: app.contact.detail__
+4. __canUpdate: app.contact__
+4. __canUpdate: app__
 3. __canEnter: app.contact.message__
 4. leave: app.contact.detail.setting
 5. leave: app.contact.detail
@@ -810,7 +813,8 @@ __你当然也可以使用[Promise](#control) 来实现异步的流程控制__
 
 
 
-如果任何一个过程没有被定义, 它会被忽略， 所以都是可选的， 我们只需要实现我们跳转逻辑中需要实现的方法.
+- 如果任何一个过程没有被定义, 它会被忽略， 所以都是可选的， 我们只需要实现我们跳转逻辑中需要实现的方法.
+- 如果任何一个函数被reject, 跳转会停止， 并返回之前的url.
 
 
 
@@ -1186,9 +1190,9 @@ var config = {
 }
 
 function cfg(o){
-  o.enter = o.enter || config.enter  
-  o.leave = o.leave || config.leave  
-  o.update = o.update || config.update  
+  o.enter = o.enter || config.enter
+  o.leave = o.leave || config.leave
+  o.update = o.update || config.update
   return o;
 }
 

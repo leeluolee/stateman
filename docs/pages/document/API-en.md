@@ -7,7 +7,7 @@
 
 
 - add an [__askForPermission__](#permission) step in Lifecyle.
-- support return __Promise__ in `enter`， `leave` and `canEnter`, `canLeave`( introduced in v0.2.0) to help us implement some asynchronous navigation. 
+- support return __Promise__ in `enter`， `leave`, `update` and `canEnter`, `canLeave`, `canUpdate`( introduced in v0.2.*) to help us implement some asynchronous navigation. 
 - add [namespace support](#event) for builtin emitter.
 - Warn: __remove [state.async]__,  you can use  `option.async` for asynchronous navigation. but I suggest you to use promise instead
 
@@ -135,7 +135,7 @@ __Arguments__
 
  __Return__ : 
 
-StateMan or State (if config is not passed) 
+this or State (if config is not passed) 
 
 
 __Example__
@@ -201,13 +201,14 @@ Everything you defined in `config` will be merged to the target state which the 
 
 
 
-There five lifecyle-related functions can be used for controlling the routing logic. they are all optional, see [lifecycle](#lifecycle) for detail.
+There five lifecyle-related functions can be used for controlling the routing logic. They are all optional, see [lifecycle](#lifecycle) for detail.
 
 * __config.enter(option)__: a function that will be called when the state be entered
 * __config.leave(option)__: a function that will be called when the state be leaved out.
 * __config.update(option)__: state contained by current state, but not be entered or leaved out will call `update`.
 * __config.canEnter(option)__: ask for permission to enter
 * __config.canLeave(option)__: ask for permission to leave
+* __config.canUpdate(option)__: ask for permission to update
 
 
 
@@ -338,9 +339,9 @@ __option__
 |Param|Type|Detail|
 |--|--|--|
 |html5 |Boolean|(default false) whether to open the html5 history support |
-|root |String|(default '/') the root of the url , __only required when html5 is actived__. default is `/` |
+|root |String|(default '/') the root of the url , __only required when html5 is actived__. defualt is `/` |
 |prefix| String | for the hash prefix , default is '' (you can pass `!` to make the hash like `#!/contact/100`), works in hash mode.|
-|autolink| Boolean | (default true) whether to delegate all link(a[href])'s navigating, only need when __html5 is actived__, default is `true`.|
+|autolink| Boolean | (defualt true) whether to delegate all link(a[href])'s navigating, only need when __html5 is actived__, default is `true`.|
 
 
 __Example__
@@ -763,7 +764,7 @@ See `app.contact.detail.setting` that we defined in the 【[first example](./exa
 
 
 <a name="permission"></a>
-#### permission: canEnter canLeave
+#### permission: canEnter canLeave canUpdate
 
 
 Some times, you want to stop the routing before `navigation` process. one solution is handling it in [`begin`](#event)'s listeners
@@ -781,7 +782,7 @@ stateman.on('begin', function(option){
 
 But after version 0.2 , stateman provide an more reasonable choice that called __"ask for permission"__. The process is triggered before __navigation__.
 
-By implementing two optional method: `canEnter`, `canLeave`. you can stop the routing before navigation is starting.
+By implementing three optional method: `canEnter`, `canLeave` and `canUpdate`. you can stop the routing before navigation is starting.
 
 
 ```js
@@ -804,6 +805,8 @@ Just like the example we mentioned in `navigation`, if we navigating from `app.c
 
 1. __canLeave: app.contact.detail.setting__
 2. __canLeave: app.contact.detail__
+4. __canUpdate: app.contact__
+4. __canUpdate: app__
 3. __canEnter: app.contact.message__
 4. leave: app.contact.detail.setting
 5. leave: app.contact.detail
@@ -813,7 +816,9 @@ Just like the example we mentioned in `navigation`, if we navigating from `app.c
 
 
 
-If any step is undefined, __It will be ignored__, they are all optional. 
+
+- If any step is undefined, __It will be ignored__, they are all optional. 
+- If any step has been rejected, navigation will be stopped, and url will be fixed to old one;
 
 
 
@@ -1190,9 +1195,9 @@ var config = {
 }
 
 function cfg(o){
-  o.enter = o.enter || config.enter  
-  o.leave = o.leave || config.leave  
-  o.update = o.update || config.update  
+  o.enter = o.enter || config.enter
+  o.leave = o.leave || config.leave
+  o.update = o.update || config.update
   return o;
 }
 
