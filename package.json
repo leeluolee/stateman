@@ -25,6 +25,7 @@
   },
   "homepage": "https://github.com/leeluolee/stateman",
   "devDependencies": {
+    "regularjs": "file:../regularjs/regular",
     "expect.js": "^0.3.1",
     "gulp": "^3.8.10",
     "gulp-bump": "^1.0.0",
