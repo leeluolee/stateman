@@ -64,6 +64,7 @@ var karmaCommonConf = {
      'test/spec/dom-*.js': ['commonjs'],
      'test/runner/vendor/expect.js': ['commonjs']
    },
+  target: 'web',
 
   // coverage reporter generates the coverage
   reporters: ['progress', 'coverage'],

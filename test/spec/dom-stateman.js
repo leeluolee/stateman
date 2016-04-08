@@ -9,7 +9,7 @@
 //    For all details and documentation:
 //    http://backbonejs.org
 
-var StateMan = require("../../src/stateman.js");
+var StateMan = require("../../src/manager/client.js");
 var expect = require("../runner/vendor/expect.js")
 var _ = require("../../src/util.js");
 var doc = typeof document !== "undefined"? document: {};
