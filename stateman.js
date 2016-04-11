@@ -59,24 +59,33 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var StateMan = __webpack_require__(1);
+	var stateman;
 
-	StateMan.History = __webpack_require__(5);
-	StateMan.util = __webpack_require__(4);
-	StateMan.State = __webpack_require__(3);
+	if( typeof window === 'object' ){
+	  stateman = __webpack_require__(1);
+	  stateman.History = __webpack_require__(4);
+	  stateman.util = __webpack_require__(3);
+	  stateman.isServer = false;
+	}else{
+	  stateman = __webpack_require__(7);
+	  stateman.isServer = true;
+	}
 
-	module.exports = StateMan;
+
+	stateman.State = __webpack_require__(2);
+
+	module.exports = stateman;
 
 
 /***/ },
 /* 1 */
 /***/ function(module, exports, __webpack_require__) {
 
-	__webpack_require__(2);
-
-	var State = __webpack_require__(3),
-	  History = __webpack_require__(5),
-	  _ = __webpack_require__(4),
+	
+	var State = __webpack_require__(2),
+	  History = __webpack_require__(4),
+	  Base = __webpack_require__(6),
+	  _ = __webpack_require__(3),
 	  baseTitle = document.title,
 	  stateFn = State.prototype.state;
 
@@ -84,45 +93,21 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  if(this instanceof StateMan === false){ return new StateMan(options); }
 	  options = options || {};
-	  // if(options.history) this.history = options.history;
-
-	  this._states = {};
+	  Base.call(this, options);
+	  if(options.history) this.history = options.history;
 	  this._stashCallback = [];
-	  this.strict = options.strict;
 	  this.current = this.active = this;
-	  this.title = options.title;
-	  this.on("end", function(){
-	    var cur = this.current,title;
-	    while( cur ){
-	      title = cur.title;
-	      if(title) break; 
-	      cur = cur.parent;
-	    }
-	    document.title = typeof title === "function"? cur.title(): String( title || baseTitle ) ;
+	  // auto update document.title, when navigation has been down
+	  this.on("end", function( options ){
+	    var cur = this.current;
+	    document.title = cur.getTitle( options ) ||  baseTitle  ;
 	  });
-
 	}
 
-	_.extend( _.emitable( StateMan ), {
-	    // keep blank
-	    name: '',
+	var o =_.inherit( StateMan, Base.prototype );
 
-	    state: function(stateName){
+	_.extend(o , {
 
-	      var active = this.active;
-	      var args = _.slice(arguments, 1);
-
-	      if(typeof stateName === "string" && active){
-	         stateName = stateName.replace("~", active.name);
-	         if(active.parent) stateName = stateName.replace("^", active.parent.name || "");
-	      }
-	      // ^ represent current.parent
-	      // ~ represent  current
-	      // only 
-	      args.unshift(stateName);
-	      return stateFn.apply(this, args);
-
-	    },
 	    start: function(options){
 
 	      if( !this.history ) this.history = new History(options); 
@@ -176,29 +161,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	      return this;
 	    },
-	    decode: function(path){
 
-	      var pathAndQuery = path.split("?");
-	      var query = this._findQuery(pathAndQuery[1]);
-	      path = pathAndQuery[0];
-	      var state = this._findState(this, path);
-	      if(state) _.extend(state.param, query);
-	      return state;
-
-	    },
-	    encode: function(stateName, param){
-	      var state = this.state(stateName);
-	      return state? state.encode(param) : '';
-	    },
-	    // notify specify state
-	    // check the active statename whether to match the passed condition (stateName and param)
-	    is: function(stateName, param, isStrict){
-	      if(!stateName) return false;
-	      stateName = (stateName.name || stateName);
-	      var current = this.current, currentName = current.name;
-	      var matchPath = isStrict? currentName === stateName : (currentName + ".").indexOf(stateName + ".")===0;
-	      return matchPath && (!param || _.eql(param, this.param)); 
-	    },
 	    // after pathchange changed
 	    // @TODO: afterPathChange need based on decode
 	    _afterPathChange: function(path, options ,callback){
@@ -212,19 +175,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	      options.path = path;
 
 	      if(!found){
-	        // loc.nav("$default", {silent: true})
 	        return this._notfound(options);
 	      }
 
 	      options.param = found.param;
 
-	      this._go( found, options, callback );
+	      this._go( found.state, options, callback );
 	    },
 	    _notfound: function(options){
 
-	      // var $notfound = this.state("$notfound");
-
-	      // if( $notfound ) this._go($notfound, options);
 
 	      return this.emit("notfound", options);
 	    },
@@ -233,25 +192,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	      var over;
 
-	      // if(typeof state === "string") state = this.state(state);
-
-	      // if(!state) return _.log("destination is not defined")
+	  
 
 	      if(state.hasNext && this.strict) return this._notfound({name: state.name});
 
-	      // not touch the end in previous transtion
-
-	      // if( this.pending ){
-	      //   var pendingCurrent = this.pending.current;
-	      //   this.pending.stop();
-	      //   _.log("naving to [" + pendingCurrent.name + "] will be stoped, trying to ["+state.name+"] now");
-	      // }
-	      // if(this.active !== this.current){
-	      //   // we need return
-	      //   _.log("naving to [" + this.current.name + "] will be stoped, trying to ["+state.name+"] now");
-	      //   this.current = this.active;
-	      //   // back to before
-	      // }
+	  
 	      option.param = option.param || {};
 
 	      var current = this.current,
@@ -322,14 +267,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	      }, this) );
 
-	      // }
-	      // else{
-	      //   this.param = option.param;
-	      //   this.path = option.path;
-	      //   self._walkUpdate(baseState, option);
-	      //   this.pending = null;
-	      //   done();
-	      // }
 
 	    },
 	    _popStash: function(option){
@@ -495,32 +432,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      return query;
 
 	    },
-	    _findState: function(state, path){
-	      var states = state._states, found, param;
 
-	      // leaf-state has the high priority upon branch-state
-	      if(state.hasNext){
-
-	        var stateList = _.values( states ).sort( this._sortState );
-	        var len = stateList.length;
-
-	        for(var i = 0; i < len; i++){
-
-	          found = this._findState( stateList[i], path );
-	          if( found ) return found;
-	        }
-
-	      }
-	      // in strict mode only leaf can be touched
-	      // if all children is don. will try it self
-	      param = state.regexp && state.decode(path);
-	      if(param){
-	        state.param = param;
-	        return state;
-	      }else{
-	        return false;
-	      }
-	    },
 	    _sortState: function( a, b ){
 	      return ( b.priority || 0 ) - ( a.priority || 0 );
 	    },
@@ -564,40 +476,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 2 */
-/***/ function(module, exports) {
-
-	var win = window,
-	    doc = document;
-
-	module.exports = {
-	  hash: "onhashchange" in win && (!doc.documentMode || doc.documentMode > 7),
-	  history: win.history && "onpopstate" in win,
-	  location: win.location,
-	  isSameDomain: function(url){
-	    var matched = url.match(/^.*?:\/\/([^/]*)/);
-	    if(matched){
-	      return matched[0] == this.location.origin;
-	    }
-	    return true;
-	  },
-	  getHref: function(node){
-	    return "href" in node ? node.getAttribute("href", 2) : node.getAttribute("href");
-	  },
-	  on: "addEventListener" in win ?  // IE10 attachEvent is not working when binding the onpopstate, so we need check addEventLister first
-	      function(node,type,cb){return node.addEventListener( type, cb )}
-	    : function(node,type,cb){return node.attachEvent( "on" + type, cb )},
-
-	  off: "removeEventListener" in win ? 
-	      function(node,type,cb){return node.removeEventListener( type, cb )}
-	    : function(node,type,cb){return node.detachEvent( "on" + type, cb )}
-	}
-
-
-/***/ },
-/* 3 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var _ = __webpack_require__(4);
+	var _ = __webpack_require__(3);
 
 	function State(option){
 	  this._states = {};
@@ -610,6 +491,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	State.rCache = {};
 
 	_.extend( _.emitable( State ), {
+
+	  getTitle: function(options){
+	    var cur = this ,title;
+	    while( cur ){
+	      title = cur.title;
+	      if(title) return typeof title === 'function'? cur.title(options): cur.title
+	      cur = cur.parent;
+	    }
+	    return title;
+	  },
+
 
 	  state: function(stateName, config){
 	    if(_.typeOf(stateName) === "object"){
@@ -747,7 +639,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 4 */
+/* 3 */
 /***/ function(module, exports) {
 
 	var _ = module.exports = {};
@@ -768,6 +660,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 	  return keys;
 	};
+
+	_.inherit = function( cstor, o ){
+	  function Faker(){}
+	  Faker.prototype = o;
+	  cstor.prototype = new Faker();
+	  cstor.prototype.constructor = cstor;
+	  return o;
+	}
 
 	_.slice = function(arr, index){
 	  return slice.call(arr, index);
@@ -936,7 +836,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 5 */
+/* 4 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -944,8 +844,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	// Thx Backbone.js 1.1.2  and https://github.com/cowboy/jquery-hashchange/blob/master/jquery.ba-hashchange.js
 	// for iframe patches in old ie.
 
-	var browser = __webpack_require__(2);
-	var _ = __webpack_require__(4);
+	var browser = __webpack_require__(5);
+	var _ = __webpack_require__(3);
 
 
 	// the mode const
@@ -1154,6 +1054,218 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	module.exports = History;
 
+
+/***/ },
+/* 5 */
+/***/ function(module, exports) {
+
+	var win = window,
+	    doc = document;
+
+	module.exports = {
+	  hash: "onhashchange" in win && (!doc.documentMode || doc.documentMode > 7),
+	  history: win.history && "onpopstate" in win,
+	  location: win.location,
+	  isSameDomain: function(url){
+	    var matched = url.match(/^.*?:\/\/([^/]*)/);
+	    if(matched){
+	      return matched[0] == this.location.origin;
+	    }
+	    return true;
+	  },
+	  getHref: function(node){
+	    return "href" in node ? node.getAttribute("href", 2) : node.getAttribute("href");
+	  },
+	  on: "addEventListener" in win ?  // IE10 attachEvent is not working when binding the onpopstate, so we need check addEventLister first
+	      function(node,type,cb){return node.addEventListener( type, cb )}
+	    : function(node,type,cb){return node.attachEvent( "on" + type, cb )},
+
+	  off: "removeEventListener" in win ? 
+	      function(node,type,cb){return node.removeEventListener( type, cb )}
+	    : function(node,type,cb){return node.detachEvent( "on" + type, cb )}
+	}
+
+
+/***/ },
+/* 6 */
+/***/ function(module, exports, __webpack_require__) {
+
+	
+	var State = __webpack_require__(2),
+	  _ = __webpack_require__(3),
+	  stateFn = State.prototype.state;
+
+	function BaseMan( options ){
+
+	  options = options || {};
+
+	  this._states = {};
+
+	  this.strict = options.strict;
+	  this.title = options.title;
+
+	  if(options.routes) this.state(options.routes);
+
+	}
+
+	_.extend( _.emitable( BaseMan ), {
+	    // keep blank
+	    name: '',
+
+	    root: true,
+
+
+	    state: function(stateName){
+
+	      var active = this.active;
+	      var args = _.slice(arguments, 1);
+
+	      if(typeof stateName === "string" && active){
+	         stateName = stateName.replace("~", active.name);
+	         if(active.parent) stateName = stateName.replace("^", active.parent.name || "");
+	      }
+	      // ^ represent current.parent
+	      // ~ represent  current
+	      // only 
+	      args.unshift(stateName);
+	      return stateFn.apply(this, args);
+
+	    },
+
+	    decode: function(path, needLocation){
+
+	      var pathAndQuery = path.split("?");
+	      var query = this._findQuery(pathAndQuery[1]);
+	      path = pathAndQuery[0];
+	      var found = this._findState(this, path);
+	      if(found) _.extend(found.param, query);
+	      return found;
+
+	    },
+	    encode: function(stateName, param){
+	      var state = this.state(stateName);
+	      return state? state.encode(param) : '';
+	    },
+	    // notify specify state
+	    // check the active statename whether to match the passed condition (stateName and param)
+	    is: function(stateName, param, isStrict){
+	      if(!stateName) return false;
+	      stateName = (stateName.name || stateName);
+	      var current = this.current, currentName = current.name;
+	      var matchPath = isStrict? currentName === stateName : (currentName + ".").indexOf(stateName + ".")===0;
+	      return matchPath && (!param || _.eql(param, this.param)); 
+	    },
+
+
+	    _wrapPromise: function( promise, next ){
+
+	      return promise.then( next, function(){ next(false); }) ;
+
+	    },
+
+	    _findQuery: function(querystr){
+
+	      var queries = querystr && querystr.split("&"), query= {};
+	      if(queries){
+	        var len = queries.length;
+	        for(var i =0; i< len; i++){
+	          var tmp = queries[i].split("=");
+	          query[tmp[0]] = tmp[1];
+	        }
+	      }
+	      return query;
+
+	    },
+	    _findState: function(state, path){
+	      var states = state._states, found, param;
+
+	      // leaf-state has the high priority upon branch-state
+	      if(state.hasNext){
+
+	        var stateList = _.values( states ).sort( this._sortState );
+	        var len = stateList.length;
+
+	        for(var i = 0; i < len; i++){
+
+	          found = this._findState( stateList[i], path );
+	          if( found ) return found;
+	        }
+
+	      }
+	      // in strict mode only leaf can be touched
+	      // if all children is don. will try it self
+	      param = state.regexp && state.decode(path);
+	      if(param){
+	        return {
+	          state: state,
+	          param: param
+	        }
+	      }else{
+	        return false;
+	      }
+	    },
+	    _sortState: function( a, b ){
+	      return ( b.priority || 0 ) - ( a.priority || 0 );
+	    },
+	    // find the same branch;
+	    _findBase: function(now, before){
+
+	      if(!now || !before || now == this || before == this) return this;
+	      var np = now, bp = before, tmp;
+	      while(np && bp){
+	        tmp = bp;
+	        while(tmp){
+	          if(np === tmp) return tmp;
+	          tmp = tmp.parent;
+	        }
+	        np = np.parent;
+	      }
+	    },
+
+	}, true);
+
+	module.exports = BaseMan;
+
+
+
+/***/ },
+/* 7 */
+/***/ function(module, exports, __webpack_require__) {
+
+	
+	var _ = __webpack_require__(3);
+	var Base = __webpack_require__(6);
+
+	function ServerManager( options ){
+	  if(this instanceof ServerManager === false){ return new ServerManager(options); }
+	  Base.apply( this, arguments );
+	}
+
+	var o =_.inherit( ServerManager, Base.prototype );
+
+	_.extend(o , {
+	  exec: function ( path ){
+	    var found = this.decode(path);
+	    if( !found ) return;
+	    var param = found.param;
+	    var states = [];
+	    var state = found.state;
+	    this.current = state;
+
+	    while(state && !state.root){
+	      states.unshift( state );
+	      state = state.parent;
+	    }
+
+	    return {
+	      states: states,
+	      param: param
+	    }
+	  }
+	})
+
+
+	module.exports = ServerManager
 
 /***/ }
 /******/ ])

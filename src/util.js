@@ -17,6 +17,14 @@ _.values = function( o){
   return keys;
 };
 
+_.inherit = function( cstor, o ){
+  function Faker(){}
+  Faker.prototype = o;
+  cstor.prototype = new Faker();
+  cstor.prototype.constructor = cstor;
+  return o;
+}
+
 _.slice = function(arr, index){
   return slice.call(arr, index);
 };

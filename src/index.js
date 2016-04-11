@@ -1,7 +1,16 @@
-var StateMan = require("./stateman.js");
+var stateman;
 
-StateMan.History = require("./history.js");
-StateMan.util = require("./util.js");
-StateMan.State = require("./state.js");
+if( typeof window === 'object' ){
+  stateman = require("./manager/client.js");
+  stateman.History = require("./history.js");
+  stateman.util = require("./util.js");
+  stateman.isServer = false;
+}else{
+  stateman = require("./manager/server.js");
+  stateman.isServer = true;
+}
 
-module.exports = StateMan;
+
+stateman.State = require("./state.js");
+
+module.exports = stateman;

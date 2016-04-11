@@ -9,7 +9,7 @@
 //    For all details and documentation:
 //    http://backbonejs.org
 
-var StateMan = require("../../src/stateman.js");
+var StateMan = require("../../src/index.js");
 var expect = require("../runner/vendor/expect.js")
 var _ = require("../../src/util.js");
 var doc = typeof document !== "undefined"? document: {};
@@ -593,8 +593,8 @@ describe("stateman:other", function(){
 
   it("stateman.decode should return the parsed state", function(){
 
-    var state = stateman.state("book.detail", {url: ":id"}).decode("/book/a?name=12")
-    expect(state.param).to.eql({id:"a", name: "12"})
+    var found = stateman.state("book.detail", {url: ":id"}).decode("/book/a?name=12")
+    expect(found.param).to.eql({id:"a", name: "12"})
 
   })
 
@@ -613,12 +613,12 @@ describe("stateman:other", function(){
   })
 
   it( "ISSUE #22: url match should matching by state.priority", function(){
-    var state = stateman
+    var found = stateman
       .state( 'blog.detail', {url: ":id"})
       .state( 'blog.list', {priority: 10} )
       .decode("/blog/list")
 
-    expect(state.name).to.equal('blog.list');
+    expect(found.state.name).to.equal('blog.list');
 
   })
 

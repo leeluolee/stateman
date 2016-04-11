@@ -12,6 +12,17 @@ State.rCache = {};
 
 _.extend( _.emitable( State ), {
 
+  getTitle: function(options){
+    var cur = this ,title;
+    while( cur ){
+      title = cur.title;
+      if(title) return typeof title === 'function'? cur.title(options): cur.title
+      cur = cur.parent;
+    }
+    return title;
+  },
+
+
   state: function(stateName, config){
     if(_.typeOf(stateName) === "object"){
       for(var j in stateName){
