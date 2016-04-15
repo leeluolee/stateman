@@ -70,7 +70,7 @@ _.extend( _.emitable(History), {
 
     this.curPath = path;
 
-    this.emit("change", path, { init: true});
+    this.emit("change", path, { firstTime: true});
   },
 
   // the history teardown
