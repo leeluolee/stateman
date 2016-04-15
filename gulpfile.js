@@ -192,9 +192,6 @@ gulp.task('travis', ['jshint' ,'build','mocha',  'karma']);
 
 
 
-gulp.task('server', ['build'], shell.task([
-  "./node_modules/puer/bin/puer"
-]))
 
 
 gulp.task('example', function(){

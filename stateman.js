@@ -911,7 +911,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    this.curPath = path;
 
-	    this.emit("change", path);
+	    this.emit("change", path, { init: true});
 	  },
 
 	  // the history teardown
