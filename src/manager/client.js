@@ -126,7 +126,7 @@ _.extend(o , {
       // if we done the navigating when start
       function done(success){
         over = true;
-        if( success !== false ) self.emit("end");
+        if( success !== false ) self.emit("end", option);
         self.pending = null;
         self._popStash(option);
       }
