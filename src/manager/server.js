@@ -14,6 +14,12 @@ _.extend(o , {
     var found = this.decode(path);
     if( !found ) return;
     var param = found.param;
+
+    //@FIXIT: We NEED decodeURIComponent in server side!!
+
+    for(var i in param){
+      if(typeof param[i] === 'string') param[i] = decodeURIComponent(param[i]);
+    }
     var states = [];
     var state = found.state;
     this.current = state;
