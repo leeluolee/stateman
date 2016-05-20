@@ -3943,7 +3943,7 @@
 
 	_.extend( _.emitable(History), {
 	  // check the
-	  start: function(){
+	  start: function(callback){
 	    var path = this.getPath();
 	    this._checkPath = _.bind(this.checkPath, this);
 
@@ -3969,7 +3969,7 @@
 
 	    this.curPath = path;
 
-	    this.emit("change", path, { init: true});
+	    this.emit("change", path, { firstTime: true});
 	  },
 
 	  // the history teardown
@@ -5239,6 +5239,30 @@
 	  })
 
 	})
+	describe("start callback", function(){
+
+	  it("start with callback should work correct", function(done){
+	    var location = loc("http://leeluolee.github.io/blog");
+	    var obj = {}; 
+	    var stateman = new StateMan({
+	      routes: {
+	        'app': {
+	          url: ''
+
+	        },
+	        'app.blog': {
+
+	        }
+	      }
+	    });
+	    stateman.start({location: location, html5: true}, function(option){
+	      expect(option.current.name).to.equal('app.blog')
+	      done()
+	    })
+	  })
+
+	})
+
 	})
 
 
@@ -5295,8 +5319,9 @@
 
 	_.extend(o , {
 
-	    start: function(options){
+	    start: function(options, callback){
 
+	      this._startCallback = callback;
 	      if( !this.history ) this.history = new History(options); 
 	      if( !this.history.isStart ){
 	        this.history.on("change", _.bind(this._afterPathChange, this));
@@ -5367,6 +5392,11 @@
 
 	      options.param = found.param;
 
+	      if( options.firstTime && !callback){
+	        callback =  this._startCallback;
+	        delete this._startCallback;
+	      }
+
 	      this._go( found.state, options, callback );
 	    },
 	    _notfound: function(options){
@@ -5396,7 +5426,7 @@
 	      // if we done the navigating when start
 	      function done(success){
 	        over = true;
-	        if( success !== false ) self.emit("end");
+	        if( success !== false ) self.emit("end", option);
 	        self.pending = null;
 	        self._popStash(option);
 	      }
@@ -5823,6 +5853,12 @@
 	    var found = this.decode(path);
 	    if( !found ) return;
 	    var param = found.param;
+
+	    //@FIXIT: We NEED decodeURIComponent in server side!!
+
+	    for(var i in param){
+	      if(typeof param[i] === 'string') param[i] = decodeURIComponent(param[i]);
+	    }
 	    var states = [];
 	    var state = found.state;
 	    this.current = state;

@@ -1120,4 +1120,28 @@ describe("Config", function(){
   })
 
 })
+describe("start callback", function(){
+
+  it("start with callback should work correct", function(done){
+    var location = loc("http://leeluolee.github.io/blog");
+    var obj = {}; 
+    var stateman = new StateMan({
+      routes: {
+        'app': {
+          url: ''
+
+        },
+        'app.blog': {
+
+        }
+      }
+    });
+    stateman.start({location: location, html5: true}, function(option){
+      expect(option.current.name).to.equal('app.blog')
+      done()
+    })
+  })
+
+})
+
 })

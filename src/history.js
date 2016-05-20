@@ -44,7 +44,7 @@ function History(options){
 
 _.extend( _.emitable(History), {
   // check the
-  start: function(){
+  start: function(callback){
     var path = this.getPath();
     this._checkPath = _.bind(this.checkPath, this);
 

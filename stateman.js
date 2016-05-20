@@ -108,8 +108,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	_.extend(o , {
 
-	    start: function(options){
+	    start: function(options, callback){
 
+	      this._startCallback = callback;
 	      if( !this.history ) this.history = new History(options); 
 	      if( !this.history.isStart ){
 	        this.history.on("change", _.bind(this._afterPathChange, this));
@@ -180,6 +181,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	      options.param = found.param;
 
+	      if( options.firstTime && !callback){
+	        callback =  this._startCallback;
+	        delete this._startCallback;
+	      }
+
 	      this._go( found.state, options, callback );
 	    },
 	    _notfound: function(options){
@@ -209,7 +215,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      // if we done the navigating when start
 	      function done(success){
 	        over = true;
-	        if( success !== false ) self.emit("end");
+	        if( success !== false ) self.emit("end", option);
 	        self.pending = null;
 	        self._popStash(option);
 	      }
@@ -885,7 +891,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	_.extend( _.emitable(History), {
 	  // check the
-	  start: function(){
+	  start: function(callback){
 	    var path = this.getPath();
 	    this._checkPath = _.bind(this.checkPath, this);
 
@@ -911,7 +917,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    this.curPath = path;
 
-	    this.emit("change", path, { init: true});
+	    this.emit("change", path, { firstTime: true});
 	  },
 
 	  // the history teardown
@@ -1248,6 +1254,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var found = this.decode(path);
 	    if( !found ) return;
 	    var param = found.param;
+
+	    //@FIXIT: We NEED decodeURIComponent in server side!!
+
+	    for(var i in param){
+	      if(typeof param[i] === 'string') param[i] = decodeURIComponent(param[i]);
+	    }
 	    var states = [];
 	    var state = found.state;
 	    this.current = state;

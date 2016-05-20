@@ -25,8 +25,9 @@ var o =_.inherit( StateMan, Base.prototype );
 
 _.extend(o , {
 
-    start: function(options){
+    start: function(options, callback){
 
+      this._startCallback = callback;
       if( !this.history ) this.history = new History(options); 
       if( !this.history.isStart ){
         this.history.on("change", _.bind(this._afterPathChange, this));
@@ -96,6 +97,11 @@ _.extend(o , {
       }
 
       options.param = found.param;
+
+      if( options.firstTime && !callback){
+        callback =  this._startCallback;
+        delete this._startCallback;
+      }
 
       this._go( found.state, options, callback );
     },
