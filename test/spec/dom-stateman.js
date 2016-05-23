@@ -31,6 +31,14 @@ function loc(href){
       }, true)
       if (!/^\//.test(this.pathname)) this.pathname = '/' + this.pathname;
       return this;
+    },
+    history: {
+      replaceState: function(obj, title, path){
+        a.pathname = path
+      },
+      pushState: function(obj, title, path){
+        a.pathname = path
+      }
     }
   }).replace(href)
 }
@@ -156,7 +164,8 @@ describe("stateman:basic", function(){
       }
     })
     .start({
-      location: location
+      location: location,
+      html5: true
     });
 
   after(function(){
@@ -1136,7 +1145,9 @@ describe("start callback", function(){
         }
       }
     });
-    stateman.start({location: location, html5: true}, function(option){
+    stateman.start({
+      location: location, html5: true
+    }, function(option){
       expect(option.current.name).to.equal('app.blog')
       done()
     })

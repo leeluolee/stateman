@@ -984,7 +984,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this._setHash(this.iframe.location, to, options.replace);
 	      }
 	    }else{
-	      history[options.replace? 'replaceState': 'pushState']( {}, options.title || "" , _.cleanPath( this.root + to ) );
+	      this._changeState(this.location, options.title||"", _.cleanPath( this.root + to ), options.replace )
 	    }
 
 	    if( !options.silent ) this.emit('change', to);
@@ -1039,9 +1039,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }else if( this.mode === HISTORY /* && pathname === this.root*/){
 
 	      hash = this.location.hash.replace(this.prefix, "");
-	      if(hash) history.replaceState({}, document.title, _.cleanPath(this.root + hash));
-
+	      if(hash) this._changeState( this.location, document.title, _.cleanPath(this.root + hash));
 	    }
+	  },
+	  // ONLY for test, forbid browser to update 
+	  _changeState: function(location, title, path, replace){
+	    var history = location.history || window.history;
+	    return history[replace? 'replaceState': 'pushState']({}, title , path)
 	  },
 	  // Thanks for backbone.history and https://github.com/cowboy/jquery-hashchange/blob/master/jquery.ba-hashchange.js
 	  // for helping stateman fixing the oldie hash history issues when with iframe hack
