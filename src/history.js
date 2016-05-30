@@ -35,9 +35,9 @@ function History(options){
   this.root = options.root ||  "/" ;
   this.rRoot = new RegExp("^" +  this.root);
 
-  this._fixInitState();
 
   this.autolink = options.autolink!==false;
+  this.autofix = options.autofix!==false;
 
   this.curPath = undefined;
 }
@@ -67,6 +67,7 @@ _.extend( _.emitable(History), {
     }
     // event delegate
     this.autolink && this._autolink();
+    this.autofix && this._fixInitState();
 
     this.curPath = path;
 

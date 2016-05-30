@@ -314,7 +314,11 @@ _.extend(o , {
 
     _wrapPromise: function( promise, next ){
 
-      return promise.then( next, function(){ next(false); }) ;
+      return promise.then( next, function(err){ 
+        //TODO: 万一promise中throw了Error如何处理？
+        if(err instanceof Error) throw err;
+        next(false); 
+      }) ;
 
     },
 
