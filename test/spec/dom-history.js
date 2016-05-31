@@ -125,4 +125,14 @@ describe("History", function(){
     history.checkPath();
     expect(history.curPath).to.equal("");
   });
+
+  it("history should repare when html5 mode enable", function(){
+    var history = new History({
+      location: loc("http://regularjs.github.io/app/history"),
+      html5: true,
+      mode:1
+    });
+    history.start();
+    expect(history.location.hash).to.equal('#/app/history');
+  })
 });

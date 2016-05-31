@@ -397,7 +397,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    _wrapPromise: function( promise, next ){
 
-	      return promise.then( next, function(){ next(false); }) ;
+	      return promise.then( next, function(err){ 
+	        //TODO: 万一promise中throw了Error如何处理？
+	        if(err instanceof Error) throw err;
+	        next(false); 
+	      }) ;
 
 	    },
 
@@ -882,9 +886,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	  this.root = options.root ||  "/" ;
 	  this.rRoot = new RegExp("^" +  this.root);
 
-	  this._fixInitState();
 
 	  this.autolink = options.autolink!==false;
+	  this.autofix = options.autofix!==false;
 
 	  this.curPath = undefined;
 	}
@@ -914,6 +918,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	    // event delegate
 	    this.autolink && this._autolink();
+	    this.autofix && this._fixInitState();
 
 	    this.curPath = path;
 
@@ -1034,7 +1039,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if( this.mode !== HISTORY && this.html5){
 
 	      hashInPathName = pathname.replace(this.rRoot, "");
-	      if(hashInPathName) this.location.replace(this.root + this.prefix + hashInPathName);
+	      if(hashInPathName) this.location.replace(this.root + this.prefix + _.cleanPath(hashInPathName));
 
 	    }else if( this.mode === HISTORY /* && pathname === this.root*/){
 

@@ -3859,6 +3859,16 @@
 	    history.checkPath();
 	    expect(history.curPath).to.equal("");
 	  });
+
+	  it("history should repare when html5 mode enable", function(){
+	    var history = new History({
+	      location: loc("http://regularjs.github.io/app/history"),
+	      html5: true,
+	      mode:1
+	    });
+	    history.start();
+	    expect(history.location.hash).to.equal('#/app/history');
+	  })
 	});
 
 
@@ -3934,9 +3944,9 @@
 	  this.root = options.root ||  "/" ;
 	  this.rRoot = new RegExp("^" +  this.root);
 
-	  this._fixInitState();
 
 	  this.autolink = options.autolink!==false;
+	  this.autofix = options.autofix!==false;
 
 	  this.curPath = undefined;
 	}
@@ -3966,6 +3976,7 @@
 	    }
 	    // event delegate
 	    this.autolink && this._autolink();
+	    this.autofix && this._fixInitState();
 
 	    this.curPath = path;
 
@@ -4086,7 +4097,7 @@
 	    if( this.mode !== HISTORY && this.html5){
 
 	      hashInPathName = pathname.replace(this.rRoot, "");
-	      if(hashInPathName) this.location.replace(this.root + this.prefix + hashInPathName);
+	      if(hashInPathName) this.location.replace(this.root + this.prefix + _.cleanPath(hashInPathName));
 
 	    }else if( this.mode === HISTORY /* && pathname === this.root*/){
 
@@ -5623,7 +5634,11 @@
 
 	    _wrapPromise: function( promise, next ){
 
-	      return promise.then( next, function(){ next(false); }) ;
+	      return promise.then( next, function(err){ 
+	        //TODO: 万一promise中throw了Error如何处理？
+	        if(err instanceof Error) throw err;
+	        next(false); 
+	      }) ;
 
 	    },
 

@@ -188,7 +188,7 @@ _.extend( _.emitable(History), {
     if( this.mode !== HISTORY && this.html5){
 
       hashInPathName = pathname.replace(this.rRoot, "");
-      if(hashInPathName) this.location.replace(this.root + this.prefix + hashInPathName);
+      if(hashInPathName) this.location.replace(this.root + this.prefix + _.cleanPath(hashInPathName));
 
     }else if( this.mode === HISTORY /* && pathname === this.root*/){
 
