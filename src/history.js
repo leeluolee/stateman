@@ -108,7 +108,7 @@ _.extend( _.emitable(History), {
 
     if( this.mode !== HISTORY ){
       tmp = location.href.match(this.rPrefix);
-      return tmp && tmp[1]? tmp[1]: "";
+      return _.cleanPath(tmp && tmp[1]? tmp[1]: "");
 
     }else{
       return _.cleanPath(( location.pathname + location.search || "" ).replace( this.rRoot, "/" ));
