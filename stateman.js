@@ -1157,9 +1157,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	      return found;
 
 	    },
-	    encode: function(stateName, param){
+	    encode: function(stateName, param, needLink){
 	      var state = this.state(stateName);
-	      return state? state.encode(param) : '';
+	      var history = this.history;
+	      if(!state) return;
+	      var url  = state.encode(param);
+	      
+	      return needLink? (history.mode!==2? history.prefix + url : url ): url;
 	    },
 	    // notify specify state
 	    // check the active statename whether to match the passed condition (stateName and param)

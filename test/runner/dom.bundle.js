@@ -4755,6 +4755,12 @@
 
 	  })
 
+	  it("stateman.encode should prepare the url", function(){
+
+	    expect(stateman.encode("contact.detail",null, true)).to.equal("#/contact/detail")
+
+	  })
+
 	  it( "ISSUE #22: url match should matching by state.priority", function(){
 	    var found = stateman
 	      .state( 'blog.detail', {url: ":id"})
@@ -5777,9 +5783,13 @@
 	      return found;
 
 	    },
-	    encode: function(stateName, param){
+	    encode: function(stateName, param, needLink){
 	      var state = this.state(stateName);
-	      return state? state.encode(param) : '';
+	      var history = this.history;
+	      if(!state) return;
+	      var url  = state.encode(param);
+	      
+	      return needLink? (history.mode!==2? history.prefix + url : url ): url;
 	    },
 	    // notify specify state
 	    // check the active statename whether to match the passed condition (stateName and param)

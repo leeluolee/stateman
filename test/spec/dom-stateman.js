@@ -621,6 +621,12 @@ describe("stateman:other", function(){
 
   })
 
+  it("stateman.encode should prepare the url", function(){
+
+    expect(stateman.encode("contact.detail",null, true)).to.equal("#/contact/detail")
+
+  })
+
   it( "ISSUE #22: url match should matching by state.priority", function(){
     var found = stateman
       .state( 'blog.detail', {url: ":id"})
