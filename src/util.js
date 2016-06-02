@@ -9,10 +9,16 @@ _.extend = function(o1, o2, override){
   return o1;
 };
 
-_.values = function( o){
+var rDot = /\./g;
+_.countDot = function(word){
+  var ret = word.match(rDot)
+  return ret? ret.length: 0;
+}
+
+_.values = function( o, key){
   var keys = [];
   for(var i in o) if( o.hasOwnProperty(i) ){
-    keys.push( o[i] );
+    keys.push( key? i: o[i] );
   }
   return keys;
 };

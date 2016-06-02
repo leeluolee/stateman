@@ -7,6 +7,7 @@ function State(option){
   if(option) this.config(option);
 }
 
+
 //regexp cache
 State.rCache = {};
 
@@ -25,8 +26,14 @@ _.extend( _.emitable( State ), {
 
   state: function(stateName, config){
     if(_.typeOf(stateName) === "object"){
-      for(var j in stateName){
-        this.state(j, stateName[j]);
+      var keys = _.values(stateName, true);
+      keys.sort(function(ka, kb){
+        return _.countDot(ka) - _.countDot(kb);
+      });
+
+      for(var i = 0, len = keys.length; i< len ;i++){
+        var key = keys[i];
+        this.state(key, stateName[key])
       }
       return this;
     }

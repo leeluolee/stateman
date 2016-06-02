@@ -123,7 +123,7 @@ describe("History", function(){
     expect(history.curPath).to.equal("/prefix");
     history.location.replace("http://regularjs.github.io/app/history/code");
     history.checkPath();
-    expect(history.curPath).to.equal("");
+    expect(history.curPath).to.equal("/");
   });
 
   it("history should repare when html5 mode enable", function(){

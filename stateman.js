@@ -497,6 +497,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  if(option) this.config(option);
 	}
 
+
 	//regexp cache
 	State.rCache = {};
 
@@ -515,8 +516,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  state: function(stateName, config){
 	    if(_.typeOf(stateName) === "object"){
-	      for(var j in stateName){
-	        this.state(j, stateName[j]);
+	      var keys = _.values(stateName, true);
+	      keys.sort(function(ka, kb){
+	        return _.countDot(ka) - _.countDot(kb);
+	      });
+
+	      for(var i = 0, len = keys.length; i< len ;i++){
+	        var key = keys[i];
+	        this.state(key, stateName[key])
 	      }
 	      return this;
 	    }
@@ -663,10 +670,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	  return o1;
 	};
 
-	_.values = function( o){
+	var rDot = /\./g;
+	_.countDot = function(word){
+	  var ret = word.match(rDot)
+	  return ret? ret.length: 0;
+	}
+
+	_.values = function( o, key){
 	  var keys = [];
 	  for(var i in o) if( o.hasOwnProperty(i) ){
-	    keys.push( o[i] );
+	    keys.push( key? i: o[i] );
 	  }
 	  return keys;
 	};

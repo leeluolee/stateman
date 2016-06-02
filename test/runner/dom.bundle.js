@@ -266,6 +266,7 @@
 	  if(option) this.config(option);
 	}
 
+
 	//regexp cache
 	State.rCache = {};
 
@@ -284,8 +285,14 @@
 
 	  state: function(stateName, config){
 	    if(_.typeOf(stateName) === "object"){
-	      for(var j in stateName){
-	        this.state(j, stateName[j]);
+	      var keys = _.values(stateName, true);
+	      keys.sort(function(ka, kb){
+	        return _.countDot(ka) - _.countDot(kb);
+	      });
+
+	      for(var i = 0, len = keys.length; i< len ;i++){
+	        var key = keys[i];
+	        this.state(key, stateName[key])
 	      }
 	      return this;
 	    }
@@ -432,10 +439,16 @@
 	  return o1;
 	};
 
-	_.values = function( o){
+	var rDot = /\./g;
+	_.countDot = function(word){
+	  var ret = word.match(rDot)
+	  return ret? ret.length: 0;
+	}
+
+	_.values = function( o, key){
 	  var keys = [];
 	  for(var i in o) if( o.hasOwnProperty(i) ){
-	    keys.push( o[i] );
+	    keys.push( key? i: o[i] );
 	  }
 	  return keys;
 	};
@@ -3857,7 +3870,7 @@
 	    expect(history.curPath).to.equal("/prefix");
 	    history.location.replace("http://regularjs.github.io/app/history/code");
 	    history.checkPath();
-	    expect(history.curPath).to.equal("");
+	    expect(history.curPath).to.equal("/");
 	  });
 
 	  it("history should repare when html5 mode enable", function(){
@@ -5220,6 +5233,32 @@
 
 	  })
 
+	  it("should sort states[Object] before setting", function(done){
+	    var stateman = new StateMan();
+
+	    stateman.state({
+	      'app.blog': { },
+	      'app': { url: '' },
+	      'app.log': { }
+	    }).start({
+	      html5: true,
+	      location: loc("http://leeluolee.github.io/")
+	    }, function(){
+	      stateman.nav('/blog', function(){
+	        expect(stateman.current.name).to.equal('app.blog')
+	        stateman.nav('/log', function(){
+	          expect(stateman.current.name).to.equal('app.log')
+	          done()
+	        })
+	      })
+	    })
+
+	  })
+
+	  it("not found also should trigger the callback", function(){
+	    
+	  })
+
 
 	})
 
@@ -5269,31 +5308,31 @@
 	  })
 
 	})
-	describe("start callback", function(){
+	  describe("start callback", function(){
 
-	  it("start with callback should work correct", function(done){
-	    var location = loc("http://leeluolee.github.io/blog");
-	    var obj = {}; 
-	    var stateman = new StateMan({
-	      routes: {
-	        'app': {
-	          url: ''
+	    it("start with callback should work correct", function(done){
+	      var location = loc("http://leeluolee.github.io/blog");
+	      var obj = {}; 
+	      var stateman = new StateMan({
+	        routes: {
+	          'app': {
+	            url: ''
 
-	        },
-	        'app.blog': {
+	          },
+	          'app.blog': {
 
+	          }
 	        }
-	      }
-	    });
-	    stateman.start({
-	      location: location, html5: true
-	    }, function(option){
-	      expect(option.current.name).to.equal('app.blog')
-	      done()
+	      });
+	      stateman.start({
+	        location: location, html5: true
+	      }, function(option){
+	        expect(option.current.name).to.equal('app.blog')
+	        done()
+	      })
 	    })
-	  })
 
-	})
+	  })
 
 	})
 
