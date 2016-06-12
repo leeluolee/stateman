@@ -222,13 +222,12 @@ _.extend(o , {
 
         // only actual transiton need update base state;
         option.backward = false;
-        self._walkUpdate(parent, option, callForPermit, function(notRejected){
+        self._walkUpdate(self, parent, option, callForPermit, function(notRejected){
           if(notRejected === false) return callback(notRejected);
 
           self._transit( parent, to, option, callForPermit,  callback);
 
         });
-
 
       });
 
@@ -378,22 +377,26 @@ _.extend(o , {
       }
     },
     // check the query and Param
-    _walkUpdate: function(baseState, options, callForPermit,  done){
+    _walkUpdate: function(baseState, to, options, callForPermit,  done){
 
       var method = callForPermit? 'canUpdate': 'update';
       var from = baseState;
       var self = this;
 
-      if(from === this) return done();
-
-      var loop = function(notRejected){
-        if(notRejected === false) return done(false);
-        from = from.parent;
-        if(from === self) return done();
-        self._moveOn(from, method, options, loop)
+      var pathes = [], node = to;
+      while(node !== this){
+        pathes.push( node );
+        node = node.parent;
       }
 
-      self._moveOn(from, method, options, loop)
+      var loop = function( notRejected ){
+        if( notRejected === false ) return done( false );
+        if( !pathes.length ) return done();
+        from = pathes.pop();
+        self._moveOn( from, method, options, loop )
+      }
+
+      self._moveOn( from, method, options, loop )
     }
 
 }, true);

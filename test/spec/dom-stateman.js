@@ -1086,6 +1086,8 @@ describe("LifeCycle: Navigating", function(){
 
   })
 
+
+
   it("should sort states[Object] before setting", function(done){
     var stateman = new StateMan();
 
@@ -1108,9 +1110,59 @@ describe("LifeCycle: Navigating", function(){
 
   })
 
-  it("not found also should trigger the callback", function(){
-    
+  it("not found also should trigger the callback", function(done){
+    throw Error('')
+    // stateman.state({
+    //   'app.blog': { },
+    //   'app': { url: '' },
+    //   'app.log': { }
+    // }).start({
+    //   html5: true,
+    //   location: loc("http://leeluolee.github.io/user")
+    // }, function(err){
+    //   stateman.nav('/blog', function(){
+    //     expect(stateman.current.name).to.equal('app.blog')
+    //     stateman.nav('/log', function(){
+    //       expect(stateman.current.name).to.equal('app.log')
+    //       done()
+    //     })
+    //   })
+    // })
   })
+
+
+  it("update a.b.c should follow the 'update a -> update b -> update c'", function(done){
+      var stateman = new StateMan();
+      var uid = 0;
+      stateman.state({
+        'a.b.c': { 
+          update: function(){
+            expect(++uid).to.equal(3)
+            done();
+          } 
+        },
+        'a': { 
+          update: function(){
+            expect(++uid).to.equal(1)
+
+          } 
+        },
+        'a.b': { 
+          update: function(){
+            expect(++uid).to.equal(2)
+          }
+        }
+      }).start({
+        html5: true,
+        location: loc("http://leeluolee.github.io/a/b/c")
+      }, function(){
+        stateman.nav('/a/b/c?qid=1', function(){
+          expect(stateman.current.name).to.equal('a.b.c')
+        })
+      })
+  })
+
+
 
 
 })

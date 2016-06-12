@@ -5233,6 +5233,8 @@
 
 	  })
 
+
+
 	  it("should sort states[Object] before setting", function(done){
 	    var stateman = new StateMan();
 
@@ -5255,9 +5257,59 @@
 
 	  })
 
-	  it("not found also should trigger the callback", function(){
-	    
+	  it("not found also should trigger the callback", function(done){
+	    throw Error('')
+	    // stateman.state({
+	    //   'app.blog': { },
+	    //   'app': { url: '' },
+	    //   'app.log': { }
+	    // }).start({
+	    //   html5: true,
+	    //   location: loc("http://leeluolee.github.io/user")
+	    // }, function(err){
+	    //   stateman.nav('/blog', function(){
+	    //     expect(stateman.current.name).to.equal('app.blog')
+	    //     stateman.nav('/log', function(){
+	    //       expect(stateman.current.name).to.equal('app.log')
+	    //       done()
+	    //     })
+	    //   })
+	    // })
 	  })
+
+
+	  it("update a.b.c should follow the 'update a -> update b -> update c'", function(done){
+	      var stateman = new StateMan();
+	      var uid = 0;
+	      stateman.state({
+	        'a.b.c': { 
+	          update: function(){
+	            expect(++uid).to.equal(3)
+	            done();
+	          } 
+	        },
+	        'a': { 
+	          update: function(){
+	            expect(++uid).to.equal(1)
+
+	          } 
+	        },
+	        'a.b': { 
+	          update: function(){
+	            expect(++uid).to.equal(2)
+	          }
+	        }
+	      }).start({
+	        html5: true,
+	        location: loc("http://leeluolee.github.io/a/b/c")
+	      }, function(){
+	        stateman.nav('/a/b/c?qid=1', function(){
+	          expect(stateman.current.name).to.equal('a.b.c')
+	        })
+	      })
+	  })
+
+
 
 
 	})
@@ -5587,13 +5639,12 @@
 
 	        // only actual transiton need update base state;
 	        option.backward = false;
-	        self._walkUpdate(parent, option, callForPermit, function(notRejected){
+	        self._walkUpdate(self, parent, option, callForPermit, function(notRejected){
 	          if(notRejected === false) return callback(notRejected);
 
 	          self._transit( parent, to, option, callForPermit,  callback);
 
 	        });
-
 
 	      });
 
@@ -5743,22 +5794,26 @@
 	      }
 	    },
 	    // check the query and Param
-	    _walkUpdate: function(baseState, options, callForPermit,  done){
+	    _walkUpdate: function(baseState, to, options, callForPermit,  done){
 
 	      var method = callForPermit? 'canUpdate': 'update';
 	      var from = baseState;
 	      var self = this;
 
-	      if(from === this) return done();
-
-	      var loop = function(notRejected){
-	        if(notRejected === false) return done(false);
-	        from = from.parent;
-	        if(from === self) return done();
-	        self._moveOn(from, method, options, loop)
+	      var pathes = [], node = to;
+	      while(node !== this){
+	        pathes.push( node );
+	        node = node.parent;
 	      }
 
-	      self._moveOn(from, method, options, loop)
+	      var loop = function( notRejected ){
+	        if( notRejected === false ) return done( false );
+	        if( !pathes.length ) return done();
+	        from = pathes.pop();
+	        self._moveOn( from, method, options, loop )
+	      }
+
+	      self._moveOn( from, method, options, loop )
 	    }
 
 	}, true);
