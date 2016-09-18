@@ -14,6 +14,7 @@
     "src/histery.js",
     "src/state.js",
     "src/stateman.js",
-    "src/util.js"
+    "src/util.js",
+    "bower_components/qs/lib/index.js"
   ]
 }

@@ -19,5 +19,8 @@
     "gulpfile.js",
     "*.json",
     "*.md"
-  ]
+  ],
+  "dependencies": {
+    "qs": "https://github.com/ljharb/qs.git#^6.2.0"
+  }
 }
