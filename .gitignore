@@ -1,3 +1,4 @@
+.test/runner/dom.bundle.js
 .DS_Store
 *node_modules*
 *sublime*

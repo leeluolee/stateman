@@ -51,6 +51,12 @@ describe("State", function(){
 
     });
 
+    it("0, false", function(){
+
+      expectUrl("/home/code/:id/:isbool", {id: 0, isbool:false, tid:0 }).to.equal("/home/code/0/false?tid=0");
+
+    });
+
     it("with uncatched param should work", function(){
 
       expectUrl("/home/code/:id").to.equal("/home/code");
