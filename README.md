@@ -5,7 +5,6 @@ StateMan
 
 
 [![Build Status](http://img.shields.io/travis/regularjs/regular/master.svg?style=flat-square)](http://travis-ci.org/regularjs/regular)
-[![spm package](http://spmjs.io/badge/stateman)](http://spmjs.io/package/stateman)
 
 
 stateman: A tiny foundation that provides nested state-based routing for complex web applications. 
@@ -13,7 +12,7 @@ stateman: A tiny foundation that provides nested state-based routing for complex
 
 stateman is highly inspired by [ui-router](https://github.com/angular-ui/ui-router); you will find many features similar to it.
 
-But stateman is a __standalone library__ with an extremely tiny codebase (10kb minified). Feel free to integrate it with whatever framework you like! 
+But stateman is a __standalone library__ with an extremely tiny codebase (5kb minified). Feel free to integrate it with whatever framework you like! 
 
 
 
