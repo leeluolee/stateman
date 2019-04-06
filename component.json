@@ -1,6 +1,6 @@
 {
   "name": "stateman",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "main": "src/index.js",
   "description": "A tiny foundation that providing nested state-based routing for complex web application.",
   "keywords": [
@@ -14,6 +14,7 @@
     "src/histery.js",
     "src/state.js",
     "src/stateman.js",
-    "src/util.js"
+    "src/util.js",
+    "bower_components/qs/lib/index.js"
   ]
 }

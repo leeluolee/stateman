@@ -94,6 +94,9 @@ just paste the code to your own `index.html`, and load it up in a browser.
 
 open the console to see the output when navigating.
 
+## Project preparation
+
+Run 'npm install' and 'bower install' to fetch all dependencies.
 
 ## Demos
 
