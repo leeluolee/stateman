@@ -17,7 +17,7 @@ function StateMan(options){
   // auto update document.title, when navigation has been down
   this.on("end", function( options ){
     var cur = this.current;
-    document.title = cur.getTitle( options ) ||  baseTitle  ;
+    document.title = cur.getTitle( options ) || document.title || baseTitle  ;
   });
 }
 
